@@ -135,7 +135,7 @@ if __name__ == '__main__':
                         res2 = submit_solution(year, day, 2, part2_answer, session)
                         logging.info("Submit result: %s", res2)
                         if isinstance(res2, dict) and res2.get("success"):
-                            git_commit(f"Submit AoC {year}-{day} part2")
+                            logging.info("Part2 submission recorded")
                         else:
                             logging.info("Not committing part2; submission unsuccessful or skipped: %s", res2)
                     else:
@@ -170,7 +170,7 @@ if __name__ == '__main__':
                                             res2 = submit_solution(year, day, 2, part2_answer, session)
                                             logging.info("Submit result: %s", res2)
                                             if isinstance(res2, dict) and res2.get("success"):
-                                                git_commit(f"Submit AoC {year}-{day} part2 (generated)")
+                                                logging.info("Part2 submission recorded")
                                             else:
                                                 logging.info("Not committing generated part2; submission unsuccessful or skipped: %s", res2)
                                         else:
@@ -196,7 +196,7 @@ if __name__ == '__main__':
                         res2 = submit_solution(year, day, 2, part2_answer, session)
                         logging.info("Submit result: %s", res2)
                         if isinstance(res2, dict) and res2.get("success"):
-                            git_commit(f"Submit AoC {year}-{day} part2")
+                            logging.info("Part2 submission recorded")
                         else:
                             logging.info("Not committing part2; submission unsuccessful or skipped: %s", res2)
             else:
@@ -227,7 +227,7 @@ if __name__ == '__main__':
                                             res2 = submit_solution(year, day, 2, part2_answer, session)
                                             logging.info("Submit result: %s", res2)
                                             if isinstance(res2, dict) and res2.get("success"):
-                                                git_commit(f"Submit AoC {year}-{day} part2 (generated)")
+                                                logging.info("Part2 submission recorded")
                                             else:
                                                 logging.info("Not committing generated part2; submission unsuccessful or skipped: %s", res2)
                                         else:
@@ -253,7 +253,7 @@ if __name__ == '__main__':
                                             res2 = submit_solution(year, day, 2, part2_answer, session)
                                             logging.info("Submit result: %s", res2)
                                             if isinstance(res2, dict) and res2.get("success"):
-                                                git_commit(f"Submit AoC {year}-{day} part2 (generated)")
+                                                logging.info("Part2 submission recorded")
                                             else:
                                                 logging.info("Not committing generated part2; submission unsuccessful or skipped: %s", res2)
                                         else:
