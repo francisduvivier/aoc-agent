@@ -31,11 +31,6 @@ def main():
 
     workdir = create_day_dir(year, day)
 
-    # CLI flags to control behavior
-    parser.add_argument("--fetch-only", action="store_true", help="Only fetch problem and input and create scaffold")
-    parser.add_argument("--run-only", action="store_true", help="Only run existing scaffold/solution and attempt submission; do not fetch")
-    args = parser.parse_args()
-
     # validate flags
     if args.fetch_only and args.run_only:
         logging.error("Cannot use --fetch-only and --run-only together")
