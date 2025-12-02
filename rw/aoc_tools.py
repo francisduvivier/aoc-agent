@@ -45,11 +45,26 @@ def download_input(year: int, day: int, session_cookie: str, out_dir: str) -> st
 
 def submit_solution(year: int, day: int, part: int, answer: str, session_cookie: str, max_attempts: int = 5) -> dict:
     """Submit an answer with exponential backoff. Logs request and response.
+    Verifies answer is non-empty and numeric before submitting.
     Returns dict with keys: success(bool), message(str), status_code(int)
     """
+    answer_str = str(answer).strip()
+    if not answer_str:
+        logging.warning("Empty answer provided; not submitting.")
+        return {"success": False, "message": "Empty answer; not submitted", "status_code": None}
+    # Ensure the answer parses as a number
+    try:
+        _ = int(answer_str)
+    except ValueError:
+        try:
+            _ = float(answer_str)
+        except ValueError:
+            logging.warning("Answer does not parse as a number; not submitting.")
+            return {"success": False, "message": "Answer not numeric; not submitted", "status_code": None}
+
     url = f"{BASE}/{year}/day/{day}/answer"
     cookies = {"session": session_cookie}
-    data = {"level": str(part), "answer": str(answer)}
+    data = {"level": str(part), "answer": answer_str}
 
     attempt = 0
     wait = 1
