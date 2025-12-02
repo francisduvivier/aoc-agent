@@ -1,5 +1,17 @@
 version: '3.8'
 services:
+  venv-setup:
+    image: python:3.11-slim
+    env_file: .env
+    volumes:
+      - ./:/workspace
+    working_dir: /workspace
+    entrypoint:
+      - "/bin/sh"
+      - "-c"
+      - "python -m venv .venv && . .venv/bin/activate && pip install --no-cache-dir -r requirements.txt"
+    tty: true
+
   agent:
     image: python:3.11-slim
     env_file: .env
@@ -9,5 +21,5 @@ services:
     entrypoint:
       - "/bin/sh"
       - "-c"
-      - "pip install -r requirements.txt && exec python agent.py \"$@\""
+      - ". .venv/bin/activate || true; exec python agent.py \"$@\""
     tty: true
