@@ -130,8 +130,17 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
     """Call OpenRouter's chat completions to generate a Python solver script.
     Returns the generated python code as a string (no surrounding ``` markers if possible).
     """
-    url = "https://api.openrouter.ai/v1/chat/completions"
+    base = "https://openrouter.ai/api/v1"
+    url = base + "/chat/completions"
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    # optional extra headers from env to match OpenRouter client example
+    referer = os.environ.get("AOC_OPENROUTER_REFERER")
+    xtitle = os.environ.get("AOC_OPENROUTER_X_TITLE")
+    if referer:
+        headers["HTTP-Referer"] = referer
+    if xtitle:
+        headers["X-Title"] = xtitle
+
     system = (
         "You are a python coding assistant. Produce a Python script that reads 'input.txt' from the current working directory and prints the part 1 answer on the first line. "
         "Do not include explanations, only return the python source code. Keep solution concise and robust."
