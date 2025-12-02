@@ -19,6 +19,7 @@ def main():
     parser.add_argument("--day", type=int, default=datetime.utcnow().day)
     parser.add_argument("--fetch-only", action="store_true", help="Only fetch problem and input and create scaffold")
     parser.add_argument("--run-only", action="store_true", help="Only run existing scaffold/solution and attempt submission; do not fetch")
+    parser.add_argument("--auto-submit", action="store_true", help="Automatically submit answers without prompting")
     args = parser.parse_args()
 
     year = args.year
@@ -31,6 +32,9 @@ def main():
         args.run_only = True
     if env_fetch_only and env_fetch_only.lower() in ("1", "true", "yes"):
         args.fetch_only = True
+
+    # auto-submit can be enabled by flag or env
+    auto_submit = args.auto_submit or (os.environ.get("AOC_AUTO_SUBMIT", "").lower() in ("1", "true", "yes"))
 
     session = os.environ.get("AOC_SESSION_COOKIE")
     if not session:
@@ -46,6 +50,20 @@ def main():
 
     do_fetch = not args.run_only
     do_run = not args.fetch_only
+
+    def _should_submit_interactive(answer: str) -> bool:
+        if auto_submit:
+            return True
+        # non-interactive: skip unless auto_submit
+        if not sys.stdin or not sys.stdin.isatty():
+            logging.info("Non-interactive shell and auto-submit not enabled; skipping submission")
+            return False
+        try:
+            resp = input(f"Submit part1 answer '{answer}' for {year}-{day}? (y/N): ").strip().lower()
+            return resp in ("y", "yes")
+        except Exception as e:
+            logging.warning("Failed to read confirmation: %s", e)
+            return False
 
     if do_fetch:
         logging.info("Fetching problem statement HTML and cleaning to text")
@@ -128,9 +146,12 @@ if __name__ == '__main__':
                             if lines2:
                                 part1_answer = lines2[0]
                                 logging.info("Found part1 answer from generated solver: %s", part1_answer)
-                                res = submit_solution(year, day, 1, part1_answer, session)
-                                logging.info("Submit result: %s", res)
-                                git_commit(f"Submit AoC {year}-{day} part1 (generated)")
+                                if _should_submit_interactive(part1_answer):
+                                    res = submit_solution(year, day, 1, part1_answer, session)
+                                    logging.info("Submit result: %s", res)
+                                    git_commit(f"Submit AoC {year}-{day} part1 (generated)")
+                                else:
+                                    logging.info("Submission skipped for generated part1 answer: %s", part1_answer)
                             else:
                                 logging.info("Generated solver produced no output; not submitting")
                         else:
