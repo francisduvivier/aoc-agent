@@ -102,6 +102,37 @@ def submit_solution(year: int, day: int, part: int, answer: str, session_cookie:
     return {"success": False, "message": "Max attempts reached", "status_code": None}
 
 
+def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: str, model: str = "grok-4.1-fast") -> str:
+    """Call OpenRouter's chat completions to generate a Python solver script.
+    Returns the generated python code as a string (no surrounding ``` markers if possible).
+    """
+    url = "https://api.openrouter.ai/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    system = (
+        "You are a python coding assistant. Produce a Python script that reads 'input.txt' from the current working directory and prints the part 1 answer on the first line. "
+        "Do not include explanations, only return the python source code. Keep solution concise and robust."
+    )
+    user_msg = f"Problem statement:\n{problem}\n\nProvide a python script that reads 'input.txt' and prints the part1 answer on the first line. Use only standard library. Include necessary parsing." + ("\n\nInput sample:\n" + input_sample[:2000])
+    payload = {"model": model, "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_msg}], "temperature": 0}
+    try:
+        r = requests.post(url, headers=headers, json=payload, timeout=60)
+        r.raise_for_status()
+        j = r.json()
+        content = ""
+        # OpenRouter responses: choices[0].message.content
+        if isinstance(j, dict):
+            choices = j.get("choices") or []
+            if choices:
+                content = choices[0].get("message", {}).get("content", "")
+        # extract code block if present
+        m = re.search(r"```(?:python)?\n([\s\S]*?)```", content)
+        code = m.group(1) if m else content
+        return code
+    except Exception as e:
+        logging.warning("OpenRouter code generation failed: %s", e)
+        return ""
+
+
 def git_commit(message: str):
     try:
         subprocess.run(["git", "add", "."], check=True)
