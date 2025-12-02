@@ -9,7 +9,8 @@ import logging
 import subprocess
 import re
 from datetime import datetime
-from aoc_tools import fetch_problem_statement, download_input, submit_solution, create_day_dir, git_commit, generate_solver_with_openrouter
+from aoc_tools import fetch_problem_statement, download_input, create_day_dir, generate_solver_with_openrouter
+from submit import submit_solution
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -104,8 +105,6 @@ if __name__ == '__main__':
 """)
             logging.info("Wrote sample solver %s", sample_py)
 
-        # git commit the new files so agent actions are recorded
-        git_commit(f"Add AoC day {year}-{day} scaffold")
 
     if do_run:
         # ensure workdir has input and problem
@@ -188,9 +187,9 @@ if __name__ == '__main__':
                     res = submit_solution(year, day, 1, part1_answer, session)
                     logging.info("Submit result: %s", res)
                     if isinstance(res, dict) and res.get("success"):
-                        git_commit(f"Submit AoC {year}-{day} part1")
+                        logging.info("Part1 submission successful")
                     else:
-                        logging.info("Not committing part1; submission unsuccessful or skipped: %s", res)
+                        logging.info("Part1 submission unsuccessful or skipped: %s", res)
                     if len(lines) > 1:
                         part2_answer = lines[1]
                         logging.info("Found part2 answer from solution.py: %s", part2_answer)
@@ -242,9 +241,9 @@ if __name__ == '__main__':
                                         res = submit_solution(year, day, 1, part1_answer, session)
                                         logging.info("Submit result: %s", res)
                                         if isinstance(res, dict) and res.get("success"):
-                                            git_commit(f"Submit AoC {year}-{day} part1 (generated)")
+                                            logging.info("Generated part1 submission successful")
                                         else:
-                                            logging.info("Not committing generated part1; submission unsuccessful or skipped: %s", res)
+                                            logging.info("Generated part1 submission unsuccessful or skipped: %s", res)
                                     else:
                                         logging.info("Submission skipped for generated part1 answer: %s", part1_answer)
                                     if len(lines2) > 1:
