@@ -24,6 +24,14 @@ def main():
     year = args.year
     day = args.day
 
+    # Allow explicit env override for compose systems that don't forward args reliably
+    env_run_only = os.environ.get("AGENT_RUN_ONLY")
+    env_fetch_only = os.environ.get("AGENT_FETCH_ONLY")
+    if env_run_only and env_run_only.lower() in ("1", "true", "yes"):
+        args.run_only = True
+    if env_fetch_only and env_fetch_only.lower() in ("1", "true", "yes"):
+        args.fetch_only = True
+
     session = os.environ.get("AOC_SESSION_COOKIE")
     if not session:
         logging.error("AOC_SESSION_COOKIE environment variable not set (value after session=).")
