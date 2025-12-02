@@ -1,12 +1,10 @@
 version: '3.8'
 services:
   agent:
-    build: .
+    image: python:3.11-slim
     env_file: .env
     volumes:
       - ./:/workspace
-    environment:
-      - AOC_SESSION_COOKIE
-      - AOC_OPENROUTER_API_KEY
     working_dir: /workspace
+    command: /bin/sh -c "pip install --no-cache-dir -r requirements.txt && python agent.py"
     tty: true
