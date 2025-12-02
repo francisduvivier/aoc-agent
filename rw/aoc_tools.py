@@ -20,16 +20,37 @@ def create_day_dir(year: int, day: int) -> str:
 
 
 def fetch_problem_statement(year: int, day: int, session_cookie: str) -> str:
-    """Fetch the problem page and return a crude plaintext of the statement."""
+    """Fetch the problem page and return a cleaned plaintext of the statement.
+    Attempts to extract the main <article class="day-desc"> block and preserve line breaks.
+    Filters out sharing/sponsor/header artifacts.
+    """
     url = f"{BASE}/{year}/day/{day}"
     cookies = {"session": session_cookie}
     r = requests.get(url, cookies=cookies, timeout=15)
     r.raise_for_status()
     text = r.text
-    # Strip HTML tags simply
-    clean = re.sub(r"<script[\s\S]*?</script>", "", text)
-    clean = re.sub(r"<[^>]+>", "", clean)
-    clean = re.sub(r"\s+", " ", clean).strip()
+    # remove scripts
+    text = re.sub(r"<script[\s\S]*?</script>", "", text, flags=re.I)
+    # Try to extract the first article.day-desc block which contains the problem description
+    m = re.search(r'<article[^>]*class="[^"]*day-desc[^"]*"[^>]*>([\s\S]*?)</article>', text, flags=re.I)
+    if m:
+        text = m.group(1)
+    # remove known unwanted tags/blocks
+    text = re.sub(r"<current_datetime>[\s\S]*?</current_datetime>", "", text, flags=re.I)
+    # replace block-level closing tags with newlines to preserve paragraphs
+    text = re.sub(r"</(p|div|h[1-6]|li|pre)>", "\n", text, flags=re.I)
+    text = re.sub(r"<br\s*/?>", "\n", text, flags=re.I)
+    # remove share / social lines
+    text = re.sub(r"You can also[\s\S]*?(?=<|$)", "", text, flags=re.I)
+    # remove sponsors block if present
+    text = re.sub(r"Our sponsors help make Advent of Code possible:[\s\S]*?(?=<|$)", "", text, flags=re.I)
+    # strip all remaining tags
+    clean = re.sub(r"<[^>]+>", "", text)
+    # normalize line endings and collapse multiple blank lines
+    clean = clean.replace('\r\n', '\n').replace('\r', '\n')
+    clean = re.sub(r"\n[ \t]*\n+", "\n\n", clean)
+    # Trim leading/trailing whitespace on each line
+    clean = "\n".join([ln.rstrip() for ln in clean.splitlines()]).strip() + "\n"
     return clean
 
 
