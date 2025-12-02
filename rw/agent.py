@@ -17,6 +17,8 @@ def main():
     parser = argparse.ArgumentParser(description="AoC agent scaffold")
     parser.add_argument("--year", type=int, default=datetime.utcnow().year)
     parser.add_argument("--day", type=int, default=datetime.utcnow().day)
+    parser.add_argument("--fetch-only", action="store_true", help="Only fetch problem and input and create scaffold")
+    parser.add_argument("--run-only", action="store_true", help="Only run existing scaffold/solution and attempt submission; do not fetch")
     args = parser.parse_args()
 
     year = args.year
