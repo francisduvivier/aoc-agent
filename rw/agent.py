@@ -7,6 +7,7 @@ import time
 import argparse
 import logging
 import subprocess
+import re
 from datetime import datetime
 from aoc_tools import fetch_problem_statement, download_input, submit_solution, create_day_dir, git_commit, generate_solver_with_openrouter
 
@@ -115,23 +116,90 @@ if __name__ == '__main__':
             logging.error("problem.txt not found in %s. Run with --fetch-only first.", workdir)
             sys.exit(1)
 
-        # Try to run the day's solution to obtain answers and submit part 1 if produced
+        # read problem text to determine if part 2 is available/unlocked
+        problem_text = open(os.path.join(workdir, "problem.txt"), "r").read()
+        has_part2 = bool(re.search(r"part\s*two|---\s*Part\s*Two\s*---", problem_text, flags=re.I))
+        logging.info("Problem has part2: %s", has_part2)
+
+        # Try to run the day's solution to obtain answers and submit appropriate parts
         try:
             proc = subprocess.run(["python3", "solution.py"], cwd=workdir, capture_output=True, text=True, timeout=30)
             out = proc.stdout or ""
             lines = [l.strip() for l in out.splitlines() if l.strip()]
             if lines:
-                part1_answer = lines[0]
-                logging.info("Found part1 answer from solution.py: %s", part1_answer)
-                res = submit_solution(year, day, 1, part1_answer, session)
-                logging.info("Submit result: %s", res)
-                git_commit(f"Submit AoC {year}-{day} part1")
-                if len(lines) > 1:
-                    part2_answer = lines[1]
-                    logging.info("Found part2 answer from solution.py: %s", part2_answer)
-                    res2 = submit_solution(year, day, 2, part2_answer, session)
-                    logging.info("Submit result: %s", res2)
-                    git_commit(f"Submit AoC {year}-{day} part2")
+                # If part 2 is available on the site, avoid resubmitting part1 and only submit part2 when present
+                if has_part2:
+                    logging.info("Part 2 detected on site; skipping part1 submission")
+                    if len(lines) > 1:
+                        part2_answer = lines[1]
+                        logging.info("Found part2 answer from solution.py: %s", part2_answer)
+                        res2 = submit_solution(year, day, 2, part2_answer, session)
+                        logging.info("Submit result: %s", res2)
+                        if isinstance(res2, dict) and res2.get("success"):
+                            git_commit(f"Submit AoC {year}-{day} part2")
+                        else:
+                            logging.info("Not committing part2; submission unsuccessful or skipped: %s", res2)
+                    else:
+                        logging.info("No part2 output from solution.py; attempting to generate part2 via OpenRouter")
+                        api_key = os.environ.get("AOC_OPENROUTER_API_KEY")
+                        if not api_key:
+                            logging.warning("AOC_OPENROUTER_API_KEY not set; cannot generate solver")
+                        else:
+                            try:
+                                problem_txt = open(os.path.join(workdir, "problem.txt"), "r").read()
+                                input_txt = open(os.path.join(workdir, "input.txt"), "r").read()
+                                # Colorized OpenRouter input
+                                YELLOW = '\033[33m'
+                                CYAN = '\033[36m'
+                                RESET = '\033[0m'
+                                logging.info(f"{YELLOW}OpenRouter INPUT (problem):\n{problem_txt}{RESET}")
+                                logging.info(f"{YELLOW}OpenRouter INPUT (input.txt):\n{input_txt}{RESET}")
+                                code = generate_solver_with_openrouter(problem_txt, input_txt, api_key)
+                                if code:
+                                    logging.info(f"{CYAN}OpenRouter OUTPUT (code):\n{code}{RESET}")
+                                    with open(os.path.join(workdir, "solution.py"), "w") as sf:
+                                        sf.write(code)
+                                    logging.info("Wrote generated solver to %s", os.path.join(workdir, "solution.py"))
+                                    proc2 = subprocess.run(["python3", "solution.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
+                                    out2 = proc2.stdout or ""
+                                    logging.info(f"{CYAN}OpenRouter OUTPUT (stdout):\n{out2}{RESET}")
+                                    lines2 = [l.strip() for l in out2.splitlines() if l.strip()]
+                                    if len(lines2) > 1:
+                                        part2_answer = lines2[1]
+                                        logging.info("Found part2 answer from generated solver: %s", part2_answer)
+                                        if _should_submit_interactive(part2_answer, 2):
+                                            res2 = submit_solution(year, day, 2, part2_answer, session)
+                                            logging.info("Submit result: %s", res2)
+                                            if isinstance(res2, dict) and res2.get("success"):
+                                                git_commit(f"Submit AoC {year}-{day} part2 (generated)")
+                                            else:
+                                                logging.info("Not committing generated part2; submission unsuccessful or skipped: %s", res2)
+                                        else:
+                                            logging.info("Submission skipped for generated part2 answer: %s", part2_answer)
+                                    else:
+                                        logging.info("Generated solver did not output part2; nothing to submit")
+                                else:
+                                    logging.info(f"{CYAN}No code generated by OpenRouter{RESET}")
+                            except Exception as e:
+                                logging.warning("Error during generation or run: %s", e)
+                else:
+                    part1_answer = lines[0]
+                    logging.info("Found part1 answer from solution.py: %s", part1_answer)
+                    res = submit_solution(year, day, 1, part1_answer, session)
+                    logging.info("Submit result: %s", res)
+                    if isinstance(res, dict) and res.get("success"):
+                        git_commit(f"Submit AoC {year}-{day} part1")
+                    else:
+                        logging.info("Not committing part1; submission unsuccessful or skipped: %s", res)
+                    if len(lines) > 1:
+                        part2_answer = lines[1]
+                        logging.info("Found part2 answer from solution.py: %s", part2_answer)
+                        res2 = submit_solution(year, day, 2, part2_answer, session)
+                        logging.info("Submit result: %s", res2)
+                        if isinstance(res2, dict) and res2.get("success"):
+                            git_commit(f"Submit AoC {year}-{day} part2")
+                        else:
+                            logging.info("Not committing part2; submission unsuccessful or skipped: %s", res2)
             else:
                 logging.info("No output from solution.py; attempting to generate solver via OpenRouter")
                 api_key = os.environ.get("AOC_OPENROUTER_API_KEY")
@@ -150,23 +218,47 @@ if __name__ == '__main__':
                             out2 = proc2.stdout or ""
                             lines2 = [l.strip() for l in out2.splitlines() if l.strip()]
                             if lines2:
-                                part1_answer = lines2[0]
-                                logging.info("Found part1 answer from generated solver: %s", part1_answer)
-                                if _should_submit_interactive(part1_answer, 1):
-                                    res = submit_solution(year, day, 1, part1_answer, session)
-                                    logging.info("Submit result: %s", res)
-                                    git_commit(f"Submit AoC {year}-{day} part1 (generated)")
-                                else:
-                                    logging.info("Submission skipped for generated part1 answer: %s", part1_answer)
-                                if len(lines2) > 1:
-                                    part2_answer = lines2[1]
-                                    logging.info("Found part2 answer from generated solver: %s", part2_answer)
-                                    if _should_submit_interactive(part2_answer, 2):
-                                        res2 = submit_solution(year, day, 2, part2_answer, session)
-                                        logging.info("Submit result: %s", res2)
-                                        git_commit(f"Submit AoC {year}-{day} part2 (generated)")
+                                # If part 2 is already available on the site, skip submitting part1 and only submit part2
+                                if has_part2:
+                                    logging.info("Part 2 detected on site; skipping generated part1 submission")
+                                    if len(lines2) > 1:
+                                        part2_answer = lines2[1]
+                                        logging.info("Found part2 answer from generated solver: %s", part2_answer)
+                                        if _should_submit_interactive(part2_answer, 2):
+                                            res2 = submit_solution(year, day, 2, part2_answer, session)
+                                            logging.info("Submit result: %s", res2)
+                                            if isinstance(res2, dict) and res2.get("success"):
+                                                git_commit(f"Submit AoC {year}-{day} part2 (generated)")
+                                            else:
+                                                logging.info("Not committing generated part2; submission unsuccessful or skipped: %s", res2)
+                                        else:
+                                            logging.info("Submission skipped for generated part2 answer: %s", part2_answer)
                                     else:
-                                        logging.info("Submission skipped for generated part2 answer: %s", part2_answer)
+                                        logging.info("Generated solver did not output part2; nothing to submit")
+                                else:
+                                    part1_answer = lines2[0]
+                                    logging.info("Found part1 answer from generated solver: %s", part1_answer)
+                                    if _should_submit_interactive(part1_answer, 1):
+                                        res = submit_solution(year, day, 1, part1_answer, session)
+                                        logging.info("Submit result: %s", res)
+                                        if isinstance(res, dict) and res.get("success"):
+                                            git_commit(f"Submit AoC {year}-{day} part1 (generated)")
+                                        else:
+                                            logging.info("Not committing generated part1; submission unsuccessful or skipped: %s", res)
+                                    else:
+                                        logging.info("Submission skipped for generated part1 answer: %s", part1_answer)
+                                    if len(lines2) > 1:
+                                        part2_answer = lines2[1]
+                                        logging.info("Found part2 answer from generated solver: %s", part2_answer)
+                                        if _should_submit_interactive(part2_answer, 2):
+                                            res2 = submit_solution(year, day, 2, part2_answer, session)
+                                            logging.info("Submit result: %s", res2)
+                                            if isinstance(res2, dict) and res2.get("success"):
+                                                git_commit(f"Submit AoC {year}-{day} part2 (generated)")
+                                            else:
+                                                logging.info("Not committing generated part2; submission unsuccessful or skipped: %s", res2)
+                                        else:
+                                            logging.info("Submission skipped for generated part2 answer: %s", part2_answer)
                             else:
                                 logging.info("Generated solver produced no output; not submitting")
                         else:

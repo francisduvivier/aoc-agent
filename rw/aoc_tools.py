@@ -88,8 +88,8 @@ def submit_solution(year: int, day: int, part: int, answer: str, session_cookie:
     cookies = {"session": session_cookie}
     data = {"level": str(part), "answer": answer_str}
 
-    print("NOT POSTING")
-    return
+    # print("NOT POSTING")
+    # return
     attempt = 0
     wait = 1
     while attempt < max_attempts:
@@ -147,18 +147,22 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
     )
     user_msg = f"Problem statement:\n{problem}\n\nProvide a python script that reads 'input.txt' and prints the part1 answer on the first line and the part2 answer on the second line. Use only standard library. Include necessary parsing." + ("\n\nInput sample:\n" + input_sample[:2000])
     payload = {"model": model, "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_msg}], "temperature": 0}
+    YELLOW = '\033[33m'
+    CYAN = '\033[36m'
+    RESET = '\033[0m'
+    logging.info(f"{YELLOW}OpenRouter REQUEST payload:{RESET}\n{payload}")
     try:
         r = requests.post(url, headers=headers, json=payload, timeout=60)
         try:
             r.raise_for_status()
         except requests.HTTPError:
-            logging.warning("OpenRouter returned status %s: %s", r.status_code, r.text[:1000])
+            logging.warning(f"{CYAN}OpenRouter returned status {r.status_code}: {r.text[:1000]}{RESET}")
             return ""
         # parse json
         try:
             j = r.json()
         except Exception:
-            logging.warning("OpenRouter returned non-json response: %s", r.text[:1000])
+            logging.warning(f"{CYAN}OpenRouter returned non-json response: {r.text[:1000]}{RESET}")
             return ""
         content = ""
         # OpenRouter responses: choices[0].message.content
@@ -174,9 +178,10 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
         # extract code block if present
         m = re.search(r"```(?:python)?\n([\s\S]*?)```", content)
         code = m.group(1) if m else content
+        logging.info(f"{CYAN}OpenRouter RESPONSE:{RESET}\n{content}")
         return code
     except Exception as e:
-        logging.warning("OpenRouter code generation failed: %s", e)
+        logging.warning(f"{CYAN}OpenRouter code generation failed: {e}{RESET}")
         return ""
 
 
