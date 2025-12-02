@@ -87,9 +87,8 @@ def submit_solution(year: int, day: int, part: int, answer: str, session_cookie:
     cookies = {"session": session_cookie}
     data = {"level": str(part), "answer": answer_str}
 
-    print("trying to submit solution"+str(answer))
+    print("NOT POSTING")
     return
-
     attempt = 0
     wait = 1
     while attempt < max_attempts:
