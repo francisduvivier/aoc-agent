@@ -11,7 +11,17 @@ services:
       - "-c"
       - "python -m venv .venv && . .venv/bin/activate && pip install --no-cache-dir -r requirements.txt"
     tty: true
-
+  python:
+    image: python:3.11-slim
+    env_file: .env
+    volumes:
+      - ./:/workspace
+    entrypoint:
+      - "/bin/bash"
+      - "-c"
+      - ". .venv/bin/activate; /bin/bash" 
+    working_dir: /workspace
+    tty: true
   agent:
     image: python:3.11-slim
     env_file: .env
@@ -23,3 +33,4 @@ services:
       - "-c"
       - ". .venv/bin/activate || true; exec python agent.py \"$@\""
     tty: true
+

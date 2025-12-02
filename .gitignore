@@ -215,4 +215,5 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-rw/2025
+rw/20*
+rw/.submit*
