@@ -149,14 +149,28 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
     payload = {"model": model, "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_msg}], "temperature": 0}
     try:
         r = requests.post(url, headers=headers, json=payload, timeout=60)
-        r.raise_for_status()
-        j = r.json()
+        try:
+            r.raise_for_status()
+        except requests.HTTPError:
+            logging.warning("OpenRouter returned status %s: %s", r.status_code, r.text[:1000])
+            return ""
+        # parse json
+        try:
+            j = r.json()
+        except Exception:
+            logging.warning("OpenRouter returned non-json response: %s", r.text[:1000])
+            return ""
         content = ""
         # OpenRouter responses: choices[0].message.content
         if isinstance(j, dict):
             choices = j.get("choices") or []
             if choices:
-                content = choices[0].get("message", {}).get("content", "")
+                # support both OpenAI and OpenRouter shapes
+                msg = choices[0].get("message") or choices[0].get("delta") or choices[0]
+                if isinstance(msg, dict):
+                    content = msg.get("content") or msg.get("text") or ""
+                else:
+                    content = str(msg)
         # extract code block if present
         m = re.search(r"```(?:python)?\n([\s\S]*?)```", content)
         code = m.group(1) if m else content
