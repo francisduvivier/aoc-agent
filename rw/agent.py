@@ -51,7 +51,7 @@ def main():
     do_fetch = not args.run_only
     do_run = not args.fetch_only
 
-    def _should_submit_interactive(answer: str) -> bool:
+    def _should_submit_interactive(answer: str, part: int = 1) -> bool:
         if auto_submit:
             return True
         # non-interactive: skip unless auto_submit
@@ -59,7 +59,7 @@ def main():
             logging.info("Non-interactive shell and auto-submit not enabled; skipping submission")
             return False
         try:
-            resp = input(f"Submit part1 answer '{answer}' for {year}-{day}? (y/N): ").strip().lower()
+            resp = input(f"Submit part{part} answer '{answer}' for {year}-{day}? (y/N): ").strip().lower()
             return resp in ("y", "yes")
         except Exception as e:
             logging.warning("Failed to read confirmation: %s", e)
@@ -126,6 +126,12 @@ if __name__ == '__main__':
                 res = submit_solution(year, day, 1, part1_answer, session)
                 logging.info("Submit result: %s", res)
                 git_commit(f"Submit AoC {year}-{day} part1")
+                if len(lines) > 1:
+                    part2_answer = lines[1]
+                    logging.info("Found part2 answer from solution.py: %s", part2_answer)
+                    res2 = submit_solution(year, day, 2, part2_answer, session)
+                    logging.info("Submit result: %s", res2)
+                    git_commit(f"Submit AoC {year}-{day} part2")
             else:
                 logging.info("No output from solution.py; attempting to generate solver via OpenRouter")
                 api_key = os.environ.get("AOC_OPENROUTER_API_KEY")
@@ -146,12 +152,21 @@ if __name__ == '__main__':
                             if lines2:
                                 part1_answer = lines2[0]
                                 logging.info("Found part1 answer from generated solver: %s", part1_answer)
-                                if _should_submit_interactive(part1_answer):
+                                if _should_submit_interactive(part1_answer, 1):
                                     res = submit_solution(year, day, 1, part1_answer, session)
                                     logging.info("Submit result: %s", res)
                                     git_commit(f"Submit AoC {year}-{day} part1 (generated)")
                                 else:
                                     logging.info("Submission skipped for generated part1 answer: %s", part1_answer)
+                                if len(lines2) > 1:
+                                    part2_answer = lines2[1]
+                                    logging.info("Found part2 answer from generated solver: %s", part2_answer)
+                                    if _should_submit_interactive(part2_answer, 2):
+                                        res2 = submit_solution(year, day, 2, part2_answer, session)
+                                        logging.info("Submit result: %s", res2)
+                                        git_commit(f"Submit AoC {year}-{day} part2 (generated)")
+                                    else:
+                                        logging.info("Submission skipped for generated part2 answer: %s", part2_answer)
                             else:
                                 logging.info("Generated solver produced no output; not submitting")
                         else:

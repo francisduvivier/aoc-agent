@@ -26,15 +26,16 @@ def fetch_problem_statement(year: int, day: int, session_cookie: str) -> str:
     """
     url = f"{BASE}/{year}/day/{day}"
     cookies = {"session": session_cookie}
-    r = requests.get(url, cookies=cookies, timeout=15)
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; aoc-agent/1.0)"}
+    r = requests.get(url, cookies=cookies, headers=headers, timeout=15)
     r.raise_for_status()
     text = r.text
     # remove scripts
     text = re.sub(r"<script[\s\S]*?</script>", "", text, flags=re.I)
-    # Try to extract the first article.day-desc block which contains the problem description
-    m = re.search(r'<article[^>]*class="[^"]*day-desc[^"]*"[^>]*>([\s\S]*?)</article>', text, flags=re.I)
-    if m:
-        text = m.group(1)
+    # Try to extract all article.day-desc blocks (part 1 and part 2) which contain the problem descriptions
+    matches = re.findall(r'<article[^>]*class="[^\"]*day-desc[^\"]*"[^>]*>([\s\S]*?)</article>', text, flags=re.I)
+    if matches:
+        text = "\n\n".join(matches)
     # remove known unwanted tags/blocks
     text = re.sub(r"<current_datetime>[\s\S]*?</current_datetime>", "", text, flags=re.I)
     # replace block-level closing tags with newlines to preserve paragraphs
@@ -141,10 +142,10 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
         headers["X-Title"] = xtitle
 
     system = (
-        "You are a python coding assistant. Produce a Python script that reads 'input.txt' from the current working directory and prints the part 1 answer on the first line. "
+        "You are a python coding assistant. Produce a Python script that reads 'input.txt' from the current working directory and prints the part 1 answer on the first line and the part 2 answer on the second line. "
         "Do not include explanations, only return the python source code. Keep solution concise and robust."
     )
-    user_msg = f"Problem statement:\n{problem}\n\nProvide a python script that reads 'input.txt' and prints the part1 answer on the first line. Use only standard library. Include necessary parsing." + ("\n\nInput sample:\n" + input_sample[:2000])
+    user_msg = f"Problem statement:\n{problem}\n\nProvide a python script that reads 'input.txt' and prints the part1 answer on the first line and the part2 answer on the second line. Use only standard library. Include necessary parsing." + ("\n\nInput sample:\n" + input_sample[:2000])
     payload = {"model": model, "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_msg}], "temperature": 0}
     try:
         r = requests.post(url, headers=headers, json=payload, timeout=60)
