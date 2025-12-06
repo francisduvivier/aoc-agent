@@ -19,4 +19,5 @@ services:
       - "/bin/sh"
       - "-c"
       - "python agent.py \"$@\""
+      - "--"
     tty: true
