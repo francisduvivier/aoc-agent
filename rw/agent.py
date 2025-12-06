@@ -130,7 +130,7 @@ if __name__ == '__main__':
             logging.info("Part 1 not solved. Attempting to solve...")
             sol1 = os.path.join(workdir, "solution_part1.py")
             
-            max_retries = 3
+            max_retries = 10
             feedback = None
             previous_code = None
             
@@ -225,7 +225,7 @@ if __name__ == '__main__':
                      with open(os.path.join(workdir, "problem.txt"), "w") as f:
                          f.write(stmt)
                 
-                max_retries = 3
+                max_retries = 10
                 feedback = None
                 previous_code = None
                 
