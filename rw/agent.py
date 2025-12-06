@@ -9,7 +9,7 @@ import logging
 import subprocess
 import re
 from datetime import datetime
-from aoc_tools import fetch_problem_statement, download_input, create_day_dir, generate_solver_with_openrouter
+from aoc_tools import fetch_problem_statement, download_input, create_day_dir, generate_solver_with_openrouter, git_commit
 from submit import submit_solution
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -76,6 +76,7 @@ def main():
         logging.info("Downloading puzzle input")
         inp_path = download_input(year, day, session, workdir)
         logging.info("Input saved to %s", inp_path)
+        git_commit([workdir], f"Fetch input for {year} day {day}")
 
         # create scaffold if not exists
         sample_py = os.path.join(workdir, "solution.py")
@@ -159,6 +160,7 @@ if __name__ == '__main__':
                                     with open(os.path.join(workdir, "solution.py"), "w") as sf:
                                         sf.write(code)
                                     logging.info("Wrote generated solver to %s", os.path.join(workdir, "solution.py"))
+                                    git_commit([os.path.join(workdir, "solution.py")], f"Agent updated solution for {year} day {day}")
                                     proc2 = subprocess.run(["python3", "solution.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
                                     out2 = proc2.stdout or ""
                                     logging.info(f"{CYAN}OpenRouter OUTPUT (stdout):\n{out2}{RESET}")
@@ -213,6 +215,7 @@ if __name__ == '__main__':
                             with open(os.path.join(workdir, "solution.py"), "w") as sf:
                                 sf.write(code)
                             logging.info("Wrote generated solver to %s", os.path.join(workdir, "solution.py"))
+                            git_commit([os.path.join(workdir, "solution.py")], f"Agent updated solution for {year} day {day}")
                             proc2 = subprocess.run(["python3", "solution.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
                             out2 = proc2.stdout or ""
                             lines2 = [l.strip() for l in out2.splitlines() if l.strip()]

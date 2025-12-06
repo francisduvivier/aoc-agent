@@ -14,7 +14,7 @@ BASE = "https://adventofcode.com"
 
 
 def create_day_dir(year: int, day: int) -> str:
-    path = Path(f"{year}/day{int(day):02d}")
+    path = Path(f"solutions/{year}/day{int(day):02d}")
     path.mkdir(parents=True, exist_ok=True)
     return str(path)
 
@@ -124,3 +124,21 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
         return ""
 
 
+
+def git_commit(paths: list[str], message: str) -> bool:
+    """Stage the given paths and commit with the message."""
+    if not paths:
+        return False
+    try:
+        subprocess.run(["git", "add"] + paths, check=True, capture_output=True)
+        # Check if there are changes to commit
+        status = subprocess.run(["git", "status", "--porcelain"] + paths, capture_output=True, text=True)
+        if not status.stdout.strip():
+            logging.info("No changes to commit for %s", paths)
+            return False
+        subprocess.run(["git", "commit", "-m", message], check=True, capture_output=True)
+        logging.info("Committed changes to %s with message: %s", paths, message)
+        return True
+    except subprocess.CalledProcessError as e:
+        logging.warning("Git commit failed: %s", e)
+        return False
