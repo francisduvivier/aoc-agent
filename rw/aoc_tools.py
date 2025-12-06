@@ -101,7 +101,8 @@ def download_input(year: int, day: int, session_cookie: str, out_dir: str) -> st
     out_path.write_text(r.text)
     return str(out_path)
 
-
+# kwaipilot/kat-coder-pro:free
+# tngtech/deepseek-r1t2-chimera:free
 def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: str, model: str = "tngtech/deepseek-r1t2-chimera:free", part: int = 1) -> str:
     """Call OpenRouter's chat completions to generate a Python solver script.
     Returns the generated python code as a string (no surrounding ``` markers if possible).
@@ -122,7 +123,7 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
         "Do not include explanations, only return the python source code. Keep solution concise and robust."
     )
     user_msg = f"Problem statement:\n{problem}\n\nProvide a python script that reads 'input.txt' and prints the part {part} answer. Use only standard library. Include necessary parsing." + ("\n\nInput sample:\n" + input_sample[:2000])
-    payload = {"model": model, "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_msg}], "temperature": 0}
+    payload = {"model": model, "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_msg}], "temperature": 0.5, "top_p": 0.9}
     YELLOW = '\033[33m'
     CYAN = '\033[36m'
     RESET = '\033[0m'
