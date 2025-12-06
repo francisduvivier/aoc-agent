@@ -9,8 +9,12 @@ import logging
 import subprocess
 import re
 from datetime import datetime
+from dotenv import load_dotenv
 from aoc_tools import fetch_problem_statement, download_input, create_day_dir, generate_solver_with_openrouter, git_commit
 from submit import submit_solution
+
+load_dotenv()
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -123,7 +127,16 @@ if __name__ == '__main__':
 
         # Try to run the day's solution to obtain answers and submit appropriate parts
         try:
-            proc = subprocess.run(["python3", "solution.py"], cwd=workdir, capture_output=True, text=True, timeout=30)
+            # Calculate relative path for docker-compose
+            # agent.py is in root, workdir is e.g. solutions/2023/01
+            # we need to pass the path relative to the docker-compose context (root)
+            rel_workdir = os.path.relpath(workdir, os.getcwd())
+            solution_script = os.path.join(rel_workdir, "solution.py")
+            
+            logging.info("Running solution via Docker: %s", solution_script)
+            cmd = ["docker", "compose", "run", "--rm", "python", "python", solution_script]
+            
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
             out = proc.stdout or ""
             lines = [l.strip() for l in out.splitlines() if l.strip()]
             if lines:
@@ -161,7 +174,9 @@ if __name__ == '__main__':
                                         sf.write(code)
                                     logging.info("Wrote generated solver to %s", os.path.join(workdir, "solution.py"))
                                     git_commit([os.path.join(workdir, "solution.py")], f"Agent updated solution for {year} day {day}")
-                                    proc2 = subprocess.run(["python3", "solution.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
+                                    
+                                    logging.info("Running generated solution via Docker...")
+                                    proc2 = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
                                     out2 = proc2.stdout or ""
                                     logging.info(f"{CYAN}OpenRouter OUTPUT (stdout):\n{out2}{RESET}")
                                     lines2 = [l.strip() for l in out2.splitlines() if l.strip()]
@@ -216,7 +231,9 @@ if __name__ == '__main__':
                                 sf.write(code)
                             logging.info("Wrote generated solver to %s", os.path.join(workdir, "solution.py"))
                             git_commit([os.path.join(workdir, "solution.py")], f"Agent updated solution for {year} day {day}")
-                            proc2 = subprocess.run(["python3", "solution.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
+                            
+                            logging.info("Running generated solution via Docker...")
+                            proc2 = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
                             out2 = proc2.stdout or ""
                             lines2 = [l.strip() for l in out2.splitlines() if l.strip()]
                             if lines2:
