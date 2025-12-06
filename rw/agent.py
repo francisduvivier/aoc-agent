@@ -9,7 +9,7 @@ import logging
 import subprocess
 import re
 from datetime import datetime
-from aoc_tools import fetch_problem_statement, download_input, create_day_dir, generate_solver_with_openrouter, git_commit
+from aoc_tools import fetch_problem_statement, download_input, create_day_dir, generate_solver_with_openrouter, git_commit, fetch_puzzle_status
 from submit import submit_solution
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -79,32 +79,37 @@ def main():
         git_commit([workdir], f"Fetch input for {year} day {day}")
 
         # create scaffold if not exists
-        sample_py = os.path.join(workdir, "solution.py")
-        if not os.path.exists(sample_py):
-            with open(sample_py, "w") as f:
-                f.write("""# Edit this file: implement solve_part1 and solve_part2
-
-
-def read_input(path):
-    with open(path) as fh:
-        return [line.strip() for line in fh]
-
-
+        # We now use separate files for part 1 and part 2
+        sol1 = os.path.join(workdir, "solution_part1.py")
+        sol2 = os.path.join(workdir, "solution_part2.py")
+        
+        if not os.path.exists(sol1):
+            with open(sol1, "w") as f:
+                f.write("""# Edit this file: implement solve_part1
 def solve_part1(lines):
     # replace with actual solution
     return ""
 
+if __name__ == '__main__':
+    with open('input.txt') as f:
+        lines = [line.strip() for line in f]
+    print(solve_part1(lines))
+""")
+            logging.info("Wrote sample solver %s", sol1)
 
+        if not os.path.exists(sol2):
+            with open(sol2, "w") as f:
+                f.write("""# Edit this file: implement solve_part2
 def solve_part2(lines):
+    # replace with actual solution
     return ""
 
-
 if __name__ == '__main__':
-    lines = read_input('input.txt')
-    print(solve_part1(lines))
+    with open('input.txt') as f:
+        lines = [line.strip() for line in f]
     print(solve_part2(lines))
 """)
-            logging.info("Wrote sample solver %s", sample_py)
+            logging.info("Wrote sample solver %s", sol2)
 
 
     if do_run:
@@ -112,163 +117,165 @@ if __name__ == '__main__':
         if not os.path.exists(os.path.join(workdir, "input.txt")):
             logging.error("input.txt not found in %s. Run with --fetch-only first.", workdir)
             sys.exit(1)
-        if not os.path.exists(os.path.join(workdir, "problem.txt")):
-            logging.error("problem.txt not found in %s. Run with --fetch-only first.", workdir)
-            sys.exit(1)
+        
+        # Check puzzle status
+        status = fetch_puzzle_status(year, day, session)
+        logging.info("Puzzle status: %s", status)
 
-        # read problem text to determine if part 2 is available/unlocked
-        problem_text = open(os.path.join(workdir, "problem.txt"), "r").read()
-        has_part2 = bool(re.search(r"part\s*two|---\s*Part\s*Two\s*---", problem_text, flags=re.I))
-        logging.info("Problem has part2: %s", has_part2)
+        api_key = os.environ.get("AOC_OPENROUTER_API_KEY")
+        
+        # --- PART 1 ---
+        if not status['part1_solved']:
+            logging.info("Part 1 not solved. Attempting to solve...")
+            # Try to run existing solution_part1.py
+            sol1 = os.path.join(workdir, "solution_part1.py")
+            output = None
+            
+            if os.path.exists(sol1):
+                try:
+                    proc = subprocess.run(["python3", "solution_part1.py"], cwd=workdir, capture_output=True, text=True, timeout=30)
+                    if proc.returncode == 0 and proc.stdout.strip():
+                        output = proc.stdout.strip().splitlines()[-1] # Assume last line is answer
+                        logging.info("Output from existing solution_part1.py: %s", output)
+                except Exception as e:
+                    logging.warning("Failed to run existing solution_part1.py: %s", e)
 
-        # Try to run the day's solution to obtain answers and submit appropriate parts
-        try:
-            proc = subprocess.run(["python3", "solution.py"], cwd=workdir, capture_output=True, text=True, timeout=30)
-            out = proc.stdout or ""
-            lines = [l.strip() for l in out.splitlines() if l.strip()]
-            if lines:
-                # If part 2 is available on the site, avoid resubmitting part1 and only submit part2 when present
-                if has_part2:
-                    logging.info("Part 2 detected on site; skipping part1 submission")
-                    if len(lines) > 1:
-                        part2_answer = lines[1]
-                        logging.info("Found part2 answer from solution.py: %s", part2_answer)
-                        res2 = submit_solution(year, day, 2, part2_answer, session)
-                        logging.info("Submit result: %s", res2)
-                        if isinstance(res2, dict) and res2.get("success"):
-                            logging.info("Part2 submission recorded")
-                        else:
-                            logging.info("Not committing part2; submission unsuccessful or skipped: %s", res2)
-                    else:
-                        logging.info("No part2 output from solution.py; attempting to generate part2 via OpenRouter")
-                        api_key = os.environ.get("AOC_OPENROUTER_API_KEY")
-                        if not api_key:
-                            logging.warning("AOC_OPENROUTER_API_KEY not set; cannot generate solver")
-                        else:
-                            try:
-                                problem_txt = open(os.path.join(workdir, "problem.txt"), "r").read()
-                                input_txt = open(os.path.join(workdir, "input.txt"), "r").read()
-                                # Colorized OpenRouter input
-                                YELLOW = '\033[33m'
-                                CYAN = '\033[36m'
-                                RESET = '\033[0m'
-                                logging.info(f"{YELLOW}OpenRouter INPUT (problem):\n{problem_txt}{RESET}")
-                                logging.info(f"{YELLOW}OpenRouter INPUT (input.txt):\n{input_txt}{RESET}")
-                                code = generate_solver_with_openrouter(problem_txt, input_txt, api_key)
-                                if code:
-                                    logging.info(f"{CYAN}OpenRouter OUTPUT (code):\n{code}{RESET}")
-                                    with open(os.path.join(workdir, "solution.py"), "w") as sf:
-                                        sf.write(code)
-                                    logging.info("Wrote generated solver to %s", os.path.join(workdir, "solution.py"))
-                                    git_commit([os.path.join(workdir, "solution.py")], f"Agent updated solution for {year} day {day}")
-                                    proc2 = subprocess.run(["python3", "solution.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
-                                    out2 = proc2.stdout or ""
-                                    logging.info(f"{CYAN}OpenRouter OUTPUT (stdout):\n{out2}{RESET}")
-                                    lines2 = [l.strip() for l in out2.splitlines() if l.strip()]
-                                    if len(lines2) > 1:
-                                        part2_answer = lines2[1]
-                                        logging.info("Found part2 answer from generated solver: %s", part2_answer)
-                                        if _should_submit_interactive(part2_answer, 2):
-                                            res2 = submit_solution(year, day, 2, part2_answer, session)
-                                            logging.info("Submit result: %s", res2)
-                                            if isinstance(res2, dict) and res2.get("success"):
-                                                logging.info("Part2 submission recorded")
-                                            else:
-                                                logging.info("Not committing generated part2; submission unsuccessful or skipped: %s", res2)
-                                        else:
-                                            logging.info("Submission skipped for generated part2 answer: %s", part2_answer)
-                                    else:
-                                        logging.info("Generated solver did not output part2; nothing to submit")
-                                else:
-                                    logging.info(f"{CYAN}No code generated by OpenRouter{RESET}")
-                            except Exception as e:
-                                logging.warning("Error during generation or run: %s", e)
-                else:
-                    part1_answer = lines[0]
-                    logging.info("Found part1 answer from solution.py: %s", part1_answer)
-                    res = submit_solution(year, day, 1, part1_answer, session)
+            if not output and api_key:
+                logging.info("Generating solution for Part 1...")
+                problem_txt = open(os.path.join(workdir, "problem.txt"), "r").read()
+                input_txt = open(os.path.join(workdir, "input.txt"), "r").read()
+                code = generate_solver_with_openrouter(problem_txt, input_txt, api_key, part=1)
+                if code:
+                    with open(sol1, "w") as f:
+                        f.write(code)
+                    git_commit([sol1], f"Agent generated solution_part1 for {year} day {day}")
+                    try:
+                        proc = subprocess.run(["python3", "solution_part1.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
+                        if proc.returncode == 0 and proc.stdout.strip():
+                            output = proc.stdout.strip().splitlines()[-1]
+                            logging.info("Output from generated solution_part1.py: %s", output)
+                    except Exception as e:
+                        logging.warning("Failed to run generated solution_part1.py: %s", e)
+            
+            if output:
+                if _should_submit_interactive(output, 1):
+                    res = submit_solution(year, day, 1, output, session)
                     logging.info("Submit result: %s", res)
                     if isinstance(res, dict) and res.get("success"):
-                        logging.info("Part1 submission successful")
+                        logging.info("Part 1 solved successfully!")
+                        # Re-fetch status to update for Part 2
+                        status = fetch_puzzle_status(year, day, session)
                     else:
-                        logging.info("Part1 submission unsuccessful or skipped: %s", res)
-                    if len(lines) > 1:
-                        part2_answer = lines[1]
-                        logging.info("Found part2 answer from solution.py: %s", part2_answer)
-                        res2 = submit_solution(year, day, 2, part2_answer, session)
-                        logging.info("Submit result: %s", res2)
-                        if isinstance(res2, dict) and res2.get("success"):
-                            logging.info("Part2 submission recorded")
-                        else:
-                            logging.info("Not committing part2; submission unsuccessful or skipped: %s", res2)
+                        logging.info("Part 1 submission failed.")
             else:
-                logging.info("No output from solution.py; attempting to generate solver via OpenRouter")
-                api_key = os.environ.get("AOC_OPENROUTER_API_KEY")
-                if not api_key:
-                    logging.warning("AOC_OPENROUTER_API_KEY not set; cannot generate solver")
-                else:
+                logging.info("Could not produce an answer for Part 1.")
+        else:
+            logging.info("Part 1 already solved.")
+
+        # --- PART 2 ---
+        # Only proceed to Part 2 if Part 1 is solved
+        if status['part1_solved']:
+            if not status['part2_solved']:
+                logging.info("Part 2 not solved. Attempting to solve...")
+                sol2 = os.path.join(workdir, "solution_part2.py")
+                output = None
+                
+                # Check if we need to fetch part 2 description?
+                # fetch_problem_statement gets the whole page, so if part 2 is unlocked, it should be there.
+                # We might want to re-fetch problem.txt if we just solved part 1.
+                if do_fetch: # Or if we just solved part 1
+                     # Re-fetch problem text to ensure we have Part 2 description
+                     stmt = fetch_problem_statement(year, day, session)
+                     with open(os.path.join(workdir, "problem.txt"), "w") as f:
+                         f.write(stmt)
+                
+                if os.path.exists(sol2):
                     try:
+                        proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir, capture_output=True, text=True, timeout=30)
+                        if proc.returncode == 0 and proc.stdout.strip():
+                            output = proc.stdout.strip().splitlines()[-1]
+                            logging.info("Output from existing solution_part2.py: %s", output)
+                    except Exception as e:
+                        logging.warning("Failed to run existing solution_part2.py: %s", e)
+
+                if not output and api_key:
+                    logging.info("Generating solution for Part 2...")
+                    problem_txt = open(os.path.join(workdir, "problem.txt"), "r").read()
+                    input_txt = open(os.path.join(workdir, "input.txt"), "r").read()
+                    code = generate_solver_with_openrouter(problem_txt, input_txt, api_key, part=2)
+                    if code:
+                        with open(sol2, "w") as f:
+                            f.write(code)
+                        git_commit([sol2], f"Agent generated solution_part2 for {year} day {day}")
+                        try:
+                            proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
+                            if proc.returncode == 0 and proc.stdout.strip():
+                                output = proc.stdout.strip().splitlines()[-1]
+                                logging.info("Output from generated solution_part2.py: %s", output)
+                        except Exception as e:
+                            logging.warning("Failed to run generated solution_part2.py: %s", e)
+
+                if output:
+                    if _should_submit_interactive(output, 2):
+                        res = submit_solution(year, day, 2, output, session)
+                        logging.info("Submit result: %s", res)
+                        if isinstance(res, dict) and res.get("success"):
+                            logging.info("Part 2 solved successfully!")
+                        else:
+                            logging.info("Part 2 submission failed.")
+                else:
+                    logging.info("Could not produce an answer for Part 2.")
+            
+            else:
+                # Part 2 is solved. Verification mode.
+                logging.info("Part 2 already solved. Entering VERIFICATION MODE.")
+                known_answer = status['part2_answer']
+                logging.info("Known Part 2 Answer: %s", known_answer)
+                
+                if not known_answer:
+                    logging.warning("Could not extract known answer from page. Skipping verification.")
+                elif not api_key:
+                    logging.warning("No API key. Skipping verification.")
+                else:
+                    # Verification loop
+                    max_attempts = 3
+                    for attempt in range(1, max_attempts + 1):
+                        logging.info("Verification Attempt %d/%d", attempt, max_attempts)
+                        
                         problem_txt = open(os.path.join(workdir, "problem.txt"), "r").read()
                         input_txt = open(os.path.join(workdir, "input.txt"), "r").read()
-                        code = generate_solver_with_openrouter(problem_txt, input_txt, api_key)
+                        
+                        # Generate solution WITHOUT showing the answer (generate_solver_with_openrouter does not see the answer)
+                        code = generate_solver_with_openrouter(problem_txt, input_txt, api_key, part=2)
+                        
                         if code:
-                            with open(os.path.join(workdir, "solution.py"), "w") as sf:
-                                sf.write(code)
-                            logging.info("Wrote generated solver to %s", os.path.join(workdir, "solution.py"))
-                            git_commit([os.path.join(workdir, "solution.py")], f"Agent updated solution for {year} day {day}")
-                            proc2 = subprocess.run(["python3", "solution.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
-                            out2 = proc2.stdout or ""
-                            lines2 = [l.strip() for l in out2.splitlines() if l.strip()]
-                            if lines2:
-                                # If part 2 is already available on the site, skip submitting part1 and only submit part2
-                                if has_part2:
-                                    logging.info("Part 2 detected on site; skipping generated part1 submission")
-                                    if len(lines2) > 1:
-                                        part2_answer = lines2[1]
-                                        logging.info("Found part2 answer from generated solver: %s", part2_answer)
-                                        if _should_submit_interactive(part2_answer, 2):
-                                            res2 = submit_solution(year, day, 2, part2_answer, session)
-                                            logging.info("Submit result: %s", res2)
-                                            if isinstance(res2, dict) and res2.get("success"):
-                                                logging.info("Part2 submission recorded")
-                                            else:
-                                                logging.info("Not committing generated part2; submission unsuccessful or skipped: %s", res2)
-                                        else:
-                                            logging.info("Submission skipped for generated part2 answer: %s", part2_answer)
+                            sol2_verify = os.path.join(workdir, "solution_part2_verify.py")
+                            with open(sol2_verify, "w") as f:
+                                f.write(code)
+                            
+                            try:
+                                proc = subprocess.run(["python3", "solution_part2_verify.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
+                                if proc.returncode == 0 and proc.stdout.strip():
+                                    output = proc.stdout.strip().splitlines()[-1]
+                                    logging.info("Generated Answer: %s", output)
+                                    
+                                    if output == known_answer:
+                                        logging.info("VERIFICATION SUCCESS: Generated answer matches known answer.")
+                                        # Optionally overwrite the main solution file with this verified one
+                                        os.rename(sol2_verify, os.path.join(workdir, "solution_part2.py"))
+                                        git_commit([os.path.join(workdir, "solution_part2.py")], f"Agent verified solution_part2 for {year} day {day}")
+                                        break
                                     else:
-                                        logging.info("Generated solver did not output part2; nothing to submit")
+                                        logging.warning("VERIFICATION FAILED: Generated answer '%s' != Known answer '%s'", output, known_answer)
                                 else:
-                                    part1_answer = lines2[0]
-                                    logging.info("Found part1 answer from generated solver: %s", part1_answer)
-                                    if _should_submit_interactive(part1_answer, 1):
-                                        res = submit_solution(year, day, 1, part1_answer, session)
-                                        logging.info("Submit result: %s", res)
-                                        if isinstance(res, dict) and res.get("success"):
-                                            logging.info("Generated part1 submission successful")
-                                        else:
-                                            logging.info("Generated part1 submission unsuccessful or skipped: %s", res)
-                                    else:
-                                        logging.info("Submission skipped for generated part1 answer: %s", part1_answer)
-                                    if len(lines2) > 1:
-                                        part2_answer = lines2[1]
-                                        logging.info("Found part2 answer from generated solver: %s", part2_answer)
-                                        if _should_submit_interactive(part2_answer, 2):
-                                            res2 = submit_solution(year, day, 2, part2_answer, session)
-                                            logging.info("Submit result: %s", res2)
-                                            if isinstance(res2, dict) and res2.get("success"):
-                                                logging.info("Part2 submission recorded")
-                                            else:
-                                                logging.info("Not committing generated part2; submission unsuccessful or skipped: %s", res2)
-                                        else:
-                                            logging.info("Submission skipped for generated part2 answer: %s", part2_answer)
-                            else:
-                                logging.info("Generated solver produced no output; not submitting")
+                                    logging.warning("Verification script failed or produced no output.")
+                            except Exception as e:
+                                logging.warning("Error running verification script: %s", e)
                         else:
-                            logging.info("No code generated by OpenRouter")
-                    except Exception as e:
-                        logging.warning("Error during generation or run: %s", e)
-        except Exception as e:
-            logging.warning("Running solution.py or submission failed: %s", e)
+                            logging.warning("Failed to generate verification code.")
+                        
+                        if attempt == max_attempts:
+                            logging.error("Verification failed after %d attempts.", max_attempts)
 
     logging.info("Scaffold ready in %s. Use submit_solution() from aoc_tools to submit answers manually if needed.", workdir)
 

@@ -55,6 +55,43 @@ def fetch_problem_statement(year: int, day: int, session_cookie: str) -> str:
     return clean
 
 
+def fetch_puzzle_status(year: int, day: int, session_cookie: str) -> dict:
+    """Fetch the problem page and determine which parts are solved.
+    Returns a dict: {'part1_solved': bool, 'part1_answer': str|None, 'part2_solved': bool, 'part2_answer': str|None}
+    """
+    url = f"{BASE}/{year}/day/{day}"
+    cookies = {"session": session_cookie}
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; aoc-agent/1.0)"}
+    r = requests.get(url, cookies=cookies, headers=headers, timeout=15)
+    r.raise_for_status()
+    text = r.text
+
+    status = {
+        'part1_solved': False,
+        'part1_answer': None,
+        'part2_solved': False,
+        'part2_answer': None
+    }
+
+    # Check for "Your puzzle answer was" blocks
+    # Usually: <p>Your puzzle answer was <code>ANSWER</code>.</p>
+    # If both are solved, there are two such blocks. The first one is part 1, second is part 2.
+    # However, the page structure might be complex.
+    # Let's look for the specific pattern.
+    
+    answers = re.findall(r"Your puzzle answer was <code>(.*?)</code>", text)
+    
+    if len(answers) >= 1:
+        status['part1_solved'] = True
+        status['part1_answer'] = answers[0]
+    
+    if len(answers) >= 2:
+        status['part2_solved'] = True
+        status['part2_answer'] = answers[1]
+        
+    return status
+
+
 def download_input(year: int, day: int, session_cookie: str, out_dir: str) -> str:
     url = f"{BASE}/{year}/day/{day}/input"
     cookies = {"session": session_cookie}
@@ -65,7 +102,7 @@ def download_input(year: int, day: int, session_cookie: str, out_dir: str) -> st
     return str(out_path)
 
 
-def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: str, model: str = "tngtech/deepseek-r1t2-chimera:free") -> str:
+def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: str, model: str = "tngtech/deepseek-r1t2-chimera:free", part: int = 1) -> str:
     """Call OpenRouter's chat completions to generate a Python solver script.
     Returns the generated python code as a string (no surrounding ``` markers if possible).
     """
@@ -81,10 +118,10 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
         headers["X-Title"] = xtitle
 
     system = (
-        "You are a python coding assistant. Produce a Python script that reads 'input.txt' from the current working directory and prints the part 1 answer on the first line and the part 2 answer on the second line. "
+        f"You are a python coding assistant. Produce a Python script that reads 'input.txt' from the current working directory and prints the part {part} answer. "
         "Do not include explanations, only return the python source code. Keep solution concise and robust."
     )
-    user_msg = f"Problem statement:\n{problem}\n\nProvide a python script that reads 'input.txt' and prints the part1 answer on the first line and the part2 answer on the second line. Use only standard library. Include necessary parsing." + ("\n\nInput sample:\n" + input_sample[:2000])
+    user_msg = f"Problem statement:\n{problem}\n\nProvide a python script that reads 'input.txt' and prints the part {part} answer. Use only standard library. Include necessary parsing." + ("\n\nInput sample:\n" + input_sample[:2000])
     payload = {"model": model, "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_msg}], "temperature": 0}
     YELLOW = '\033[33m'
     CYAN = '\033[36m'
