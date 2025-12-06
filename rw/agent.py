@@ -125,106 +125,175 @@ if __name__ == '__main__':
         api_key = os.environ.get("AOC_OPENROUTER_API_KEY")
         
         # --- PART 1 ---
+        # --- PART 1 ---
         if not status['part1_solved']:
             logging.info("Part 1 not solved. Attempting to solve...")
-            # Try to run existing solution_part1.py
             sol1 = os.path.join(workdir, "solution_part1.py")
-            output = None
             
-            if os.path.exists(sol1):
-                try:
-                    proc = subprocess.run(["python3", "solution_part1.py"], cwd=workdir, capture_output=True, text=True, timeout=30)
-                    if proc.returncode == 0 and proc.stdout.strip():
-                        output = proc.stdout.strip().splitlines()[-1] # Assume last line is answer
-                        logging.info("Output from existing solution_part1.py: %s", output)
-                except Exception as e:
-                    logging.warning("Failed to run existing solution_part1.py: %s", e)
-
-            if not output and api_key:
-                logging.info("Generating solution for Part 1...")
-                problem_txt = open(os.path.join(workdir, "problem.txt"), "r").read()
-                input_txt = open(os.path.join(workdir, "input.txt"), "r").read()
-                code = generate_solver_with_openrouter(problem_txt, input_txt, api_key, part=1)
-                if code:
-                    with open(sol1, "w") as f:
-                        f.write(code)
-                    git_commit([sol1], f"Agent generated solution_part1 for {year} day {day}")
+            max_retries = 3
+            feedback = None
+            previous_code = None
+            
+            for attempt in range(1, max_retries + 1):
+                logging.info("Part 1 Attempt %d/%d", attempt, max_retries)
+                output = None
+                
+                # Try to run existing solution first if no feedback yet
+                if attempt == 1 and os.path.exists(sol1) and not feedback:
                     try:
-                        proc = subprocess.run(["python3", "solution_part1.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
+                        proc = subprocess.run(["python3", "solution_part1.py"], cwd=workdir, capture_output=True, text=True, timeout=30)
                         if proc.returncode == 0 and proc.stdout.strip():
                             output = proc.stdout.strip().splitlines()[-1]
-                            logging.info("Output from generated solution_part1.py: %s", output)
+                            logging.info("Output from existing solution_part1.py: %s", output)
+                        else:
+                            # Existing solution failed or no output
+                            if proc.returncode != 0:
+                                feedback = f"Existing solution failed with error:\n{proc.stderr}"
+                            else:
+                                feedback = "Existing solution produced no output."
+                            previous_code = open(sol1).read()
                     except Exception as e:
-                        logging.warning("Failed to run generated solution_part1.py: %s", e)
-            
-            if output:
-                if _should_submit_interactive(output, 1):
-                    res = submit_solution(year, day, 1, output, session)
-                    logging.info("Submit result: %s", res)
-                    if isinstance(res, dict) and res.get("success"):
-                        logging.info("Part 1 solved successfully!")
-                        # Re-fetch status to update for Part 2
-                        status = fetch_puzzle_status(year, day, session)
+                        logging.warning("Failed to run existing solution_part1.py: %s", e)
+                        feedback = f"Failed to run existing solution: {e}"
+
+                # Generate if needed (if no output from existing, or if we have feedback from previous attempt)
+                if not output and api_key:
+                    logging.info("Generating solution for Part 1...")
+                    problem_txt = open(os.path.join(workdir, "problem.txt"), "r").read()
+                    input_txt = open(os.path.join(workdir, "input.txt"), "r").read()
+                    
+                    code = generate_solver_with_openrouter(problem_txt, input_txt, api_key, part=1, previous_code=previous_code, feedback=feedback)
+                    
+                    if code:
+                        with open(sol1, "w") as f:
+                            f.write(code)
+                        git_commit([sol1], f"Agent generated solution_part1 for {year} day {day} (attempt {attempt})")
+                        
+                        try:
+                            proc = subprocess.run(["python3", "solution_part1.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
+                            if proc.returncode == 0 and proc.stdout.strip():
+                                output = proc.stdout.strip().splitlines()[-1]
+                                logging.info("Output from generated solution_part1.py: %s", output)
+                            else:
+                                if proc.returncode != 0:
+                                    feedback = f"Runtime error:\n{proc.stderr}"
+                                else:
+                                    feedback = "Script produced no output."
+                                previous_code = code
+                                logging.warning("Generation failed: %s", feedback)
+                        except Exception as e:
+                            logging.warning("Failed to run generated solution_part1.py: %s", e)
+                            feedback = f"Execution failed: {e}"
+                            previous_code = code
                     else:
-                        logging.info("Part 1 submission failed.")
-            else:
-                logging.info("Could not produce an answer for Part 1.")
+                        logging.warning("No code generated.")
+                        # If generation fails, maybe break or continue? Continue allows retry if transient.
+                
+                if output:
+                    if _should_submit_interactive(output, 1):
+                        res = submit_solution(year, day, 1, output, session)
+                        logging.info("Submit result: %s", res)
+                        if isinstance(res, dict) and res.get("success"):
+                            logging.info("Part 1 solved successfully!")
+                            status = fetch_puzzle_status(year, day, session)
+                            break
+                        else:
+                            logging.info("Part 1 submission failed.")
+                            msg = res.get("message", "Unknown error")
+                            feedback = f"Submitted answer '{output}' was incorrect. Message: {msg}"
+                            if os.path.exists(sol1):
+                                previous_code = open(sol1).read()
+                    else:
+                        logging.info("Submission skipped by user.")
+                        break
+                
+                if attempt == max_retries:
+                    logging.error("Part 1 failed after %d attempts.", max_retries)
         else:
             logging.info("Part 1 already solved.")
 
         # --- PART 2 ---
         # Only proceed to Part 2 if Part 1 is solved
+        # --- PART 2 ---
         if status['part1_solved']:
             if not status['part2_solved']:
                 logging.info("Part 2 not solved. Attempting to solve...")
                 sol2 = os.path.join(workdir, "solution_part2.py")
-                output = None
                 
-                # Check if we need to fetch part 2 description?
-                # fetch_problem_statement gets the whole page, so if part 2 is unlocked, it should be there.
-                # We might want to re-fetch problem.txt if we just solved part 1.
-                if do_fetch: # Or if we just solved part 1
-                     # Re-fetch problem text to ensure we have Part 2 description
+                if do_fetch:
                      stmt = fetch_problem_statement(year, day, session)
                      with open(os.path.join(workdir, "problem.txt"), "w") as f:
                          f.write(stmt)
                 
-                if os.path.exists(sol2):
-                    try:
-                        proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir, capture_output=True, text=True, timeout=30)
-                        if proc.returncode == 0 and proc.stdout.strip():
-                            output = proc.stdout.strip().splitlines()[-1]
-                            logging.info("Output from existing solution_part2.py: %s", output)
-                    except Exception as e:
-                        logging.warning("Failed to run existing solution_part2.py: %s", e)
-
-                if not output and api_key:
-                    logging.info("Generating solution for Part 2...")
-                    problem_txt = open(os.path.join(workdir, "problem.txt"), "r").read()
-                    input_txt = open(os.path.join(workdir, "input.txt"), "r").read()
-                    code = generate_solver_with_openrouter(problem_txt, input_txt, api_key, part=2)
-                    if code:
-                        with open(sol2, "w") as f:
-                            f.write(code)
-                        git_commit([sol2], f"Agent generated solution_part2 for {year} day {day}")
+                max_retries = 3
+                feedback = None
+                previous_code = None
+                
+                for attempt in range(1, max_retries + 1):
+                    logging.info("Part 2 Attempt %d/%d", attempt, max_retries)
+                    output = None
+                    
+                    if attempt == 1 and os.path.exists(sol2) and not feedback:
                         try:
-                            proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
+                            proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir, capture_output=True, text=True, timeout=30)
                             if proc.returncode == 0 and proc.stdout.strip():
                                 output = proc.stdout.strip().splitlines()[-1]
-                                logging.info("Output from generated solution_part2.py: %s", output)
+                                logging.info("Output from existing solution_part2.py: %s", output)
+                            else:
+                                if proc.returncode != 0:
+                                    feedback = f"Existing solution failed with error:\n{proc.stderr}"
+                                else:
+                                    feedback = "Existing solution produced no output."
+                                previous_code = open(sol2).read()
                         except Exception as e:
-                            logging.warning("Failed to run generated solution_part2.py: %s", e)
+                            logging.warning("Failed to run existing solution_part2.py: %s", e)
+                            feedback = f"Failed to run existing solution: {e}"
 
-                if output:
-                    if _should_submit_interactive(output, 2):
-                        res = submit_solution(year, day, 2, output, session)
-                        logging.info("Submit result: %s", res)
-                        if isinstance(res, dict) and res.get("success"):
-                            logging.info("Part 2 solved successfully!")
+                    if not output and api_key:
+                        logging.info("Generating solution for Part 2...")
+                        problem_txt = open(os.path.join(workdir, "problem.txt"), "r").read()
+                        input_txt = open(os.path.join(workdir, "input.txt"), "r").read()
+                        code = generate_solver_with_openrouter(problem_txt, input_txt, api_key, part=2, previous_code=previous_code, feedback=feedback)
+                        if code:
+                            with open(sol2, "w") as f:
+                                f.write(code)
+                            git_commit([sol2], f"Agent generated solution_part2 for {year} day {day} (attempt {attempt})")
+                            try:
+                                proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
+                                if proc.returncode == 0 and proc.stdout.strip():
+                                    output = proc.stdout.strip().splitlines()[-1]
+                                    logging.info("Output from generated solution_part2.py: %s", output)
+                                else:
+                                    if proc.returncode != 0:
+                                        feedback = f"Runtime error:\n{proc.stderr}"
+                                    else:
+                                        feedback = "Script produced no output."
+                                    previous_code = code
+                                    logging.warning("Generation failed: %s", feedback)
+                            except Exception as e:
+                                logging.warning("Failed to run generated solution_part2.py: %s", e)
+                                feedback = f"Execution failed: {e}"
+                                previous_code = code
+
+                    if output:
+                        if _should_submit_interactive(output, 2):
+                            res = submit_solution(year, day, 2, output, session)
+                            logging.info("Submit result: %s", res)
+                            if isinstance(res, dict) and res.get("success"):
+                                logging.info("Part 2 solved successfully!")
+                                break
+                            else:
+                                logging.info("Part 2 submission failed.")
+                                msg = res.get("message", "Unknown error")
+                                feedback = f"Submitted answer '{output}' was incorrect. Message: {msg}"
+                                if os.path.exists(sol2):
+                                    previous_code = open(sol2).read()
                         else:
-                            logging.info("Part 2 submission failed.")
-                else:
-                    logging.info("Could not produce an answer for Part 2.")
+                            logging.info("Submission skipped by user.")
+                            break
+                    
+                    if attempt == max_retries:
+                        logging.error("Part 2 failed after %d attempts.", max_retries)
             
             else:
                 # Part 2 is solved. Verification mode.
@@ -237,16 +306,17 @@ if __name__ == '__main__':
                 elif not api_key:
                     logging.warning("No API key. Skipping verification.")
                 else:
-                    # Verification loop
                     max_attempts = 3
+                    feedback = None
+                    previous_code = None
+                    
                     for attempt in range(1, max_attempts + 1):
                         logging.info("Verification Attempt %d/%d", attempt, max_attempts)
                         
                         problem_txt = open(os.path.join(workdir, "problem.txt"), "r").read()
                         input_txt = open(os.path.join(workdir, "input.txt"), "r").read()
                         
-                        # Generate solution WITHOUT showing the answer (generate_solver_with_openrouter does not see the answer)
-                        code = generate_solver_with_openrouter(problem_txt, input_txt, api_key, part=2)
+                        code = generate_solver_with_openrouter(problem_txt, input_txt, api_key, part=2, previous_code=previous_code, feedback=feedback)
                         
                         if code:
                             sol2_verify = os.path.join(workdir, "solution_part2_verify.py")
@@ -261,16 +331,24 @@ if __name__ == '__main__':
                                     
                                     if output == known_answer:
                                         logging.info("VERIFICATION SUCCESS: Generated answer matches known answer.")
-                                        # Optionally overwrite the main solution file with this verified one
                                         os.rename(sol2_verify, os.path.join(workdir, "solution_part2.py"))
                                         git_commit([os.path.join(workdir, "solution_part2.py")], f"Agent verified solution_part2 for {year} day {day}")
                                         break
                                     else:
                                         logging.warning("VERIFICATION FAILED: Generated answer '%s' != Known answer '%s'", output, known_answer)
+                                        feedback = f"Generated answer '{output}' does not match known answer '{known_answer}'."
+                                        previous_code = code
                                 else:
                                     logging.warning("Verification script failed or produced no output.")
+                                    if proc.returncode != 0:
+                                        feedback = f"Runtime error:\n{proc.stderr}"
+                                    else:
+                                        feedback = "Script produced no output."
+                                    previous_code = code
                             except Exception as e:
                                 logging.warning("Error running verification script: %s", e)
+                                feedback = f"Execution failed: {e}"
+                                previous_code = code
                         else:
                             logging.warning("Failed to generate verification code.")
                         
