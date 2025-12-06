@@ -5,7 +5,7 @@ A brief fall later, you find yourself in a garbage smasher. Unfortunately, the d
 
 As you try to find a way out, you are approached by a family of cephalopods! They're pretty sure they can get the door open, but it will take some time. While you wait, they're curious if you can help the youngest cephalopod with her math homework.
 
-Cephalopod math doesn't look that different from normal math. The math worksheet (your puzzle input) consists of a list of problems; each problem has a group of numbers that need to either be either added (+) or multiplied (*) together.
+Cephalopod math doesn't look that different from normal math. The math worksheet (your puzzle input) consists of a list of problems; each problem has a group of numbers that need to be either added (+) or multiplied (*) together.
 
 However, the problems are arranged a little strangely; they seem to be presented next to each other in a very long horizontal list. For example:
 
