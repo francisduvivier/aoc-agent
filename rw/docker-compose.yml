@@ -19,8 +19,7 @@ services:
     entrypoint:
       - "/bin/bash"
       - "-c"
-      - ". .venv/bin/activate; exec \"$@\""
-      - "--" 
+      - ". .venv/bin/activate; /bin/bash" 
     working_dir: /workspace
     tty: true
   agent:
