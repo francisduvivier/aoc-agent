@@ -215,6 +215,7 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-rw/20*
 rw/.submit*
 rw/Coding_Agent_Implementation_Workbook.docx.md
+
+.idea

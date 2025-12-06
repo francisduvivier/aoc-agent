@@ -65,7 +65,7 @@ def download_input(year: int, day: int, session_cookie: str, out_dir: str) -> st
     return str(out_path)
 
 
-def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: str, model: str = "x-ai/grok-4.1-fast:free") -> str:
+def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: str, model: str = "tngtech/deepseek-r1t2-chimera:free") -> str:
     """Call OpenRouter's chat completions to generate a Python solver script.
     Returns the generated python code as a string (no surrounding ``` markers if possible).
     """
