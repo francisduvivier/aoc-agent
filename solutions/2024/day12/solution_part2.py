@@ -28,7 +28,8 @@ def solve_part2(lines):
                         queue.append((nr, nc))
             
             sides = 0
-            for r, c in region_cells:
+            for cell in region_cells:
+                r, c = cell
                 for dr, dc in directions:
                     nr, nc = r + dr, c + dc
                     if not (0 <= nr < rows and 0 <= nc < cols) or grid[nr][nc] != plant_type:
