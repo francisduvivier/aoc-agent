@@ -14,19 +14,23 @@ def solve_part2(lines):
     
     def count_trails(start_r, start_c):
         # BFS to find all distinct paths from start to any height 9
+        # We need to count paths, not just reachable cells
         # State: (r, c, height)
         queue = deque([(start_r, start_c, 0)])
         # visited[r][c] = set of heights that can reach this cell
-        visited = [[set() for _ in range(cols)] for _ in range(rows)]
-        visited[start_r][start_c].add(0)
-        trail_count = 0
+        # But we need to count paths, so we'll track path counts
+        path_counts = {}
+        path_counts[(start_r, start_c, 0)] = 1
+        
+        total_trails = 0
         
         while queue:
             r, c, height = queue.popleft()
+            current_paths = path_counts.get((r, c, height), 0)
             
-            # If we reached height 9, count this as a completed trail
+            # If we reached height 9, count all paths that reached this cell
             if height == 9:
-                trail_count += 1
+                total_trails += current_paths
                 continue
             
             # Explore neighbors
@@ -36,12 +40,15 @@ def solve_part2(lines):
                     next_height = grid[nr][nc]
                     # Must increase by exactly 1
                     if next_height == height + 1:
-                        # Only add if we haven't visited this cell with this height before
-                        if next_height not in visited[nr][nc]:
-                            visited[nr][nc].add(next_height)
-                            queue.append((nr, nc, next_height))
+                        next_state = (nr, nc, next_height)
+                        # Add to queue if not already processed
+                        if next_state not in path_counts:
+                            queue.append(next_state)
+                            path_counts[next_state] = 0
+                        # Add the number of paths from current state to next state
+                        path_counts[next_state] += current_paths
         
-        return trail_count
+        return total_trails
     
     total_rating = 0
     for r, c in trailheads:
@@ -86,3 +93,4 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part2(lines)
 print(f"---- Final result Part 2: {final_result} ----") # YOU MUST NOT change this output format
+
