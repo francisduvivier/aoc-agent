@@ -150,41 +150,6 @@ def main():
 
                 # Try to run existing solution first if no feedback yet (skipped if we just reset)
                 final_out_pattern_1, sample_out_pattern_1 = getOutputCheckRegex(1, scaffold)
-                if attempt == 1 and os.path.exists(
-                        sol1) and not feedback and False:  # Disabled because we always reset on attempt 1 now
-                    try:
-                        proc = subprocess.run(["python3", "solution_part1.py"], cwd=workdir, capture_output=True,
-                                              text=True, timeout=30)
-                        if proc.returncode == 0 and proc.stdout.strip():
-                            # Parse output with regex
-                            sample_match = re.search(sample_out_pattern_1, proc.stdout)
-                            final_match = re.search(final_out_pattern_1, proc.stdout)
-                            outputTail = proc.stdout[-OUTPUT_TAIL_SIZE:]
-                            if not sample_match:
-                                feedback = "Solution code did print any sample check formatted as \'---- Sample (.+?) Solution Part 1: (.+?) ----\': Instead, the following {0} chars where printed last: {1}".format(
-                                    str(OUTPUT_TAIL_SIZE), outputTail)
-                            elif not final_match:
-                                feedback = "Solution code did print the final output formatted as ---- Final Solution Part 1: (.+?) ----.\n Instead, the following {0} chars where printed last: {1}".format(
-                                    str(OUTPUT_TAIL_SIZE), outputTail)
-                            else:
-                                test_res = sample_match.group(1).strip()
-                                real_res = final_match.group(1).strip()
-                                if test_res != real_res and test_res != "0" and real_res != "0":
-                                    output = real_res
-                                    logging.info("Output from existing solution_part1.py: Test=%s, Real=%s", test_res,
-                                                 real_res)
-                                else:
-                                    feedback = f"Existing solution output invalid: Test='{test_res}', Real='{real_res}'. Must be distinct and non-zero."
-                        else:
-                            # Existing solution failed or no output
-                            if proc.returncode != 0:
-                                feedback = f"Existing solution failed with last output \n{outputTail}\nand error:\n{proc.stderr}"
-                            else:
-                                feedback = "Existing solution produced no output."
-                            previous_code = open(sol1).read()
-                    except Exception as e:
-                        logging.warning("Failed to run existing solution_part1.py: %s", e)
-                        feedback = f"Failed to run existing solution: {e}"
 
                 # Generate if needed (if no output from existing, or if we have feedback from previous attempt)
                 if not output and api_key:
@@ -305,45 +270,7 @@ def main():
 
                     # Reset to scaffold on fresh start
                     if attempt == 1 and not feedback:
-                        # Load template again to be sure
-                        template_dir = os.path.join(os.path.dirname(__file__), "templates")
-
                         feedback = "Starting fresh. Please implement the solution starting from this scaffold. Fill in sample_input and sample_answer. The script MUST print the results in the format: ---- Sample Solution Part 2: [result] ---- and ---- Final Solution Part 2: [result] ----"
-
-                    if attempt == 1 and os.path.exists(
-                            sol2) and not feedback and False:  # Disabled because we always reset on attempt 1 now
-                        try:
-                            proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir, capture_output=True,
-                                                  text=True, timeout=30)
-                            final_out_pattern_2, sample_out_pattern_2 = getOutputCheckRegex(2, scaffold)
-                            if proc.returncode == 0 and proc.stdout.strip():
-                                sample_match = re.search(sample_out_pattern_2, proc.stdout)
-                                final_match = re.search(final_out_pattern_2, proc.stdout)
-                                outputTail = proc.stdout[-OUTPUT_TAIL_SIZE:]
-                                if not sample_match:
-                                    feedback = "Solution code did print any sample check formatted as \'---- Sample (.+?) Solution Part 2: (.+?) ----\': Instead, the following {0} chars where printed last: {1}".format(
-                                        str(OUTPUT_TAIL_SIZE), outputTail)
-                                elif not final_match:
-                                    feedback = "Solution code did print the final output formatted as ---- Final Solution Part 2: (.+?) ----.\n Instead, the following {0} chars where printed last: {1}".format(
-                                        str(OUTPUT_TAIL_SIZE), outputTail)
-                                else:
-                                    test_res = sample_match.group(1).strip()
-                                    real_res = final_match.group(1).strip()
-                                    if test_res != real_res and test_res != "0" and real_res != "0":
-                                        output = real_res
-                                        logging.info("Output from existing solution_part2.py: Test=%s, Real=%s",
-                                                     test_res, real_res)
-                                    else:
-                                        feedback = f"Existing solution output invalid: Test='{test_res}', Real='{real_res}'. Must be distinct and non-zero."
-                            else:
-                                if proc.returncode != 0:
-                                    feedback = f"Existing solution failed with error:\n{proc.stderr}"
-                                else:
-                                    feedback = "Existing solution produced no output."
-                                previous_code = open(sol2).read()
-                        except Exception as e:
-                            logging.warning("Failed to run existing solution_part2.py: %s", e)
-                            feedback = f"Failed to run existing solution: {e}"
 
                     if not output and api_key:
                         logging.info("Generating solution for Part 2...")
