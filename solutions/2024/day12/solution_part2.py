@@ -16,15 +16,15 @@ def solve_part2(lines):
             plant_type = grid[r][c]
             queue = deque([(r, c)])
             visited.add((r, c))
-            region_cells = set([(r, c)])
+            region_cells = []
             
             while queue:
                 cr, cc = queue.popleft()
+                region_cells.append((cr, cc))
                 for dr, dc in directions:
                     nr, nc = cr + dr, cc + dc
                     if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] == plant_type and (nr, nc) not in visited:
                         visited.add((nr, nc))
-                        region_cells.add((nr, nc))
                         queue.append((nr, nc))
             
             sides = 0
