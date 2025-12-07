@@ -31,39 +31,49 @@ def solve_part2(lines):
         area = len(region)
         sides = 0
         
-        # Horizontal fences
+        # Top sides
         for i in range(rows):
-            # Top fences
-            top_fences = [j for j in range(cols) if (i, j) in region and (i - 1 < 0 or (i - 1, j) not in region)]
-            if top_fences:
-                sides += 1
-                for k in range(1, len(top_fences)):
-                    if top_fences[k] != top_fences[k-1] + 1:
+            in_top = False
+            for j in range(cols):
+                if (i, j) in region and (i - 1 < 0 or (i - 1, j) not in region):
+                    if not in_top:
                         sides += 1
-            # Bottom fences
-            bottom_fences = [j for j in range(cols) if (i, j) in region and (i + 1 >= rows or (i + 1, j) not in region)]
-            if bottom_fences:
-                sides += 1
-                for k in range(1, len(bottom_fences)):
-                    if bottom_fences[k] != bottom_fences[k-1] + 1:
-                        sides += 1
+                        in_top = True
+                else:
+                    in_top = False
         
-        # Vertical fences
+        # Bottom sides
+        for i in range(rows):
+            in_bottom = False
+            for j in range(cols):
+                if (i, j) in region and (i + 1 >= rows or (i + 1, j) not in region):
+                    if not in_bottom:
+                        sides += 1
+                        in_bottom = True
+                else:
+                    in_bottom = False
+        
+        # Left sides
         for j in range(cols):
-            # Left fences
-            left_fences = [i for i in range(rows) if (i, j) in region and (j - 1 < 0 or (i, j - 1) not in region)]
-            if left_fences:
-                sides += 1
-                for k in range(1, len(left_fences)):
-                    if left_fences[k] != left_fences[k-1] + 1:
+            in_left = False
+            for i in range(rows):
+                if (i, j) in region and (j - 1 < 0 or (i, j - 1) not in region):
+                    if not in_left:
                         sides += 1
-            # Right fences
-            right_fences = [i for i in range(rows) if (i, j) in region and (j + 1 >= cols or (i, j + 1) not in region)]
-            if right_fences:
-                sides += 1
-                for k in range(1, len(right_fences)):
-                    if right_fences[k] != right_fences[k-1] + 1:
+                        in_left = True
+                else:
+                    in_left = False
+        
+        # Right sides
+        for j in range(cols):
+            in_right = False
+            for i in range(rows):
+                if (i, j) in region and (j + 1 >= cols or (i, j + 1) not in region):
+                    if not in_right:
                         sides += 1
+                        in_right = True
+                else:
+                    in_right = False
         
         price = area * sides
         total_price += price
