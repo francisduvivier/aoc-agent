@@ -127,7 +127,7 @@ def main():
             logging.info("Puzzle status from AoC: %s", status)
 
         api_key = os.environ.get("AOC_OPENROUTER_API_KEY")
-        max_attempts = 20
+        max_attempts = 10
 
         # --- PART 1 ---
         if not status['part1_solved']:
