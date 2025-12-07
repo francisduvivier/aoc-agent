@@ -1,59 +1,52 @@
 # Edit this file: implement solve_part1
 
 def solve_part1(lines):
-    # Parse input
+    # Parse robots: p=x,y v=dx,dy
     robots = []
     for line in lines:
         if not line.strip():
             continue
         parts = line.split()
-        p_part = parts[0].replace('p=', '')
-        v_part = parts[1].replace('v=', '')
-        px, py = map(int, p_part.split(','))
-        vx, vy = map(int, v_part.split(','))
-        robots.append(((px, py), (vx, vy)))
+        p = parts[0][2:]  # remove "p="
+        v = parts[1][2:]  # remove "v="
+        x, y = map(int, p.split(","))
+        dx, dy = map(int, v.split(","))
+        robots.append((x, y, dx, dy))
     
-    # Dimensions for the actual puzzle
-    width = 101
-    height = 103
+    # Dimensions from problem: 101 wide, 103 tall
+    W, H = 101, 103
     seconds = 100
     
-    # Calculate positions after 100 seconds
-    quadrants = [0, 0, 0, 0]  # top-left, top-right, bottom-left, bottom-right
+    # Simulate 100 seconds
+    counts = [0, 0, 0, 0]  # Q1, Q2, Q3, Q4
+    mid_x = W // 2  # 50
+    mid_y = H // 2  # 51
     
-    for (px, py), (vx, vy) in robots:
-        # Calculate new position after 100 seconds
-        new_px = (px + vx * seconds) % width
-        new_py = (py + vy * seconds) % height
+    for x, y, dx, dy in robots:
+        nx = (x + dx * seconds) % W
+        ny = (y + dy * seconds) % H
         
-        # Skip robots exactly in the middle
-        mid_x = width // 2
-        mid_y = height // 2
-        
-        if new_px == mid_x or new_py == mid_y:
+        # Skip if on middle lines
+        if nx == mid_x or ny == mid_y:
             continue
             
-        # Determine which quadrant
-        if new_px < mid_x and new_py < mid_y:
-            quadrants[0] += 1  # top-left
-        elif new_px > mid_x and new_py < mid_y:
-            quadrants[1] += 1  # top-right
-        elif new_px < mid_x and new_py > mid_y:
-            quadrants[2] += 1  # bottom-left
-        elif new_px > mid_x and new_py > mid_y:
-            quadrants[3] += 1  # bottom-right
+        # Determine quadrant
+        if nx < mid_x and ny < mid_y:
+            counts[0] += 1  # top-left
+        elif nx > mid_x and ny < mid_y:
+            counts[1] += 1  # top-right
+        elif nx < mid_x and ny > mid_y:
+            counts[2] += 1  # bottom-left
+        elif nx > mid_x and ny > mid_y:
+            counts[3] += 1  # bottom-right
     
-    # Calculate safety factor
-    result = 1
-    for count in quadrants:
-        result *= count
-    
-    return result
+    return counts[0] * counts[1] * counts[2] * counts[3]
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
 samples = [
-    ("""p=0,4 v=3,-3
+    (
+        """p=0,4 v=3,-3
 p=6,3 v=-1,-3
 p=10,3 v=-1,2
 p=2,0 v=2,-1
@@ -64,7 +57,9 @@ p=3,0 v=-1,-2
 p=9,3 v=2,3
 p=7,3 v=-1,2
 p=2,4 v=2,-3
-p=9,5 v=-3,-3""", 12)
+p=9,5 v=-3,-3""",
+        12
+    )
 ]  # TODO: fill with actual samples and expected results
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
