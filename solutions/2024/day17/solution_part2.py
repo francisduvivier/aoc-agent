@@ -20,7 +20,7 @@ def solve_part2(lines):
                 C_val = A_val // (2 ** y)
                 B_val = (y ^ 5) ^ C_val
                 out = B_val % 8
-                if out == target[-(index + 1)]:
+                if out == target[index]:
                     possible.append(A_val)
         return possible
     
