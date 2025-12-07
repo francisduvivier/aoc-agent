@@ -9,6 +9,8 @@ import logging
 import subprocess
 import re
 from datetime import datetime, timezone, timedelta
+from re import RegexFlag
+
 from aoc_tools import fetch_problem_statement, download_input, create_day_dir, generate_solver_with_openrouter, \
     git_commit, fetch_puzzle_status, check_accepted_files
 from submit import submit_solution
@@ -147,7 +149,7 @@ def main():
                     feedback = "Starting fresh. Please implement the solution starting from this scaffold. Fill in sample_input and sample_answer. The script MUST print the test result first, then the real result."
 
                 # Try to run existing solution first if no feedback yet (skipped if we just reset)
-                FINAL_OUTPUT_REGEX_1, SAMPLE_OUTPUT_REGEX_1 = getOutputCheckRegex(r"1", scaffold)
+                final_out_pattern_1, sample_out_pattern_1 = getOutputCheckRegex(1, scaffold)
                 if attempt == 1 and os.path.exists(
                         sol1) and not feedback and False:  # Disabled because we always reset on attempt 1 now
                     try:
@@ -155,8 +157,8 @@ def main():
                                               text=True, timeout=30)
                         if proc.returncode == 0 and proc.stdout.strip():
                             # Parse output with regex
-                            sample_match = re.search(SAMPLE_OUTPUT_REGEX_1, proc.stdout)
-                            final_match = re.search(FINAL_OUTPUT_REGEX_1, proc.stdout)
+                            sample_match = re.search(sample_out_pattern_1, proc.stdout)
+                            final_match = re.search(final_out_pattern_1, proc.stdout)
                             outputTail = proc.stdout[-OUTPUT_TAIL_SIZE:]
                             if not sample_match:
                                 feedback = "Solution code did print any sample check formatted as \'---- Sample (.+?) Solution Part 1: (.+?) ----\': Instead, the following {0} chars where printed last: {1}".format(
@@ -203,8 +205,8 @@ def main():
                                                   text=True, timeout=60)
                             if proc.returncode == 0 and proc.stdout.strip():
 
-                                sample_match = re.search(SAMPLE_OUTPUT_REGEX_1, proc.stdout)
-                                final_match = re.search(FINAL_OUTPUT_REGEX_1, proc.stdout)
+                                sample_match = re.search(sample_out_pattern_1, proc.stdout)
+                                final_match = re.search(final_out_pattern_1, proc.stdout)
                                 outputTail = proc.stdout[-OUTPUT_TAIL_SIZE:]
                                 if not sample_match:
                                     feedback = "Solution code did print any sample check formatted as \'---- Sample (.+?) Solution Part 1: (.+?) ----\': Instead, the following {0} chars where printed last: {1}".format(
@@ -313,10 +315,10 @@ def main():
                         try:
                             proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir, capture_output=True,
                                                   text=True, timeout=30)
-                            FINAL_OUTPUT_REGEX_2, SAMPLE_OUTPUT_REGEX_2 = getOutputCheckRegex(r"2", scaffold)
+                            final_out_pattern_2, sample_out_pattern_2 = getOutputCheckRegex(2, scaffold)
                             if proc.returncode == 0 and proc.stdout.strip():
-                                sample_match = re.search(SAMPLE_OUTPUT_REGEX_2, proc.stdout)
-                                final_match = re.search(FINAL_OUTPUT_REGEX_2, proc.stdout)
+                                sample_match = re.search(sample_out_pattern_2, proc.stdout)
+                                final_match = re.search(final_out_pattern_2, proc.stdout)
                                 outputTail = proc.stdout[-OUTPUT_TAIL_SIZE:]
                                 if not sample_match:
                                     feedback = "Solution code did print any sample check formatted as \'---- Sample (.+?) Solution Part 2: (.+?) ----\': Instead, the following {0} chars where printed last: {1}".format(
@@ -358,11 +360,11 @@ def main():
                             try:
                                 proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir,
                                                       capture_output=True, text=True, timeout=60)
-                                FINAL_OUTPUT_REGEX_2, SAMPLE_OUTPUT_REGEX_2 = getOutputCheckRegex(r"2", scaffold)
-        
+                                final_out_pattern_2, sample_out_pattern_2 = getOutputCheckRegex(2, scaffold)
+
                                 if proc.returncode == 0 and proc.stdout.strip():
-                                    sample_match = re.search(SAMPLE_OUTPUT_REGEX_2, proc.stdout)
-                                    final_match = re.search(FINAL_OUTPUT_REGEX_2, proc.stdout)
+                                    sample_match = re.search(sample_out_pattern_2, proc.stdout)
+                                    final_match = re.search(final_out_pattern_2, proc.stdout)
                                     if sample_match and final_match:
                                         test_res = sample_match.group(1).strip()
                                         real_res = final_match.group(1).strip()
@@ -450,9 +452,9 @@ def main():
                                                       capture_output=True, text=True, timeout=60)
                                 if proc.returncode == 0 and proc.stdout.strip():
 
-                                    FINAL_OUTPUT_REGEX_2, SAMPLE_OUTPUT_REGEX_2 = getOutputCheckRegex(r"2", scaffold)
-                                    sample_match = re.search(SAMPLE_OUTPUT_REGEX_2, proc.stdout)
-                                    final_match = re.search(FINAL_OUTPUT_REGEX_2, proc.stdout)
+                                    final_out_pattern_2, sample_out_pattern_2 = getOutputCheckRegex(2, scaffold)
+                                    sample_match = re.search(sample_out_pattern_2, proc.stdout)
+                                    final_match = re.search(final_out_pattern_2, proc.stdout)
                                     if sample_match and final_match:
                                         output = final_match.group(1).strip()
                                         logging.info("Generated Answer: %s", output)
@@ -496,12 +498,14 @@ def main():
                  workdir)
 
 
-def getOutputCheckRegex(partNb: str, scaffold: str) -> tuple[str, str]:
-    SAMPLE_OUTPUT_REGEX = r"---- Sample (.+?) Solution Part %s: (.+?) ----" % partNb
-    assert re.match(SAMPLE_OUTPUT_REGEX, scaffold)
-    FINAL_OUTPUT_REGEX = r"---- Final Solution Part %s: (.+?) ----" % partNb
-    assert re.match(FINAL_OUTPUT_REGEX, scaffold)
-    return FINAL_OUTPUT_REGEX, SAMPLE_OUTPUT_REGEX
+def getOutputCheckRegex(part_nb: int, scaffold: str) -> tuple[re.Pattern[str], re.Pattern[str]]:
+    sample_pattern = re.compile(r"---- Sample (.+?) result Part %s: (.+?) ----" % part_nb, re.M)
+    # print(f"SCAFFOLD------\n{scaffold}\n------SCAFFOLD")
+    assert sample_pattern.search(scaffold) is not None
+    # print(f"---- FINAL result Part 1: {final_result} ----") # YOU MUST NOT change this output format
+    final_pattern = re.compile(r"---- Final result Part %s: (.+?) ----" % part_nb, re.M)
+    assert final_pattern.search(scaffold) is not None
+    return final_pattern, sample_pattern
 
 
 if __name__ == "__main__":
