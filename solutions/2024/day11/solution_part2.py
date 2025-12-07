@@ -42,7 +42,9 @@ def solve_part2(lines):
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
-samples = []  # TODO: fill with actual samples and expected results
+samples = [
+    ("125 17", 533086132674961250)
+]  # TODO: fill with actual samples and expected results
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     sample_result = solve_part2(sample_input.strip().splitlines())
