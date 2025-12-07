@@ -2,8 +2,8 @@ import sys
 
 def parse_input(lines):
     # Register A: <value>
-    # Register B: <value>
-    # Register C: <value>
+    # Register B: 0
+    # Register C: 0
     # (blank line)
     # Program: <comma-separated numbers>
     a_line = lines[0]
@@ -76,36 +76,131 @@ def run_program(A, B, C, program):
 def solve_part2(lines):
     A, B, C, program = parse_input(lines)
     
-    # We need to find the minimum positive A that makes the program output itself
-    # This is a reverse engineering problem. We can work backwards from the program.
+    # Work backwards to find the minimum A
+    # The key insight: we can reverse engineer the program by working backwards
+    # from the required output to find the initial A value
     
-    # The key insight: the program uses adv instructions (opcode 0) which divide A by powers of 2.
-    # We can reverse the computation to find the original A value.
-    
-    # Let's try a different approach: brute force with optimization
-    # We'll start from a reasonable lower bound and work up
-    
-    def check_A_value(test_A):
+    def simulate_with_A(test_A):
         output = run_program(test_A, 0, 0, program)
         return output == program
     
-    # Start with a reasonable lower bound
-    # The program length gives us a hint about the magnitude needed
-    lower_bound = 1
+    # Optimization: work backwards from the program structure
+    # The program uses adv instructions which divide by powers of 2
+    # We can build up the answer by considering what A needs to be at each step
     
-    # Try to find a pattern or use mathematical reasoning
-    # For adv instructions, if we have A // (2^operand) = result, then A = result * (2^operand)
-    # Working backwards from the end state (A=0) to find the initial A
+    # Start with the final state and work backwards
+    # At the end, A should be 0, and we need to reverse the operations
     
-    # Let's implement a more sophisticated search
-    # We'll use the fact that the program must output itself
+    # For each adv instruction (opcode 0), if we have A // (2^operand) = result,
+    # then to reverse it: previous_A = result * (2^operand) + remainder
+    # where 0 <= remainder < (2^operand)
     
-    # Start with a reasonable search space
-    for test_A in range(lower_bound, 100000000):  # 100 million upper bound
-        if check_A_value(test_A):
+    # We'll use a recursive approach to explore possible A values
+    def find_min_A(ip, current_A, current_B, current_C, min_found):
+        if ip >= len(program):
+            # Check if this A value produces the correct output
+            if simulate_with_A(current_A):
+                return current_A
+            return None
+        
+        opcode = program[ip]
+        operand = program[ip + 1]
+        
+        # Try to reverse the operation
+        if opcode == 0:  # adv
+            # A // (2^operand) = current_A
+            # So previous_A = current_A * (2^operand) + remainder
+            base = current_A * (2 ** combo_value(operand, current_A, current_B, current_C))
+            for remainder in range(2 ** combo_value(operand, current_A, current_B, current_C)):
+                prev_A = base + remainder
+                if prev_A < min_found:
+                    result = find_min_A(ip + 2, prev_A, current_B, current_C, min_found)
+                    if result is not None:
+                        min_found = min(min_found, result)
+                        return result
+        elif opcode == 1:  # bxl
+            # B = B ^ operand
+            # To reverse: previous_B = B ^ operand
+            prev_B = current_B ^ operand
+            result = find_min_A(ip + 2, current_A, prev_B, current_C, min_found)
+            if result is not None:
+                return result
+        elif opcode == 2:  # bst
+            # B = combo_value(operand) % 8
+            # This overwrites B, so we can't easily reverse it
+            # Try all possible previous B values
+            for prev_B in range(8):
+                result = find_min_A(ip + 2, current_A, prev_B, current_C, min_found)
+                if result is not None:
+                    return result
+        elif opcode == 3:  # jnz
+            # If A != 0, jump to operand
+            # This is conditional, hard to reverse
+            # Try both cases
+            if current_A != 0:
+                # Jumped case
+                result = find_min_A(operand, current_A, current_B, current_C, min_found)
+                if result is not None:
+                    return result
+            # Didn't jump case
+            result = find_min_A(ip + 2, current_A, current_B, current_C, min_found)
+            if result is not None:
+                return result
+        elif opcode == 4:  # bxc
+            # B = B ^ C
+            # To reverse: previous_B = B ^ C
+            prev_B = current_B ^ current_C
+            result = find_min_A(ip + 2, current_A, prev_B, current_C, min_found)
+            if result is not None:
+                return result
+        elif opcode == 5:  # out
+            # Output combo_value(operand) % 8
+            # This should match program[ip+1] % 8
+            expected_output = program[ip + 1] % 8
+            actual_output = combo_value(operand, current_A, current_B, current_C) % 8
+            if actual_output == expected_output:
+                result = find_min_A(ip + 2, current_A, current_B, current_C, min_found)
+                if result is not None:
+                    return result
+        elif opcode == 6:  # bdv
+            # B = A // (2^operand)
+            # To reverse: previous_A = B * (2^operand) + remainder
+            base = current_B * (2 ** combo_value(operand, current_A, current_B, current_C))
+            for remainder in range(2 ** combo_value(operand, current_A, current_B, current_C)):
+                prev_A = base + remainder
+                if prev_A < min_found:
+                    result = find_min_A(ip + 2, prev_A, current_B, current_C, min_found)
+                    if result is not None:
+                        min_found = min(min_found, result)
+                        return result
+        elif opcode == 7:  # cdv
+            # C = A // (2^operand)
+            # To reverse: previous_A = C * (2^operand) + remainder
+            base = current_C * (2 ** combo_value(operand, current_A, current_B, current_C))
+            for remainder in range(2 ** combo_value(operand, current_A, current_B, current_C)):
+                prev_A = base + remainder
+                if prev_A < min_found:
+                    result = find_min_A(ip + 2, prev_A, current_B, current_C, min_found)
+                    if result is not None:
+                        min_found = min(min_found, result)
+                        return result
+        
+        return None
+    
+    # Start the search from the end with A=0, B=0, C=0
+    result = find_min_A(0, 0, 0, 0, float('inf'))
+    if result is not None:
+        return result
+    
+    # Fallback: try a more direct approach
+    # Since the program outputs itself, we can try to construct A step by step
+    test_A = 1
+    while test_A < 1000000000:  # 1 billion upper bound
+        if simulate_with_A(test_A):
             return test_A
+        test_A += 1
     
-    return -1  # Not found in reasonable range
+    return -1
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples IF there are any samples given for part 2.
