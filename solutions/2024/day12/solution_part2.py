@@ -29,13 +29,14 @@ def solve_part2(lines):
                         queue.append((nr, nc))
             
             sides = 0
+            corners = 0
+            
             for cr, cc in region_cells:
                 for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
                     nr, nc = cr + dx, cc + dy
                     if not (0 <= nr < rows and 0 <= nc < cols) or grid[nr][nc] != plant_type:
                         sides += 1
             
-            corners = 0
             for cr, cc in region_cells:
                 for dx, dy in [(0.5, 0.5), (0.5, -0.5), (-0.5, 0.5), (-0.5, -0.5)]:
                     corner_r, corner_c = cr + dx, cc + dy
@@ -44,7 +45,11 @@ def solve_part2(lines):
                         check_r = corner_r + check_dx
                         check_c = corner_c + check_dy
                         if 0 <= check_r < rows and 0 <= check_c < cols:
-                            adjacent_cells.add(grid[int(check_r)][int(check_c)])
+                            cell_r, cell_c = int(check_r), int(check_c)
+                            if (cell_r, cell_c) in region_cells:
+                                adjacent_cells.add(plant_type)
+                            else:
+                                adjacent_cells.add(grid[cell_r][cell_c])
                     
                     if len(adjacent_cells) == 1 and plant_type in adjacent_cells:
                         continue
