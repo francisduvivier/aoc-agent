@@ -42,18 +42,16 @@ def solve_part1(lines):
     threshold = 100
     
     # Get all track positions
-    track_positions = set()
+    track_positions = []
     for r in range(rows):
         for c in range(cols):
             if grid[r][c] != '#':
-                track_positions.add((r, c))
+                track_positions.append((r, c))
     
     # Check all pairs of track positions within Manhattan distance <= 20
-    for pos1 in track_positions:
-        r1, c1 = pos1
-        for pos2 in track_positions:
-            r2, c2 = pos2
-            if pos1 == pos2:
+    for i, (r1, c1) in enumerate(track_positions):
+        for j, (r2, c2) in enumerate(track_positions):
+            if i >= j:  # Avoid double counting and same position
                 continue
             
             # Calculate cheat distance (Manhattan distance)
@@ -62,11 +60,11 @@ def solve_part1(lines):
                 continue
             
             # Check if both positions are reachable
-            if pos1 not in dist_from_start or pos2 not in dist_to_end:
+            if (r1, c1) not in dist_from_start or (r2, c2) not in dist_to_end:
                 continue
             
             # Calculate new path length with cheat
-            new_dist = dist_from_start[pos1] + cheat_dist + dist_to_end[pos2]
+            new_dist = dist_from_start[(r1, c1)] + cheat_dist + dist_to_end[(r2, c2)]
             
             # Calculate time saved
             saved = total_dist - new_dist
