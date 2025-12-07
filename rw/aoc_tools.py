@@ -103,7 +103,7 @@ def download_input(year: int, day: int, session_cookie: str, out_dir: str) -> st
 
 # kwaipilot/kat-coder-pro:free
 # tngtech/deepseek-r1t2-chimera:free
-def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: str, model: str = "kwaipilot/kat-coder-pro:free", part: int = 1, previous_code: str = None, feedback: str = None) -> str:
+def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: str, model: str = "tngtech/deepseek-r1t2-chimera:free", part: int = 1, previous_code: str = None, feedback: str = None) -> str:
     """Call OpenRouter's chat completions to generate a Python solver script.
     Returns the generated python code as a string (no surrounding ``` markers if possible).
     """
@@ -122,7 +122,9 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
         f"You are a python coding assistant. Produce a Python script that reads 'input.txt' from the current working directory and prints the part {part} answer. "
         "Do not include explanations, only return the python source code. Keep solution concise and robust."
     )
-    user_msg = f"Problem statement:\n{problem}\n\nProvide a python script that reads 'input.txt' and prints the part {part} answer. Use only standard library. Include necessary parsing." + ("\n\nInput sample:\n" + input_sample[:2000])
+    user_msg = f"Problem statement:\n{problem}\n\nProvide a python script that reads 'input.txt' and prints the part {part} answer. Use only standard library. Include necessary parsing.\n" + \
+               f"IMPORTANT: You MUST fill in the 'sample_input' and 'sample_answer' variables in the scaffold with data from the problem statement. " + \
+               f"Uncomment the assertion line and ensure the test run passes. 'sample_answer' might be an integer or string." + ("\n\nInput sample:\n" + input_sample[:2000])
     
     if previous_code and feedback:
         user_msg += f"\n\nPrevious attempt failed:\n```python\n{previous_code}\n```\nFeedback: {feedback}\nPlease fix the code."

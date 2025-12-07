@@ -83,32 +83,21 @@ def main():
         sol1 = os.path.join(workdir, "solution_part1.py")
         sol2 = os.path.join(workdir, "solution_part2.py")
         
+        # Load templates
+        template_dir = os.path.join(os.path.dirname(__file__), "templates")
+        with open(os.path.join(template_dir, "scaffold_part1.py")) as f:
+            scaffold1 = f.read()
+        with open(os.path.join(template_dir, "scaffold_part2.py")) as f:
+            scaffold2 = f.read()
+        
         if not os.path.exists(sol1):
             with open(sol1, "w") as f:
-                f.write("""# Edit this file: implement solve_part1
-def solve_part1(lines):
-    # replace with actual solution
-    return ""
-
-if __name__ == '__main__':
-    with open('input.txt') as f:
-        lines = [line.strip() for line in f]
-    print(solve_part1(lines))
-""")
+                f.write(scaffold1)
             logging.info("Wrote sample solver %s", sol1)
 
         if not os.path.exists(sol2):
             with open(sol2, "w") as f:
-                f.write("""# Edit this file: implement solve_part2
-def solve_part2(lines):
-    # replace with actual solution
-    return ""
-
-if __name__ == '__main__':
-    with open('input.txt') as f:
-        lines = [line.strip() for line in f]
-    print(solve_part2(lines))
-""")
+                f.write(scaffold2)
             logging.info("Wrote sample solver %s", sol2)
 
 
@@ -138,8 +127,22 @@ if __name__ == '__main__':
                 logging.info("Part 1 Attempt %d/%d", attempt, max_retries)
                 output = None
                 
-                # Try to run existing solution first if no feedback yet
-                if attempt == 1 and os.path.exists(sol1) and not feedback:
+                
+                # Reset to scaffold on fresh start
+                if attempt == 1 and not feedback:
+                    # Load template again to be sure
+                    template_dir = os.path.join(os.path.dirname(__file__), "templates")
+                    with open(os.path.join(template_dir, "scaffold_part1.py")) as f:
+                        scaffold1 = f.read()
+                    
+                    with open(sol1, "w") as f:
+                        f.write(scaffold1)
+                    logging.info("Reset solution_part1.py to scaffold.")
+                    previous_code = scaffold1
+                    feedback = "Starting fresh. Please implement the solution starting from this scaffold. Fill in sample_input and sample_answer, and ensure the assertion passes."
+
+                # Try to run existing solution first if no feedback yet (skipped if we just reset)
+                if attempt == 1 and os.path.exists(sol1) and not feedback and False: # Disabled because we always reset on attempt 1 now
                     try:
                         proc = subprocess.run(["python3", "solution_part1.py"], cwd=workdir, capture_output=True, text=True, timeout=30)
                         if proc.returncode == 0 and proc.stdout.strip():
@@ -233,7 +236,21 @@ if __name__ == '__main__':
                     logging.info("Part 2 Attempt %d/%d", attempt, max_retries)
                     output = None
                     
-                    if attempt == 1 and os.path.exists(sol2) and not feedback:
+                    
+                    # Reset to scaffold on fresh start
+                    if attempt == 1 and not feedback:
+                        # Load template again to be sure
+                        template_dir = os.path.join(os.path.dirname(__file__), "templates")
+                        with open(os.path.join(template_dir, "scaffold_part2.py")) as f:
+                            scaffold2 = f.read()
+                        
+                        with open(sol2, "w") as f:
+                            f.write(scaffold2)
+                        logging.info("Reset solution_part2.py to scaffold.")
+                        previous_code = scaffold2
+                        feedback = "Starting fresh. Please implement the solution starting from this scaffold. Fill in sample_input and sample_answer, and ensure the assertion passes."
+
+                    if attempt == 1 and os.path.exists(sol2) and not feedback and False: # Disabled because we always reset on attempt 1 now
                         try:
                             proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir, capture_output=True, text=True, timeout=30)
                             if proc.returncode == 0 and proc.stdout.strip():
