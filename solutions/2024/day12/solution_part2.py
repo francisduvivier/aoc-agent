@@ -39,17 +39,16 @@ def solve_part2(lines):
             for cr, cc in region_cells:
                 for dx, dy in [(0.5, 0.5), (0.5, -0.5), (-0.5, 0.5), (-0.5, -0.5)]:
                     corner_r, corner_c = cr + dx, cc + dy
-                    adjacent_cells = []
+                    adjacent_cells = set()
                     for check_dx, check_dy in [(0.5, 0), (-0.5, 0), (0, 0.5), (0, -0.5)]:
                         check_r = corner_r + check_dx
                         check_c = corner_c + check_dy
                         if 0 <= check_r < rows and 0 <= check_c < cols:
-                            adjacent_cells.append(grid[int(check_r)][int(check_c)])
-                        else:
-                            adjacent_cells.append(None)
+                            adjacent_cells.add(grid[int(check_r)][int(check_c)])
                     
-                    if all(adj != plant_type for adj in adjacent_cells if adj is not None):
-                        corners += 1
+                    if len(adjacent_cells) == 1 and plant_type in adjacent_cells:
+                        continue
+                    corners += 1
             
             area = len(region_cells)
             total_price += area * (sides + corners)
