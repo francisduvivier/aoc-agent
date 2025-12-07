@@ -24,20 +24,20 @@ For example:
 #....O...#
 ##########
 
-&lt;vv&gt;^&lt;v^&gt;v&gt;^vv^v&gt;v&lt;&gt;v^v&lt;v&lt;^vv&lt;&lt;&lt;^&gt;&lt;&lt;&gt;&lt;&gt;&gt;v&lt;vvv&lt;&gt;^v^&gt;^&lt;&lt;&lt;&gt;&lt;&lt;v&lt;&lt;&lt;v^vv^v&gt;^
-vvv&lt;&lt;^&gt;^v^^&gt;&lt;&lt;&gt;&gt;&gt;&lt;&gt;^&lt;&lt;&gt;&lt;^vv^^&lt;&gt;vvv&lt;&gt;&gt;&lt;^^v&gt;^&gt;vv&lt;&gt;v&lt;&lt;&lt;&lt;v&lt;^v&gt;^&lt;^^&gt;&gt;&gt;^&lt;v&lt;v
-&gt;&lt;&gt;vv&gt;v^v^&lt;&gt;&gt;&lt;&gt;&gt;&gt;&gt;&lt;^^&gt;vv&gt;v&lt;^^^&gt;&gt;v^v^&lt;^^&gt;v^^&gt;v^&lt;^v&gt;v&lt;&gt;&gt;v^v^&lt;v&gt;v^^&lt;^^vv&lt;
-&lt;&lt;v&lt;^&gt;&gt;^^^^&gt;&gt;&gt;v^&lt;&gt;vvv^&gt;&lt;v&lt;&lt;&lt;&gt;^^^vv^&lt;vvv&gt;^&gt;v&lt;^^^^v&lt;&gt;^&gt;vvvv&gt;&lt;&gt;&gt;v^&lt;&lt;^^^^^
-^&gt;&lt;^&gt;&lt;&gt;&gt;&gt;&lt;&gt;^^&lt;&lt;^^v&gt;&gt;&gt;&lt;^&lt;v&gt;^&lt;vv&gt;&gt;v&gt;&gt;&gt;^v&gt;&lt;&gt;^v&gt;&lt;&lt;&lt;&lt;v&gt;&gt;v&lt;v&lt;v&gt;vvv&gt;^&lt;&gt;&lt;&lt;&gt;^&gt;&lt;
-^&gt;&gt;&lt;&gt;^v&lt;&gt;&lt;^vvv&lt;^^&lt;&gt;&lt;v&lt;&lt;&lt;&lt;&lt;&gt;&lt;^v&lt;&lt;&lt;&gt;&lt;&lt;&lt;^^&lt;v&lt;^^^&gt;&lt;^&gt;&gt;^&lt;v^&gt;&lt;&lt;&lt;^&gt;&gt;^v&lt;v^v&lt;v^
-&gt;^&gt;&gt;^v&gt;vv&gt;^&lt;&lt;^v&lt;&gt;&gt;&lt;&lt;&gt;&lt;&lt;v&lt;&lt;v&gt;&lt;&gt;v&lt;^vv&lt;&lt;&lt;&gt;^^v^&gt;^^&gt;&gt;&gt;&lt;&lt;^v&gt;&gt;v^v&gt;&lt;^^&gt;&gt;^&lt;&gt;vv^
-&lt;&gt;&lt;^^&gt;^^^&lt;&gt;&lt;vvvvv^v&lt;v&lt;&lt;&gt;^v&lt;v&gt;v&lt;&lt;^&gt;&lt;&lt;&gt;&lt;&lt;&gt;&lt;&lt;&lt;^^&lt;&lt;&lt;^&lt;&lt;&gt;&gt;&lt;&lt;&gt;&lt;^^^&gt;^^&lt;&gt;^&gt;v&lt;&gt;
-^^&gt;vv&lt;^v^v&lt;vv&gt;^&lt;&gt;&lt;v&lt;^v&gt;^^^&gt;&gt;&gt;^^vvv^&gt;vvv&lt;&gt;&gt;&gt;^&lt;^&gt;&gt;&gt;&gt;&gt;^&lt;&lt;^v&gt;^vvv&lt;&gt;^&lt;&gt;&lt;&lt;v&gt;
-v^^&gt;&gt;&gt;&lt;&lt;^^&lt;&gt;&gt;^v^&lt;v^vv&lt;&gt;v^&lt;&lt;&gt;^&lt;^v^v&gt;&lt;^&lt;&lt;&lt;&gt;&lt;&lt;^&lt;v&gt;&lt;v&lt;&gt;vv&gt;&gt;v&gt;&lt;v^&lt;vv&lt;&gt;v^&lt;&lt;^
+<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^
+vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
+><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<
+<<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^
+^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><
+^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^
+>^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^
+<><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
+^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
+v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^
 
 As the robot (@) attempts to move, if there are any boxes (O) in the way, the robot will also attempt to push those boxes. However, if this action would cause the robot or a box to move into a wall (#), nothing moves instead, including the robot. The initial positions of these are shown on the map at the top of the document the lanternfish gave you.
 
-The rest of the document describes the moves (^ for up, v for down, &lt; for left, &gt; for right) that the robot will attempt to make, in order. (The moves form a single giant sequence; they are broken into multiple lines just to make copy-pasting easier. Newlines within the move sequence should be ignored.)
+The rest of the document describes the moves (^ for up, v for down, < for left, > for right) that the robot will attempt to make, in order. (The moves form a single giant sequence; they are broken into multiple lines just to make copy-pasting easier. Newlines within the move sequence should be ignored.)
 
 Here is a smaller example to get started:
 
@@ -50,7 +50,7 @@ Here is a smaller example to get started:
 #......#
 ########
 
-&lt;^^&gt;&gt;&gt;vv&lt;v&gt;&gt;v&lt;&lt;
+<^^>>>vv<v>>v<<
 
 Were the robot to attempt the given sequence of moves, it would push around the boxes as follows:
 
@@ -64,7 +64,7 @@ Initial state:
 #......#
 ########
 
-Move &lt;:
+Move <:
 ########
 #..O.O.#
 ##@.O..#
@@ -94,7 +94,7 @@ Move ^:
 #......#
 ########
 
-Move &gt;:
+Move >:
 ########
 #..@OO.#
 ##..O..#
@@ -104,7 +104,7 @@ Move &gt;:
 #......#
 ########
 
-Move &gt;:
+Move >:
 ########
 #...@OO#
 ##..O..#
@@ -114,7 +114,7 @@ Move &gt;:
 #......#
 ########
 
-Move &gt;:
+Move >:
 ########
 #...@OO#
 ##..O..#
@@ -144,7 +144,7 @@ Move v:
 #...O..#
 ########
 
-Move &lt;:
+Move <:
 ########
 #....OO#
 ##.@...#
@@ -164,7 +164,7 @@ Move v:
 #...O..#
 ########
 
-Move &gt;:
+Move >:
 ########
 #....OO#
 ##.....#
@@ -174,7 +174,7 @@ Move &gt;:
 #...O..#
 ########
 
-Move &gt;:
+Move >:
 ########
 #....OO#
 ##.....#
@@ -194,7 +194,7 @@ Move v:
 #...O..#
 ########
 
-Move &lt;:
+Move <:
 ########
 #....OO#
 ##.....#
@@ -204,7 +204,7 @@ Move &lt;:
 #...O..#
 ########
 
-Move &lt;:
+Move <:
 ########
 #....OO#
 ##.....#
@@ -279,7 +279,7 @@ Because boxes are now twice as wide but the robot is still the same size and spe
 #.....#
 #######
 
-&lt;vv&lt;&lt;^^&lt;&lt;^^
+<vv<<^^<<^^
 
 After appropriately resizing this map, the robot would push around these boxes as follows:
 
@@ -292,7 +292,7 @@ Initial state:
 ##..........##
 ##############
 
-Move &lt;:
+Move <:
 ##############
 ##......##..##
 ##..........##
@@ -319,7 +319,7 @@ Move v:
 ##.......@..##
 ##############
 
-Move &lt;:
+Move <:
 ##############
 ##......##..##
 ##..........##
@@ -328,7 +328,7 @@ Move &lt;:
 ##......@...##
 ##############
 
-Move &lt;:
+Move <:
 ##############
 ##......##..##
 ##..........##
@@ -355,7 +355,7 @@ Move ^:
 ##..........##
 ##############
 
-Move &lt;:
+Move <:
 ##############
 ##......##..##
 ##...[][]...##
@@ -364,7 +364,7 @@ Move &lt;:
 ##..........##
 ##############
 
-Move &lt;:
+Move <:
 ##############
 ##......##..##
 ##...[][]...##
