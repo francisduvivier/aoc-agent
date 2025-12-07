@@ -4,19 +4,20 @@ def solve_part1(lines):
     # Parse coordinates
     bytes = []
     for line in lines:
-        if line.strip():
-            x, y = map(int, line.strip().split(','))
-            bytes.append((x, y))
+        x, y = map(int, line.split(','))
+        bytes.append((x, y))
     
     # Simulate first 1024 bytes falling
-    grid_size = 70
-    corrupted = set()
+    grid_size = 71
+    grid = [[False] * grid_size for _ in range(grid_size)]
+    
     for i in range(1024):
-        corrupted.add(bytes[i])
+        x, y = bytes[i]
+        grid[y][x] = True  # True means corrupted
     
     # BFS to find shortest path
     start = (0, 0)
-    end = (grid_size, grid_size)
+    end = (70, 70)
     
     queue = deque([(start[0], start[1], 0)])  # (x, y, steps)
     visited = {start}
@@ -32,49 +33,24 @@ def solve_part1(lines):
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
             
-            if 0 <= nx <= grid_size and 0 <= ny <= grid_size:
-                if (nx, ny) not in corrupted and (nx, ny) not in visited:
+            if 0 <= nx < grid_size and 0 <= ny < grid_size:
+                if not grid[ny][nx] and (nx, ny) not in visited:
                     visited.add((nx, ny))
                     queue.append((nx, ny, steps + 1))
     
     return -1  # No path found
 
-# Sample data from problem statement
-samples = [
-    """5,4
-4,2
-4,5
-3,0
-2,1
-6,3
-2,4
-1,5
-0,6
-3,3
-2,6
-5,1
-1,2
-5,5
-2,5
-6,5
-1,4
-0,4
-6,4
-1,1
-6,1
-1,0
-0,5
-1,6
-2,0""".splitlines(), 22
-]
+# Sample data - may contain multiple samples from the problem statement.
+# Populate this list with (sample_input, expected_result) tuples.
+samples = []  # TODO: fill with actual samples and expected results
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
-    sample_result = solve_part1(sample_input)
+    sample_result = solve_part1(sample_input.strip().splitlines())
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
-    print(f"---- Sample {idx} result Part 1: {sample_result} ----")
+    print(f"---- Sample {idx} result Part 1: {sample_result} ----") # YOU MUST NOT change this output format
 
 # Run on the real puzzle input
 with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
-print(f"---- Final result Part 1: {final_result} ----")
+print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
