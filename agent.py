@@ -19,6 +19,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 def main():
     template_dir = os.path.join(os.path.dirname(__file__), "templates")
     parser = argparse.ArgumentParser(description="AoC agent scaffold")
+    OUTPUT_TAIL_SIZE = 500
     # AoC unlocks at midnight EST (UTC-5)
     est = timezone(timedelta(hours=-5))
     parser.add_argument("--year", type=int, default=datetime.now(est).year)
@@ -146,6 +147,8 @@ def main():
                     feedback = "Starting fresh. Please implement the solution starting from this scaffold. Fill in sample_input and sample_answer. The script MUST print the test result first, then the real result."
 
                 # Try to run existing solution first if no feedback yet (skipped if we just reset)
+                partNb = r"1"
+                FINAL_OUTPUT_REGEX_1, SAMPLE_OUTPUT_REGEX_1 = getOutputCheckRegex(partNb, scaffold)
                 if attempt == 1 and os.path.exists(
                         sol1) and not feedback and False:  # Disabled because we always reset on attempt 1 now
                     try:
@@ -153,10 +156,16 @@ def main():
                                               text=True, timeout=30)
                         if proc.returncode == 0 and proc.stdout.strip():
                             # Parse output with regex
-                            sample_match = re.search(r"---- Sample (.+?) Solution Part 1: (.+?) ----", proc.stdout)
-                            final_match = re.search(r"---- Final Solution Part 1: (.+?) ----", proc.stdout)
-
-                            if sample_match and final_match:
+                            sample_match = re.search(SAMPLE_OUTPUT_REGEX_1, proc.stdout)
+                            final_match = re.search(FINAL_OUTPUT_REGEX_1, proc.stdout)
+                            outputTail = proc.stdout[-OUTPUT_TAIL_SIZE:]
+                            if not sample_match:
+                                feedback = "Solution code did print any sample check formatted as \'---- Sample (.+?) Solution Part 1: (.+?) ----\': Instead, the following {0} chars where printed last: {1}".format(
+                                    str(OUTPUT_TAIL_SIZE), outputTail)
+                            elif not final_match:
+                                feedback = "Solution code did print the final output formatted as ---- Final Solution Part 1: (.+?) ----.\n Instead, the following {0} chars where printed last: {1}".format(
+                                    str(OUTPUT_TAIL_SIZE), outputTail)
+                            else:
                                 test_res = sample_match.group(1).strip()
                                 real_res = final_match.group(1).strip()
                                 if test_res != real_res and test_res != "0" and real_res != "0":
@@ -165,8 +174,6 @@ def main():
                                                  real_res)
                                 else:
                                     feedback = f"Existing solution output invalid: Test='{test_res}', Real='{real_res}'. Must be distinct and non-zero."
-                            else:
-                                feedback = "Existing solution produced insufficient output (missing format markers)."
                         else:
                             # Existing solution failed or no output
                             if proc.returncode != 0:
@@ -197,11 +204,20 @@ def main():
                                                   text=True, timeout=60)
                             if proc.returncode == 0 and proc.stdout.strip():
 
-                                # Parse output with regex
-                                sample_match = re.search(r"---- Sample Solution Part 1: (.+?) ----", proc.stdout)
-                                final_match = re.search(r"---- Final Solution Part 1: (.+?) ----", proc.stdout)
-
-                                if sample_match and final_match:
+                                sample_match = re.search(SAMPLE_OUTPUT_REGEX_1, proc.stdout)
+                                final_match = re.search(FINAL_OUTPUT_REGEX_1, proc.stdout)
+                                outputTail = proc.stdout[-OUTPUT_TAIL_SIZE:]
+                                if not sample_match:
+                                    feedback = "Solution code did print any sample check formatted as \'---- Sample (.+?) Solution Part 1: (.+?) ----\': Instead, the following {0} chars where printed last: {1}".format(
+                                        str(OUTPUT_TAIL_SIZE), outputTail)
+                                    previous_code = code
+                                    logging.warning("Verification failed: %s", feedback)
+                                elif not final_match:
+                                    feedback = "Solution code did print the final output formatted as ---- Final Solution Part 1: (.+?) ----.\n Instead, the following {0} chars where printed last: {1}".format(
+                                        str(OUTPUT_TAIL_SIZE), outputTail)
+                                    previous_code = code
+                                    logging.warning("Verification failed: %s", feedback)
+                                else:
                                     test_res = sample_match.group(1).strip()
                                     real_res = final_match.group(1).strip()
                                     if test_res != real_res and test_res != "0" and real_res != "0":
@@ -212,10 +228,7 @@ def main():
                                         feedback = f"Generated solution output invalid: Test='{test_res}', Real='{real_res}'. Must be distinct and non-zero."
                                         previous_code = code
                                         logging.warning("Verification failed: %s", feedback)
-                                else:
-                                    feedback = "Generated solution produced insufficient output (missing format markers)."
-                                    previous_code = code
-                                    logging.warning("Verification failed: %s", feedback)
+
                             else:
                                 if proc.returncode != 0:
                                     feedback = f"Runtime error:\n{proc.stderr}"
@@ -268,6 +281,9 @@ def main():
             feedback = None
             previous_code = None
             scaffold = None
+
+            with open(os.path.join(template_dir, "scaffold_part2.py")) as f:
+                scaffold = f.read()
             if not status['part2_solved']:
                 logging.info("Part 2 not solved. Attempting to solve...")
                 sol2 = os.path.join(workdir, "solution_part2.py")
@@ -282,10 +298,6 @@ def main():
                     with open(os.path.join(workdir, "problem.txt"), "w") as f:
                         f.write(stmt)
 
-
-                with open(os.path.join(template_dir, "scaffold_part2.py")) as f:
-                    scaffold = f.read()
-
                 for attempt in range(1, max_attempts + 1):
                     logging.info("Part 2 Attempt %d/%d", attempt, max_attempts)
                     output = None
@@ -294,7 +306,7 @@ def main():
                     if attempt == 1 and not feedback:
                         # Load template again to be sure
                         template_dir = os.path.join(os.path.dirname(__file__), "templates")
-                    
+
                         feedback = "Starting fresh. Please implement the solution starting from this scaffold. Fill in sample_input and sample_answer. The script MUST print the results in the format: ---- Sample Solution Part 2: [result] ---- and ---- Final Solution Part 2: [result] ----"
 
                     if attempt == 1 and os.path.exists(
@@ -302,12 +314,19 @@ def main():
                         try:
                             proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir, capture_output=True,
                                                   text=True, timeout=30)
-                            if proc.returncode == 0 and proc.stdout.strip():
-                                # Parse output with regex
-                                sample_match = re.search(r"---- Sample (.+?) result Part 2: (.+?) ----", proc.stdout)
-                                final_match = re.search(r"---- Final result Part 2: (.+?) ----", proc.stdout)
+                        FINAL_OUTPUT_REGEX_2, SAMPLE_OUTPUT_REGEX_2 = getOutputCheckRegex(r"2", scaffold)
 
-                                if sample_match and final_match:
+                        if proc.returncode == 0 and proc.stdout.strip():
+                                sample_match = re.search(SAMPLE_OUTPUT_REGEX_2, proc.stdout)
+                                final_match = re.search(FINAL_OUTPUT_REGEX_2, proc.stdout)
+                                outputTail = proc.stdout[-OUTPUT_TAIL_SIZE:]
+                                if not sample_match:
+                                    feedback = "Solution code did print any sample check formatted as \'---- Sample (.+?) Solution Part 2: (.+?) ----\': Instead, the following {0} chars where printed last: {1}".format(
+                                        str(OUTPUT_TAIL_SIZE), outputTail)
+                                elif not final_match:
+                                    feedback = "Solution code did print the final output formatted as ---- Final Solution Part 2: (.+?) ----.\n Instead, the following {0} chars where printed last: {1}".format(
+                                        str(OUTPUT_TAIL_SIZE), outputTail)
+                                else:
                                     test_res = sample_match.group(1).strip()
                                     real_res = final_match.group(1).strip()
                                     if test_res != real_res and test_res != "0" and real_res != "0":
@@ -316,8 +335,6 @@ def main():
                                                      test_res, real_res)
                                     else:
                                         feedback = f"Existing solution output invalid: Test='{test_res}', Real='{real_res}'. Must be distinct and non-zero."
-                                else:
-                                    feedback = "Existing solution produced insufficient output (missing format markers)."
                             else:
                                 if proc.returncode != 0:
                                     feedback = f"Existing solution failed with error:\n{proc.stderr}"
@@ -343,12 +360,11 @@ def main():
                             try:
                                 proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir,
                                                       capture_output=True, text=True, timeout=60)
+                                FINAL_OUTPUT_REGEX_2, SAMPLE_OUTPUT_REGEX_2 = getOutputCheckRegex(r"2", scaffold)
+        
                                 if proc.returncode == 0 and proc.stdout.strip():
-
-                                    # Parse output with regex
-                                    sample_match = re.search(r"---- Sample Solution Part 2: (.+?) ----", proc.stdout)
-                                    final_match = re.search(r"---- Final Solution Part 2: (.+?) ----", proc.stdout)
-
+                                    sample_match = re.search(SAMPLE_OUTPUT_REGEX_2, proc.stdout)
+                                    final_match = re.search(FINAL_OUTPUT_REGEX_2, proc.stdout)
                                     if sample_match and final_match:
                                         test_res = sample_match.group(1).strip()
                                         real_res = final_match.group(1).strip()
@@ -482,6 +498,14 @@ def main():
 
     logging.info("Scaffold ready in %s. Use submit_solution() from aoc_tools to submit answers manually if needed.",
                  workdir)
+
+
+def getOutputCheckRegex(partNb: str, scaffold: str) -> tuple[str, str]:
+    SAMPLE_OUTPUT_REGEX = r"---- Sample (.+?) Solution Part %s: (.+?) ----" % partNb
+    assert re.match(SAMPLE_OUTPUT_REGEX, scaffold)
+    FINAL_OUTPUT_REGEX = r"---- Final Solution Part %s: (.+?) ----" % partNb
+    assert re.match(FINAL_OUTPUT_REGEX, scaffold)
+    return FINAL_OUTPUT_REGEX, SAMPLE_OUTPUT_REGEX
 
 
 if __name__ == "__main__":

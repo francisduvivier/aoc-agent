@@ -195,10 +195,11 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
                f"Here is a sample of the input.txt file(first and last 100 letters):" + (
                            "\n\n" + input_sample[:100] + "..." + input_sample[
                        -max(0, min(100, len(input_sample) - 100)):]) + \
-               f"IMPORTANT: You are encouraged to include reasoning and debug output in your solution in case of errors.\n" + \
-               f"IMPORTANT: Your solution MUST use this scaffold because the output format is used for evaluating your result: ```python\n{scaffold}\n```"
+               f"IMPORTANT: You MUST fill in the 'samples' list with (sample_input, expected_result) tuples extracted from the problem statement.\n" + \
+               f"IMPORTANT: Your solution MUST use this scaffold because the output format is used for evaluating your result: ```python\n{scaffold}\n```\n"
 
     if previous_code and feedback:
+        user_msg += f"\nIMPORTANT: You are encouraged to include asserts, reasoning comments and debug output in your solution.\n"
         user_msg += f"\n\nPrevious attempt failed:\n```python\n{previous_code}\n```\nFeedback: {feedback}\nPlease fix the code."
     payload = {"model": model,
                "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_msg}],
