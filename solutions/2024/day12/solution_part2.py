@@ -29,7 +29,7 @@ def solve_part2(lines):
                         queue.append((nr, nc))
             
             sides = 0
-            corners = 0
+            corners = set()
             
             for cr, cc in region_cells:
                 for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
@@ -38,25 +38,25 @@ def solve_part2(lines):
                         sides += 1
             
             for cr, cc in region_cells:
-                for dx, dy in [(0.5, 0.5), (0.5, -0.5), (-0.5, 0.5), (-0.5, -0.5)]:
-                    corner_r, corner_c = cr + dx, cc + dy
-                    adjacent_cells = set()
-                    for check_dx, check_dy in [(0.5, 0), (-0.5, 0), (0, 0.5), (0, -0.5)]:
-                        check_r = corner_r + check_dx
-                        check_c = corner_c + check_dy
+                for corner_x, corner_y in [(cr, cc), (cr, cc+1), (cr+1, cc), (cr+1, cc+1)]:
+                    if (corner_x, corner_y) in corners:
+                        continue
+                    
+                    adjacent_types = set()
+                    for check_r, check_c in [(corner_x-0.5, corner_y-0.5), (corner_x-0.5, corner_y+0.5),
+                                           (corner_x+0.5, corner_y-0.5), (corner_x+0.5, corner_y+0.5)]:
                         if 0 <= check_r < rows and 0 <= check_c < cols:
                             cell_r, cell_c = int(check_r), int(check_c)
                             if (cell_r, cell_c) in region_cells:
-                                adjacent_cells.add(plant_type)
+                                adjacent_types.add(plant_type)
                             else:
-                                adjacent_cells.add(grid[cell_r][cell_c])
+                                adjacent_types.add(grid[cell_r][cell_c])
                     
-                    if len(adjacent_cells) == 1 and plant_type in adjacent_cells:
-                        continue
-                    corners += 1
+                    if len(adjacent_types) > 1:
+                        corners.add((corner_x, corner_y))
             
             area = len(region_cells)
-            total_price += area * (sides + corners)
+            total_price += area * (sides + len(corners))
     
     return total_price
 
