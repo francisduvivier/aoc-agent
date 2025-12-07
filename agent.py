@@ -178,7 +178,7 @@ def main():
                         else:
                             # Existing solution failed or no output
                             if proc.returncode != 0:
-                                feedback = f"Existing solution failed with error:\n{proc.stderr}"
+                                feedback = f"Existing solution failed with last output \n{outputTail}\nand error:\n{proc.stderr}"
                             else:
                                 feedback = "Existing solution produced no output."
                             previous_code = open(sol1).read()
