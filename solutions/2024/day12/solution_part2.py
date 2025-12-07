@@ -30,11 +30,14 @@ def solve_part2(lines):
             
             corners = set()
             for cr, cc in region_cells:
-                for corner_x, corner_y in [(cr, cc), (cr, cc+1), (cr+1, cc), (cr+1, cc+1)]:
-                    corners.add((corner_x, corner_y))
+                corners.add((cr, cc))
+                corners.add((cr, cc + 1))
+                corners.add((cr + 1, cc))
+                corners.add((cr + 1, cc + 1))
             
             connected_corners = set()
             corner_components = []
+            
             for corner in corners:
                 if corner in connected_corners:
                     continue
@@ -55,7 +58,8 @@ def solve_part2(lines):
                 corner_components.append(component)
             
             sides = len(corner_components)
-            total_price += len(region_cells) * sides
+            area = len(region_cells)
+            total_price += area * sides
     
     return total_price
 
