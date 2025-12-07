@@ -128,6 +128,43 @@ def check_accepted_files(workdir: str) -> dict | None:
     return status if found_any else None
 
 
+    return status if found_any else None
+
+
+def parse_problem_file(path: str) -> dict | None:
+    """Parse a local problem.txt file to determine solved status.
+    Returns a status dict if the file exists and appears to contain answers, else None.
+    """
+    if not os.path.exists(path):
+        return None
+    
+    try:
+        text = open(path, "r").read()
+    except Exception:
+        return None
+
+    status = {
+        'part1_solved': False,
+        'part1_answer': None,
+        'part2_solved': False,
+        'part2_answer': None
+    }
+
+    # Check for "Your puzzle answer was" blocks
+    # In the cleaned text, it usually looks like "Your puzzle answer was ANSWER."
+    answers = re.findall(r"Your puzzle answer was (.*?)\.", text)
+    
+    if len(answers) >= 1:
+        status['part1_solved'] = True
+        status['part1_answer'] = answers[0]
+    
+    if len(answers) >= 2:
+        status['part2_solved'] = True
+        status['part2_answer'] = answers[1]
+        
+    return status
+
+
 def download_input(year: int, day: int, session_cookie: str, out_dir: str) -> str:
     url = f"{BASE}/{year}/day/{day}/input"
     cookies = {"session": session_cookie}
