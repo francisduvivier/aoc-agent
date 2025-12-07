@@ -1,5 +1,4 @@
 import heapq
-from collections import deque
 
 def solve_part1(lines):
     # Parse byte positions
@@ -14,7 +13,7 @@ def solve_part1(lines):
     
     # BFS to find shortest path
     start = (0, 0)
-    end = (70, 70)
+    end = (grid_size, grid_size)
     
     # Priority queue for Dijkstra's algorithm (all edges have weight 1)
     pq = [(0, start)]
