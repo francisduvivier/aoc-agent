@@ -27,24 +27,27 @@ def solve_part1(lines):
     
     # Count robots in each quadrant
     # Quadrants are defined by splitting the grid in half (excluding middle lines)
+    # Left half: x < width//2, Right half: x > width//2
+    # Top half: y < height//2, Bottom half: y > height//2
     mid_x = width // 2
     mid_y = height // 2
     
     q1 = q2 = q3 = q4 = 0
     
     for (px, py), _ in robots:
-        # Skip robots on middle lines
         if px == mid_x or py == mid_y:
-            continue
-            
-        if px < mid_x and py < mid_y:
-            q1 += 1
-        elif px > mid_x and py < mid_y:
-            q2 += 1
-        elif px < mid_x and py > mid_y:
-            q3 += 1
-        elif px > mid_x and py > mid_y:
-            q4 += 1
+            continue  # Skip robots exactly in the middle
+        
+        if px < mid_x:
+            if py < mid_y:
+                q1 += 1  # Top-left quadrant
+            else:
+                q3 += 1  # Bottom-left quadrant
+        else:  # px > mid_x
+            if py < mid_y:
+                q2 += 1  # Top-right quadrant
+            else:
+                q4 += 1  # Bottom-right quadrant
     
     return q1 * q2 * q3 * q4
 
