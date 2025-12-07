@@ -19,11 +19,11 @@ def solve_part1(lines):
         robots.append((px, py, vx, vy))
     
     # Simulate 100 seconds
-    final_positions = []
+    positions = []
     for px, py, vx, vy in robots:
         new_x = (px + vx * seconds) % width
         new_y = (py + vy * seconds) % height
-        final_positions.append((new_x, new_y))
+        positions.append((new_x, new_y))
     
     # Count robots in each quadrant
     # Middle lines are at width//2 and height//2 (50 and 51)
@@ -31,7 +31,7 @@ def solve_part1(lines):
     mid_y = height // 2  # 51
     
     q1 = q2 = q3 = q4 = 0
-    for x, y in final_positions:
+    for x, y in positions:
         if x == mid_x or y == mid_y:
             continue  # Skip middle lines
         if x < mid_x and y < mid_y:
