@@ -1,8 +1,8 @@
 # Edit this file: implement solve_part1
 
 def solve_part1(lines):
-    width = 101
-    height = 103
+    width = 11
+    height = 7
     seconds = 100
     
     quadrants = [0, 0, 0, 0]
@@ -11,7 +11,7 @@ def solve_part1(lines):
         if not line.strip():
             continue
             
-        # Parse line: p=46,91 v=80,-6
+        # Parse line: p=0,4 v=3,-3
         parts = line.split()
         pos_part = parts[0][2:]  # Remove "p="
         vel_part = parts[1][2:]  # Remove "v="
