@@ -1,88 +1,88 @@
 # Edit this file: implement solve_part1
 
 def solve_part1(lines):
-    # Parse the grid and moves
-    grid_lines = []
+    # Split into map and moves
+    map_lines = []
     moves = []
-    parsing_moves = False
+    reading_moves = False
     
     for line in lines:
         if line.strip() == "":
-            parsing_moves = True
+            reading_moves = True
             continue
-        if parsing_moves:
+        if reading_moves:
             moves.extend(list(line.strip()))
         else:
-            grid_lines.append(line.strip())
+            map_lines.append(line.strip())
     
-    # Find robot position and create grid
-    grid = [list(row) for row in grid_lines]
-    rows, cols = len(grid), len(grid[0])
-    
-    robot_r, robot_c = -1, -1
-    for r in range(rows):
-        for c in range(cols):
-            if grid[r][c] == '@':
+    # Find robot position
+    robot_r, robot_c = None, None
+    for r, row in enumerate(map_lines):
+        for c, ch in enumerate(row):
+            if ch == '@':
                 robot_r, robot_c = r, c
                 break
-        if robot_r != -1:
+        if robot_r is not None:
             break
     
     # Process moves
-    move_dirs = {'^': (-1, 0), 'v': (1, 0), '<': (0, -1), '>': (0, 1)}
-    
     for move in moves:
-        dr, dc = move_dirs[move]
+        dr, dc = 0, 0
+        if move == '^':
+            dr = -1
+        elif move == 'v':
+            dr = 1
+        elif move == '<':
+            dc = -1
+        elif move == '>':
+            dc = 1
+        
+        # Check what's in the way
         nr, nc = robot_r + dr, robot_c + dc
-        
-        # Check if move is valid
-        if grid[nr][nc] == '#':
-            continue  # Wall, can't move
-        
-        # If empty space, just move
-        if grid[nr][nc] == '.':
-            grid[robot_r][robot_c] = '.'
-            grid[nr][nc] = '@'
-            robot_r, robot_c = nr, nc
+        if map_lines[nr][nc] == '#':
+            # Wall - can't move
             continue
         
-        # If box, try to push it
-        if grid[nr][nc] == 'O':
-            # Find how far we can push the box
-            push_r, push_c = nr, nc
-            can_push = True
-            
-            # Check if we can push the entire line of boxes
-            while grid[push_r][push_c] == 'O':
-                push_r += dr
-                push_c += dc
-                if grid[push_r][push_c] == '#':
-                    can_push = False
-                    break
-            
-            if can_push:
-                # Push boxes and move robot
-                # Move boxes one by one from the end
-                while not (push_r - dr == nr and push_c - dc == nc):
-                    push_r -= dr
-                    push_c -= dc
-                    grid[push_r + dr][push_c + dc] = 'O'
-                    grid[push_r][push_c] = '.'
-                
-                # Move robot
-                grid[robot_r][robot_c] = '.'
-                grid[nr][nc] = '@'
-                robot_r, robot_c = nr, nc
+        # Find boxes to push
+        boxes_to_move = []
+        r, c = nr, nc
+        while 0 <= r < len(map_lines) and 0 <= c < len(map_lines[0]):
+            if map_lines[r][c] == '#':
+                # Hit a wall - can't move anything
+                boxes_to_move = None
+                break
+            elif map_lines[r][c] == 'O':
+                boxes_to_move.append((r, c))
+                r += dr
+                c += dc
+            else:
+                # Empty space or robot - stop
+                break
+        
+        if boxes_to_move is None:
+            # Can't move due to wall
+            continue
+        
+        # Move boxes
+        for r, c in reversed(boxes_to_move):
+            # Convert box to empty
+            map_lines[r] = map_lines[r][:c] + '.' + map_lines[r][c+1:]
+            # Move box forward
+            map_lines[r + dr] = map_lines[r + dr][:c + dc] + 'O' + map_lines[r + dr][c + dc + 1:]
+        
+        # Move robot
+        map_lines[robot_r] = map_lines[robot_r][:robot_c] + '.' + map_lines[robot_r][robot_c+1:]
+        robot_r, robot_c = nr, nc
+        map_lines[robot_r] = map_lines[robot_r][:robot_c] + '@' + map_lines[robot_r][robot_c+1:]
     
     # Calculate GPS coordinates
-    total_gps = 0
-    for r in range(rows):
-        for c in range(cols):
-            if grid[r][c] == 'O':
-                gps = 100 * r + c
-                total_gps += gps
+    total = 0
+    for r, row in enumerate(map_lines):
+        for c, ch in enumerate(row):
+            if ch == 'O':
+                total += 100 * r + c
     
-    return total_gps
+    return total
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
@@ -97,7 +97,7 @@ samples = [
 ########
 
 <^^>>>vv<v>>v<<""", 2028)
-]
+]  # TODO: fill with actual samples and expected results
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     sample_result = solve_part1(sample_input.strip().splitlines())
