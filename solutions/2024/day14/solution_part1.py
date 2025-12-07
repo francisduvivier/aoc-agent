@@ -1,40 +1,58 @@
 # Edit this file: implement solve_part1
 
 def solve_part1(lines):
-    width = 101
-    height = 103
+    # Parse robots: p=x,y v=dx,dy
+    robots = []
+    for line in lines:
+        if not line.strip():
+            continue
+        # Extract numbers from "p=0,4 v=3,-3"
+        parts = line.split()
+        p_part = parts[0][2:]  # Remove "p="
+        v_part = parts[1][2:]  # Remove "v="
+        px, py = map(int, p_part.split(","))
+        vx, vy = map(int, v_part.split(","))
+        robots.append(((px, py), (vx, vy)))
+    
+    # Grid dimensions
+    W = 101
+    H = 103
     seconds = 100
     
-    quadrants = [0, 0, 0, 0]
+    # Compute final positions after 100 seconds
+    grid = [[0] * W for _ in range(H)]
+    for (px, py), (vx, vy) in robots:
+        fx = (px + vx * seconds) % W
+        fy = (py + vy * seconds) % H
+        grid[fy][fx] += 1
     
-    for line in lines:
-        if not line:
-            continue
-            
-        parts = line.split()
-        pos_part = parts[0][2:]  # Remove 'p='
-        vel_part = parts[1][2:]  # Remove 'v='
-        
-        px, py = map(int, pos_part.split(','))
-        vx, vy = map(int, vel_part.split(','))
-        
-        # Calculate final position after 100 seconds
-        final_x = (px + vx * seconds) % width
-        final_y = (py + vy * seconds) % height
-        
-        # Check if robot is in any quadrant (not on middle lines)
-        if final_x != width // 2 and final_y != height // 2:
-            x_quad = 0 if final_x < width // 2 else 1
-            y_quad = 0 if final_y < height // 2 else 1
-            quadrant = y_quad * 2 + x_quad
-            quadrants[quadrant] += 1
+    # Count robots in each quadrant
+    # Quadrants: top-left, top-right, bottom-left, bottom-right
+    # Middle rows/cols (W//2 or H//2) are excluded
+    mid_x = W // 2
+    mid_y = H // 2
     
-    return quadrants[0] * quadrants[1] * quadrants[2] * quadrants[3]
+    q1 = q2 = q3 = q4 = 0
+    for y in range(H):
+        for x in range(W):
+            if x == mid_x or y == mid_y:
+                continue
+            if x < mid_x and y < mid_y:
+                q1 += grid[y][x]
+            elif x > mid_x and y < mid_y:
+                q2 += grid[y][x]
+            elif x < mid_x and y > mid_y:
+                q3 += grid[y][x]
+            elif x > mid_x and y > mid_y:
+                q4 += grid[y][x]
+    
+    return q1 * q2 * q3 * q4
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
 samples = [
-    ("""p=0,4 v=3,-3
+    (
+        """p=0,4 v=3,-3
 p=6,3 v=-1,-3
 p=10,3 v=-1,2
 p=2,0 v=2,-1
@@ -45,7 +63,9 @@ p=3,0 v=-1,-2
 p=9,3 v=2,3
 p=7,3 v=-1,2
 p=2,4 v=2,-3
-p=9,5 v=-3,-3""", 12)
+p=9,5 v=-3,-3""",
+        12
+    )
 ]  # TODO: fill with actual samples and expected results
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
