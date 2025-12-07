@@ -1,42 +1,41 @@
 # Edit this file: implement solve_part1
 
-from collections import deque
-
 def solve_part1(lines):
-    # Parse the byte positions
+    # Parse the input to get byte positions
     bytes = []
     for line in lines:
         x, y = map(int, line.split(','))
         bytes.append((x, y))
     
-    # Simulate first 1024 bytes falling
-    corrupted = set(bytes[:1024])
+    # Create the grid (70x70)
+    grid = [[False for _ in range(71)] for _ in range(71)]
     
-    # BFS to find shortest path from (0,0) to (70,70)
-    start = (0, 0)
-    end = (70, 70)
+    # Mark the first 1024 bytes as corrupted
+    for i in range(1024):
+        x, y = bytes[i]
+        grid[y][x] = True  # True means corrupted
     
-    # Check if start or end is corrupted
-    if start in corrupted or end in corrupted:
-        return -1
+    # BFS to find shortest path
+    from collections import deque
     
-    queue = deque([(start[0], start[1], 0)])  # (x, y, steps)
-    visited = {start}
+    queue = deque([(0, 0, 0)])  # (x, y, steps)
+    visited = [[False for _ in range(71)] for _ in range(71)]
+    visited[0][0] = True
     
     directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
     
     while queue:
         x, y, steps = queue.popleft()
         
-        if (x, y) == end:
+        if x == 70 and y == 70:
             return steps
         
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
             
             if 0 <= nx <= 70 and 0 <= ny <= 70:
-                if (nx, ny) not in corrupted and (nx, ny) not in visited:
-                    visited.add((nx, ny))
+                if not visited[ny][nx] and not grid[ny][nx]:
+                    visited[ny][nx] = True
                     queue.append((nx, ny, steps + 1))
     
     return -1  # No path found
