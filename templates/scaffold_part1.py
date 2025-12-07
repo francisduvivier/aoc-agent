@@ -4,18 +4,17 @@ def solve_part1(lines):
     # replace with actual solution
     return 0
 
-if __name__ == '__main__':
-    # Sample data – may contain multiple samples from the problem statement.
-    # Populate this list with (sample_input, expected_result) tuples.
-    samples = []  # TODO: fill with actual samples and expected results
+# Sample data – may contain multiple samples from the problem statement.
+# Populate this list with (sample_input, expected_result) tuples.
+samples = []  # TODO: fill with actual samples and expected results
 
-    for idx, (sample_input, expected_result) in enumerate(samples, start=1):
-        sample_res = solve_part1(sample_input.strip().splitlines())
-        assert sample_res == expected_result, f"Sample {idx} result {sample_res} does not match expected {expected_result}"
-        print(f"---- Sample {idx} Solution Part 1: {sample_res} ----")
+for idx, (sample_input, expected_result) in enumerate(samples, start=1):
+    sample_res = solve_part1(sample_input.strip().splitlines())
+    assert sample_res == expected_result, f"Sample {idx} result {sample_res} does not match expected {expected_result}"
+    print(f"---- Sample {idx} Solution Part 1: {sample_res} ----")
 
-    # Run on the real puzzle input
-    with open('input.txt') as f:
-        lines = [line.strip() for line in f]
-    final_result = solve_part1(lines)
-    print(f"---- Final Solution Part 1: {final_result} ----")
+# Run on the real puzzle input
+with open('input.txt') as f:
+    lines = [line.strip() for line in f]
+final_result = solve_part1(lines)
+print(f"---- Final Solution Part 1: {final_result} ----")
