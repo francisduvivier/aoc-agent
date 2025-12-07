@@ -9,7 +9,7 @@ import logging
 import subprocess
 import re
 from datetime import datetime, timezone, timedelta
-from aoc_tools import fetch_problem_statement, download_input, create_day_dir, generate_solver_with_openrouter, git_commit, fetch_puzzle_status
+from aoc_tools import fetch_problem_statement, download_input, create_day_dir, generate_solver_with_openrouter, git_commit, fetch_puzzle_status, parse_problem_file
 from submit import submit_solution
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -70,10 +70,15 @@ def main():
             return False
 
     if do_fetch:
-        logging.info("Fetching problem statement HTML and cleaning to text")
-        stmt = fetch_problem_statement(year, day, session)
-        with open(os.path.join(workdir, "problem.txt"), "w") as f:
-            f.write(stmt)
+        # Check if problem.txt already exists and has Part 2 answer
+        local_status = parse_problem_file(os.path.join(workdir, "problem.txt"))
+        if local_status and local_status['part2_solved']:
+            logging.info("Local problem.txt contains Part 2 answer. Skipping fetch.")
+        else:
+            logging.info("Fetching problem statement HTML and cleaning to text")
+            stmt = fetch_problem_statement(year, day, session)
+            with open(os.path.join(workdir, "problem.txt"), "w") as f:
+                f.write(stmt)
 
         logging.info("Downloading puzzle input")
         inp_path = download_input(year, day, session, workdir)
@@ -110,8 +115,12 @@ def main():
             sys.exit(1)
         
         # Check puzzle status
-        status = fetch_puzzle_status(year, day, session)
-        logging.info("Puzzle status: %s", status)
+        status = parse_problem_file(os.path.join(workdir, "problem.txt"))
+        if status and status['part2_solved']:
+            logging.info("Using local status from problem.txt: %s", status)
+        else:
+            status = fetch_puzzle_status(year, day, session)
+            logging.info("Puzzle status from AoC: %s", status)
 
         api_key = os.environ.get("AOC_OPENROUTER_API_KEY")
         
@@ -255,9 +264,14 @@ def main():
                 sol2 = os.path.join(workdir, "solution_part2.py")
                 
                 if do_fetch:
-                     stmt = fetch_problem_statement(year, day, session)
-                     with open(os.path.join(workdir, "problem.txt"), "w") as f:
-                         f.write(stmt)
+                     # Check local status again just in case
+                     local_status = parse_problem_file(os.path.join(workdir, "problem.txt"))
+                     if local_status and local_status['part2_solved']:
+                         logging.info("Local problem.txt contains Part 2 answer. Skipping fetch.")
+                     else:
+                         stmt = fetch_problem_statement(year, day, session)
+                         with open(os.path.join(workdir, "problem.txt"), "w") as f:
+                             f.write(stmt)
                 
                 max_retries = 10
                 feedback = None
