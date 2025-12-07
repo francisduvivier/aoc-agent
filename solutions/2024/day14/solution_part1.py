@@ -26,14 +26,14 @@ def solve_part1(lines):
         final_positions.append((new_x, new_y))
     
     # Count robots in each quadrant
-    # Middle lines are at width//2 and height//2 (50 and 51)
-    mid_x = width // 2  # 50
-    mid_y = height // 2  # 51
+    # Middle lines are at width//2 and height//2
+    mid_x = width // 2
+    mid_y = height // 2
     
     q1 = q2 = q3 = q4 = 0
     for x, y in final_positions:
         if x == mid_x or y == mid_y:
-            continue  # Skip middle lines
+            continue  # Skip middle line robots
         if x < mid_x and y < mid_y:
             q1 += 1
         elif x > mid_x and y < mid_y:
