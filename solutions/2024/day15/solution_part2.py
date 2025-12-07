@@ -4,156 +4,172 @@ def solve_part2(lines):
     # Parse the map and moves
     map_lines = []
     moves = []
-    parsing_map = True
+    parsing_moves = False
     
     for line in lines:
         if line.strip() == "":
-            parsing_map = False
+            parsing_moves = True
             continue
-        if parsing_map:
-            map_lines.append(line)
+        if parsing_moves:
+            moves.extend(list(line.strip()))
         else:
-            moves.extend(list(line))
+            map_lines.append(line.strip())
     
-    # Expand the map: # -> ##, O -> [], . -> .., @ -> @.
-    expanded_map = []
-    robot_pos = None
-    for r, row in enumerate(map_lines):
-        new_row = []
+    # Build the wide map (2x width)
+    wide_map = []
+    for row in map_lines:
+        wide_row = ""
+        for ch in row:
+            if ch == "#":
+                wide_row += "##"
+            elif ch == "O":
+                wide_row += "[]"
+            elif ch == ".":
+                wide_row += ".."
+            elif ch == "@":
+                wide_row += "@."
+        wide_map.append(wide_row)
+    
+    # Find robot position
+    robot_r, robot_c = -1, -1
+    for r, row in enumerate(wide_map):
         for c, ch in enumerate(row):
-            if ch == '#':
-                new_row.extend(['#', '#'])
-            elif ch == 'O':
-                new_row.extend(['[', ']'])
-            elif ch == '.':
-                new_row.extend(['.', '.'])
-            elif ch == '@':
-                new_row.extend(['@', '.'])
-                robot_pos = (r, c * 2)
-            else:
-                new_row.extend([ch, ch])
-        expanded_map.append(new_row)
-    
-    # Helper to check if a position is within bounds and not a wall
-    def is_valid(r, c):
-        return 0 <= r < len(expanded_map) and 0 <= c < len(expanded_map[0]) and expanded_map[r][c] != '#'
-    
-    # Helper to check if a push is possible in a given direction
-    # Returns True if all boxes that would be moved can be moved
-    def can_push(r, c, dr, dc):
-        # BFS to find all tiles that would move
-        from collections import deque
-        q = deque([(r, c)])
-        tiles_to_move = set()
-        visited = set()
-        
-        while q:
-            cr, cc = q.popleft()
-            if (cr, cc) in visited:
-                continue
-            visited.add((cr, cc))
-            tiles_to_move.add((cr, cc))
-            
-            # Determine the type of tile and its neighbors to check
-            if expanded_map[cr][cc] == '[':
-                # Left half of a box: check right neighbor and both halves in direction
-                neighbors = [(cr, cc + 1), (cr + dr, cc + dc), (cr + dr, cc + 1 + dc)]
-            elif expanded_map[cr][cc] == ']':
-                # Right half of a box: check left neighbor and both halves in direction
-                neighbors = [(cr, cc - 1), (cr + dr, cc + dc), (cr + dr, cc - 1 + dc)]
-            else:
-                # Should not happen for boxes
-                continue
-            
-            for nr, nc in neighbors:
-                if not is_valid(nr, nc) and expanded_map[nr][nc] not in '[]':
-                    # Wall or empty, no need to check further
-                    continue
-                if expanded_map[nr][nc] in '[]' and (nr, nc) not in visited:
-                    q.append((nr, nc))
-        
-        # Check if any tile in the direction of movement is a wall
-        for tr, tc in tiles_to_move:
-            nr, nc = tr + dr, tc + dc
-            if not (0 <= nr < len(expanded_map) and 0 <= nc < len(expanded_map[0])):
-                return False
-            if expanded_map[nr][nc] == '#':
-                return False
-        
-        return True
-    
-    # Helper to actually move the boxes
-    def move_boxes(r, c, dr, dc):
-        from collections import deque
-        q = deque([(r, c)])
-        tiles_to_move = set()
-        visited = set()
-        
-        while q:
-            cr, cc = q.popleft()
-            if (cr, cc) in visited:
-                continue
-            visited.add((cr, cc))
-            tiles_to_move.add((cr, cc))
-            
-            if expanded_map[cr][cc] == '[':
-                neighbors = [(cr, cc + 1), (cr + dr, cc + dc), (cr + dr, cc + 1 + dc)]
-            elif expanded_map[cr][cc] == ']':
-                neighbors = [(cr, cc - 1), (cr + dr, cc + dc), (cr + dr, cc - 1 + dc)]
-            else:
-                continue
-            
-            for nr, nc in neighbors:
-                if expanded_map[nr][nc] in '[]' and (nr, nc) not in visited:
-                    q.append((nr, nc))
-        
-        # Move tiles
-        for tr, tc in sorted(tiles_to_move, reverse=(dr > 0 or dc > 0)):
-            nr, nc = tr + dr, tc + dc
-            expanded_map[nr][nc] = expanded_map[tr][tc]
-            expanded_map[tr][tc] = '.'
+            if ch == "@":
+                robot_r, robot_c = r, c
+                break
+        if robot_r != -1:
+            break
     
     # Process moves
-    dir_map = {'^': (-1, 0), 'v': (1, 0), '<': (0, -1), '>': (0, 1)}
-    
     for move in moves:
-        dr, dc = dir_map[move]
-        r, c = robot_pos
-        nr, nc = r + dr, c + dc
+        dr, dc = 0, 0
+        if move == "^":
+            dr = -1
+        elif move == "v":
+            dr = 1
+        elif move == "<":
+            dc = -1
+        elif move == ">":
+            dc = 1
         
-        if not is_valid(nr, nc):
+        # Check what's in the way
+        next_r, next_c = robot_r + dr, robot_c + dc
+        if wide_map[next_r][next_c] == "#":
+            # Wall - can't move
             continue
         
-        # Check what's in the direction of movement
-        target = expanded_map[nr][nc]
-        if target == '.':
-            # Move robot
-            expanded_map[r][c] = '.'
-            expanded_map[nr][nc] = '@'
-            robot_pos = (nr, nc)
-        elif target in '[]':
-            # Try to push
-            if can_push(nr, nc, dr, dc):
-                move_boxes(nr, nc, dr, dc)
+        if wide_map[next_r][next_c] == ".":
+            # Empty space - move robot
+            wide_map[robot_r] = wide_map[robot_r][:robot_c] + "." + wide_map[robot_r][robot_c+1:]
+            wide_map[next_r] = wide_map[next_r][:next_c] + "@" + wide_map[next_r][next_c+1:]
+            robot_r, robot_c = next_r, next_c
+            continue
+        
+        if wide_map[next_r][next_c] in ["[", "]"]:
+            # Box - need to check if it can be pushed
+            if can_push_box(wide_map, next_r, next_c, dr, dc):
+                push_box(wide_map, next_r, next_c, dr, dc)
                 # Move robot
-                expanded_map[r][c] = '.'
-                expanded_map[nr][nc] = '@'
-                robot_pos = (nr, nc)
+                wide_map[robot_r] = wide_map[robot_r][:robot_c] + "." + wide_map[robot_r][robot_c+1:]
+                wide_map[next_r] = wide_map[next_r][:next_c] + "@" + wide_map[next_r][next_c+1:]
+                robot_r, robot_c = next_r, next_c
     
-    # Calculate GPS sum
-    gps_sum = 0
-    for r in range(len(expanded_map)):
-        for c in range(len(expanded_map[0])):
-            if expanded_map[r][c] == '[':
-                # Left edge of a box
-                gps_sum += 100 * r + c
+    # Calculate GPS coordinates
+    total_gps = 0
+    for r, row in enumerate(wide_map):
+        for c, ch in enumerate(row):
+            if ch == "[":
+                # This is the left half of a box
+                total_gps += 100 * r + c
     
-    return gps_sum
+    return total_gps
+
+def can_push_box(wide_map, r, c, dr, dc):
+    """Check if a box at (r,c) can be pushed in direction (dr,dc)"""
+    if wide_map[r][c] == "[":
+        # Left half of box - check both halves
+        if dc != 0:  # Horizontal push
+            # Check if right half can move
+            if not can_move_tile(wide_map, r, c+1, dr, dc):
+                return False
+        elif dr != 0:  # Vertical push
+            # Check if both halves can move down/up
+            if not can_move_tile(wide_map, r, c, dr, dc):
+                return False
+            if not can_move_tile(wide_map, r, c+1, dr, dc):
+                return False
+    elif wide_map[r][c] == "]":
+        # Right half of box - check both halves
+        if dc != 0:  # Horizontal push
+            # Check if left half can move
+            if not can_move_tile(wide_map, r, c-1, dr, dc):
+                return False
+        elif dr != 0:  # Vertical push
+            # Check if both halves can move down/up
+            if not can_move_tile(wide_map, r, c, dr, dc):
+                return False
+            if not can_move_tile(wide_map, r, c-1, dr, dc):
+                return False
+    
+    return True
+
+def can_move_tile(wide_map, r, c, dr, dc):
+    """Check if a single tile can move"""
+    new_r, new_c = r + dr, c + dc
+    if new_r < 0 or new_r >= len(wide_map) or new_c < 0 or new_c >= len(wide_map[0]):
+        return False
+    if wide_map[new_r][new_c] == "#":
+        return False
+    if wide_map[new_r][new_c] in ["[", "]"]:
+        # Recursively check if the box can be pushed
+        return can_push_box(wide_map, new_r, new_c, dr, dc)
+    return True
+
+def push_box(wide_map, r, c, dr, dc):
+    """Push a box at (r,c) in direction (dr,dc)"""
+    if wide_map[r][c] == "[":
+        if dc != 0:  # Horizontal push
+            # Move right half
+            new_r, new_c = r + dr, c + dc + 1
+            wide_map[new_r] = wide_map[new_r][:new_c] + "]" + wide_map[new_r][new_c+1:]
+            # Clear old position of right half
+            wide_map[r] = wide_map[r][:c+1] + "." + wide_map[r][c+2:]
+            
+            # Move left half
+            new_r, new_c = r + dr, c + dc
+            wide_map[new_r] = wide_map[new_r][:new_c] + "[" + wide_map[new_r][new_c+1:]
+            # Clear old position of left half
+            wide_map[r] = wide_map[r][:c] + "." + wide_map[r][c+1:]
+        elif dr != 0:  # Vertical push
+            # Move both halves down/up
+            for offset in [0, 1]:  # Left and right halves
+                new_r, new_c = r + dr, c + offset
+                wide_map[new_r] = wide_map[new_r][:new_c] + wide_map[r][c+offset] + wide_map[new_r][new_c+1:]
+                wide_map[r] = wide_map[r][:c+offset] + "." + wide_map[r][c+offset+1:]
+    elif wide_map[r][c] == "]":
+        if dc != 0:  # Horizontal push
+            # Move left half
+            new_r, new_c = r + dr, c + dc - 1
+            wide_map[new_r] = wide_map[new_r][:new_c] + "[" + wide_map[new_r][new_c+1:]
+            # Clear old position of left half
+            wide_map[r] = wide_map[r][:c-1] + "." + wide_map[r][c:]
+            
+            # Move right half
+            new_r, new_c = r + dr, c + dc
+            wide_map[new_r] = wide_map[new_r][:new_c] + "]" + wide_map[new_r][new_c+1:]
+            # Clear old position of right half
+            wide_map[r] = wide_map[r][:c] + "." + wide_map[r][c+1:]
+        elif dr != 0:  # Vertical push
+            # Move both halves down/up
+            for offset in [-1, 0]:  # Left and right halves
+                new_r, new_c = r + dr, c + offset
+                wide_map[new_r] = wide_map[new_r][:new_c] + wide_map[r][c+offset] + wide_map[new_r][new_c+1:]
+                wide_map[r] = wide_map[r][:c+offset] + "." + wide_map[r][c+offset+1:]
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples IF there are any samples given for part 2.
 samples = [
-("""########
+    ("""########
 #..O.O.#
 ##@.O..#
 #...O..#
@@ -162,9 +178,8 @@ samples = [
 #......#
 ########
 
-<^^>>>vv<v>v<v<""",
-2028),
-("""##########
+<^^>>>vv<v>>v<<""", 2028),
+    ("""##########
 #..O..O.O#
 #......O.#
 #.OO..O.O#
@@ -175,19 +190,7 @@ samples = [
 #....O...#
 ##########
 
-<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<^v^><<<<><<v<<<v^vv^v>^
-vvv<^>^v^^<<>>>^<<^<^vv^^<vvv>><^^v>^>vv<v<<<<v<^v>^<^^>>>^<v<v
-><>vv>v^v^<>><>>>>>^<^^>vv>v<<<^^>vv^<^^>v^^<^^v>^<^v>v<>>v^v^<v>v^^<^^vv<
-<<v<^>>^^^^>>>v^<>vvv^><v<^>^^>^^^vv<><v<>v<^^vv<^^<^^vv<^^<^v>>^^^^<^>^>vvv<
-^>^v><^>^<^v<>><>v<>v<>^v<^vvv<>^<><><^<v^^vv^<v<^^<>v^^^v<^><<><>^>v><^v<>v<
-^>><^>v<^><<v<v<><><v<^vvv><^<><><^<v^vv><^><v><>v<>><v^vv<>v<^><v<>><v^vvv<
-<^<^>^^>^^>v<>^<v^>v<>^<^^v<>><v<^^><>^v<^^>>^^><v^vvvv<>v<^^><><v<>^<v^v<>>
-^>><<><>^vv^^><vv<><>v><<^vv<>v<^><>>^><^<>^^<vv^vv^<><>>^<^v^vvv<>^<<>^v^>v
-><^>vv>^<^<>^<v>v<>vvv>^<^<^vv>^v>^<^>v><^>^<>^<v><v<v<>vvv>^<^<><^^>^<^v<>vv<
-><<^>^^^<><vvvv>^<^<v<>^><v><v<<>^^<^^<^^><^^><^><^><^^>^^<^^<v><><><>^>^<v<>>
-^^>vv<^v^v<vv>^<><<>^>^v^><<<^^v^>^^^><^^<>^<><^v>v><^^>^<><><^v><^^>>^vvv<^
-""",
-9021)
+<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^<<>><>>v<vvv<>^v^>^<<<><<<v<<<v<^v>^<<>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<""", 9021)
 ]  # TODO: fill with actual samples and expected results
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
