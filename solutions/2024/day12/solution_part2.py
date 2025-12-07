@@ -34,6 +34,7 @@ def solve_part2(lines):
                     corners.add((corner_x, corner_y))
             
             connected_corners = set()
+            corner_components = []
             for corner in corners:
                 if corner in connected_corners:
                     continue
@@ -51,7 +52,10 @@ def solve_part2(lines):
                             connected_corners.add((nx, ny))
                             queue.append((nx, ny))
                 
-                total_price += len(region_cells) * len(component)
+                corner_components.append(component)
+            
+            sides = len(corner_components)
+            total_price += len(region_cells) * sides
     
     return total_price
 
