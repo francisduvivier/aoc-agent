@@ -264,31 +264,31 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
     except Exception:
         logging.warning(f"{CYAN}OpenRouter returned non-json response: {r.text[:1000]}{RESET}")
         return ""
-        content = ""
-        # OpenRouter responses: choices[0].message.content
-        if isinstance(j, dict):
-            choices = j.get("choices") or []
-            if choices:
-                # support both OpenAI and OpenRouter shapes
-                msg = choices[0].get("message") or choices[0].get("delta") or choices[0]
-                if isinstance(msg, dict):
-                    content = msg.get("content") or msg.get("text") or ""
-                else:
-                    content = str(msg)
-        # extract code block if present
-        m = re.search(r"```(?:python)?\n([\s\S]*?)```", content)
-        code = m.group(1) if m else content
-        
-        usage = j.get("usage", {})
-        if usage:
-            prompt_tokens = usage.get("prompt_tokens")
-            completion_tokens = usage.get("completion_tokens")
-            total_tokens = usage.get("total_tokens")
-            logging.info(f"Token Usage: Prompt={prompt_tokens}, Completion={completion_tokens}, Total={total_tokens}")
 
-        logging.info(f"{CYAN}OpenRouter RESPONSE:{RESET}\n{content}")
-        return code
-        return code
+    content = ""
+    # OpenRouter responses: choices[0].message.content
+    if isinstance(j, dict):
+        choices = j.get("choices") or []
+        if choices:
+            # support both OpenAI and OpenRouter shapes
+            msg = choices[0].get("message") or choices[0].get("delta") or choices[0]
+            if isinstance(msg, dict):
+                content = msg.get("content") or msg.get("text") or ""
+            else:
+                content = str(msg)
+    # extract code block if present
+    m = re.search(r"```(?:python)?\n([\s\S]*?)```", content)
+    code = m.group(1) if m else content
+    
+    usage = j.get("usage", {})
+    if usage:
+        prompt_tokens = usage.get("prompt_tokens")
+        completion_tokens = usage.get("completion_tokens")
+        total_tokens = usage.get("total_tokens")
+        logging.info(f"Token Usage: Prompt={prompt_tokens}, Completion={completion_tokens}, Total={total_tokens}")
+
+    logging.info(f"{CYAN}OpenRouter RESPONSE:{RESET}\n{content}")
+    return code
     except Exception as e:
         logging.warning(f"{CYAN}OpenRouter code generation failed: {e}{RESET}")
         return ""
