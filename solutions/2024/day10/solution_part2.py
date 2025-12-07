@@ -31,8 +31,8 @@ def solve_part2(lines):
             for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
                 nr, nc = r + dr, c + dc
                 if 0 <= nr < rows and 0 <= nc < cols:
-                    # Check if the next cell is valid (not impassable) and exactly 1 higher
-                    if grid[nr][nc] != -1 and grid[nr][nc] == grid[r][c] + 1:
+                    # Check if the next cell is exactly 1 higher
+                    if grid[nr][nc] == grid[r][c] + 1:
                         total += dfs(nr, nc)
             return total
         
