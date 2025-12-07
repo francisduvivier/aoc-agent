@@ -1,23 +1,26 @@
 # Edit this file: implement solve_part2
 
 def solve_part2(lines):
+    # Parse the program from the input
     for line in lines:
         if line.startswith("Program:"):
-            prog = list(map(int, line.split(': ')[1].split(',')))
+            program_str = line.split(": ")[1]
+            P = list(map(int, program_str.split(",")))
             break
-    P = prog
-    possible_A = {P[-1] ^ 3 ^ 5}
-    for target_D in reversed(P[:-1]):
+    
+    # Find possible A that produce P as output
+    possible = {0}
+    for target in reversed(P):
         new_possible = set()
-        for a in possible_A:
-            for x in range(8):
-                shift = 1 << (x ^ 3)
-                c = a // shift
-                if (x ^ 3 ^ 5) ^ c == target_D:
-                    new_a = a * 8 + x
-                    new_possible.add(new_a)
-        possible_A = new_possible
-    return min(possible_A)
+        for a in possible:
+            for d in range(8):
+                b = d ^ 3
+                c = (a * 8 + d) // (1 << b)
+                out = ((b ^ 5) ^ c) % 8
+                if out == target:
+                    new_possible.add(a * 8 + d)
+        possible = new_possible
+    return min(possible)
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples IF there are any samples given for part 2.
