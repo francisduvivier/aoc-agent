@@ -7,17 +7,3 @@ services:
       - ./:/workspace
     working_dir: /workspace
     tty: true
-    entrypoint:
-      - "/bin/bash"
-  agent:
-    build: .
-    env_file: .env
-    volumes:
-      - ./:/workspace
-    working_dir: /workspace
-    entrypoint:
-      - "/bin/sh"
-      - "-c"
-      - "python agent.py \"$@\""
-      - "--"
-    tty: true
