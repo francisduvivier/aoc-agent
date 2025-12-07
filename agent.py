@@ -24,10 +24,13 @@ def main():
     parser.add_argument("--fetch-only", action="store_true", help="Only fetch problem and input and create scaffold")
     parser.add_argument("--run-only", action="store_true", help="Only run existing scaffold/solution and attempt submission; do not fetch")
     parser.add_argument("--auto-submit", action="store_true", help="Automatically submit answers without prompting")
+    parser.add_argument("--model", type=str, default="kwaipilot/kat-coder-pro:free", help="Model to use for solving")
+
     args = parser.parse_args()
 
     year = args.year
     day = args.day
+    model = args.model
 
     # Allow explicit env override for compose systems that don't forward args reliably
     env_run_only = os.environ.get("AGENT_RUN_ONLY")
@@ -297,7 +300,7 @@ def main():
                     with open(os.path.join(workdir, "problem.txt"), "w") as f:
                         f.write(stmt)
                 
-                max_retries = 10
+                max_retries = 20
                 feedback = None
                 previous_code = None
                 
@@ -351,7 +354,7 @@ def main():
                         logging.info("Generating solution for Part 2...")
                         problem_txt = open(os.path.join(workdir, "problem.txt"), "r").read()
                         input_txt = open(os.path.join(workdir, "input.txt"), "r").read()
-                        code = generate_solver_with_openrouter(problem_txt, input_txt, api_key, part=2, previous_code=previous_code, feedback=feedback)
+                        code = generate_solver_with_openrouter(problem_txt, input_txt, api_key, part=2, previous_code=previous_code, feedback=feedback, model=model)
                         if code:
                             with open(sol2, "w") as f:
                                 f.write(code)
@@ -430,7 +433,7 @@ def main():
                 elif not api_key:
                     logging.warning("No API key. Skipping verification.")
                 else:
-                    max_attempts = 10
+                    max_attempts = 20
                     feedback = None
                     previous_code = None
                     
@@ -440,7 +443,7 @@ def main():
                         problem_txt = open(os.path.join(workdir, "problem.txt"), "r").read()
                         input_txt = open(os.path.join(workdir, "input.txt"), "r").read()
                         
-                        code = generate_solver_with_openrouter(problem_txt, input_txt, api_key, part=2, previous_code=previous_code, feedback=feedback)
+                        code = generate_solver_with_openrouter(problem_txt, input_txt, api_key, part=2, previous_code=previous_code, feedback=feedback, model=model)
                         
                         if code:
                             sol2_verify = os.path.join(workdir, "solution_part2_verify.py")

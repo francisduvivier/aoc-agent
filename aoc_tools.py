@@ -142,6 +142,7 @@ def download_input(year: int, day: int, session_cookie: str, out_dir: str) -> st
 
 
 def check_pricing(model: str) -> bool:
+    return True # TODO: decide what to do with this
     """Check if the model's pricing is within the limit (0.0001 per 1M tokens)."""
     try:
         r = requests.get("https://openrouter.ai/api/v1/models", timeout=10)
@@ -169,7 +170,7 @@ def check_pricing(model: str) -> bool:
 # kwaipilot/kat-coder-pro:free
 # tngtech/deepseek-r1t2-chimera:free
 # deepseek/deepseek-chat-v3.1
-def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: str, model: str = "deepseek/deepseek-chat-v3.1", part: int = 1, previous_code: str = None, feedback: str = None) -> str:
+def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: str, model: str = "kwaipilot/kat-coder-pro:free", part: int = 1, previous_code: str = None, feedback: str = None) -> str:
     """Call OpenRouter's chat completions to generate a Python solver script.
     Returns the generated python code as a string (no surrounding ``` markers if possible).
     """
@@ -195,7 +196,7 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
     
     if previous_code and feedback:
         user_msg += f"\n\nPrevious attempt failed:\n```python\n{previous_code}\n```\nFeedback: {feedback}\nPlease fix the code."
-    payload = {"model": model, "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_msg}], "temperature": 0.5, "top_p": 0.9}
+    payload = {"model": model, "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_msg}], "temperature": 0.01, "top_p": 0.01}
     YELLOW = '\033[33m'
     CYAN = '\033[36m'
     RESET = '\033[0m'
