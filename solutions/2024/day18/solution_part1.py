@@ -1,51 +1,47 @@
-import heapq
+from collections import deque
 
 def solve_part1(lines):
-    # Parse byte positions
+    # Parse coordinates
     bytes = []
     for line in lines:
-        x, y = map(int, line.split(','))
-        bytes.append((x, y))
+        if line.strip():
+            x, y = map(int, line.strip().split(','))
+            bytes.append((x, y))
     
     # Simulate first 1024 bytes falling
-    corrupted = set(bytes[:1024])
+    grid_size = 70
+    corrupted = set()
+    for i in range(1024):
+        corrupted.add(bytes[i])
     
-    # BFS/Dijkstra to find shortest path
-    size = 70
+    # BFS to find shortest path
     start = (0, 0)
-    end = (size, size)
+    end = (grid_size, grid_size)
     
-    # Priority queue: (distance, x, y)
-    pq = [(0, start[0], start[1])]
-    visited = set()
+    queue = deque([(start[0], start[1], 0)])  # (x, y, steps)
+    visited = {start}
     
-    # Directions: up, down, left, right
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
     
-    while pq:
-        dist, x, y = heapq.heappop(pq)
+    while queue:
+        x, y, steps = queue.popleft()
         
         if (x, y) == end:
-            return dist
-            
-        if (x, y) in visited:
-            continue
-            
-        visited.add((x, y))
+            return steps
         
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
             
-            # Check bounds
-            if 0 <= nx <= size and 0 <= ny <= size:
-                if (nx, ny) not in visited and (nx, ny) not in corrupted:
-                    heapq.heappush(pq, (dist + 1, nx, ny))
+            if 0 <= nx <= grid_size and 0 <= ny <= grid_size:
+                if (nx, ny) not in corrupted and (nx, ny) not in visited:
+                    visited.add((nx, ny))
+                    queue.append((nx, ny, steps + 1))
     
     return -1  # No path found
 
-# Sample data - extracted from problem statement
+# Sample data from problem statement
 samples = [
-    ("""5,4
+    """5,4
 4,2
 4,5
 3,0
@@ -69,7 +65,7 @@ samples = [
 1,0
 0,5
 1,6
-2,0""".strip().splitlines(), 22)
+2,0""".splitlines(), 22
 ]
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
