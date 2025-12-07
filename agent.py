@@ -194,7 +194,7 @@ def main():
 
                     code = generate_solver_with_openrouter(problem_txt, input_txt, api_key, scaffold, part=1,
                                                            previous_code=previous_code, feedback=feedback)
-
+                    previous_code = code
                     if code:
                         with open(sol1, "w") as f:
                             f.write(code)
@@ -352,6 +352,7 @@ def main():
                         code = generate_solver_with_openrouter(problem_txt, input_txt, api_key, scaffold, part=2,
                                                                previous_code=previous_code, feedback=feedback,
                                                                model=model)
+                        previous_code = code
                         if code:
                             with open(sol2, "w") as f:
                                 f.write(code)
@@ -441,6 +442,7 @@ def main():
                         code = generate_solver_with_openrouter(problem_txt, input_txt, api_key, scaffold, part=2,
                                                                previous_code=previous_code, feedback=feedback,
                                                                model=model)
+                        previous_code = code
 
                         if code:
                             sol2_verify = os.path.join(workdir, "solution_part2_verify.py")
