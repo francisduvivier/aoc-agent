@@ -7,7 +7,9 @@ def solve_part1(lines):
 if __name__ == '__main__':
     # Replace these with the actual sample input and answer from the problem description
     sample_input = """..."""
-    expected_sample_result = 0 
+
+    # Sample data – fill these in for each puzzle (LLM should extract from problem statement)
+    expected_sample_result = 0  # TODO: set to the expected result from the problem description
 
     # Run on the sample and verify
     sample_result = solve_part1(sample_input.strip().splitlines())

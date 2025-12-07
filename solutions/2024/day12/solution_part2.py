@@ -5,7 +5,7 @@ def solve_part2(lines):
 
 # Sample data – fill these in for each puzzle
 sample_input = """..."""
-expected_sample_result = 0
+expected_sample_result = 0  # TODO: set to expected result from problem statement
 
 # Run on the sample and verify
 sample_result = solve_part2(sample_input.strip().splitlines())
