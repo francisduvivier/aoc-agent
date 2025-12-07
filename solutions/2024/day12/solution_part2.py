@@ -33,7 +33,7 @@ def solve_part2(lines):
         for r, c in region_cells:
             for dr, dc in dirs:
                 nr, nc = r + dr, c + dc
-                if not (0 <= nr < rows and 0 <= nc < cols) or grid[nr][nc] != plant_type:
+                if (nr, nc) not in region_set:
                     sides += 1
         
         return sides
