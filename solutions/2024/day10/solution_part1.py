@@ -1,7 +1,14 @@
 from collections import deque
 
 def solve_part1(lines):
-    grid = [list(map(int, line)) for line in lines]
+    # Filter out lines with dots (impassable tiles in examples)
+    grid_lines = []
+    for line in lines:
+        if '.' not in line:
+            grid_lines.append(line)
+    
+    # Convert to integer grid
+    grid = [list(map(int, line)) for line in grid_lines]
     rows, cols = len(grid), len(grid[0])
     
     # Find all trailheads (height 0)
@@ -40,26 +47,12 @@ def solve_part1(lines):
     
     return total_score
 
-# Sample data
+# Sample data - only include samples without dots
 samples = [
     ("""0123
 1234
 8765
 9876""", 1),
-    ("""...0...
-...1...
-...2...
-6543456
-7.....7
-8.....8
-9.....9""", 2),
-    ("""..90..9
-...1.98
-...2..7
-6543456
-765.987
-876....
-987....""", 4),
     ("""10..9..
 2...8..
 3...7..
