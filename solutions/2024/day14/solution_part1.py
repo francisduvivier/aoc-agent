@@ -1,49 +1,50 @@
 # Edit this file: implement solve_part1
 
 def solve_part1(lines):
-    # Parse input
+    width = 101
+    height = 103
+    seconds = 100
+    
+    # Parse robots
     robots = []
     for line in lines:
         if not line.strip():
             continue
         parts = line.split()
-        p_part = parts[0].replace('p=', '')
-        v_part = parts[1].replace('v=', '')
-        px, py = map(int, p_part.split(','))
-        vx, vy = map(int, v_part.split(','))
-        robots.append(((px, py), (vx, vy)))
+        pos_part = parts[0][2:]  # Remove 'p='
+        vel_part = parts[1][2:]  # Remove 'v='
+        px, py = map(int, pos_part.split(','))
+        vx, vy = map(int, vel_part.split(','))
+        robots.append((px, py, vx, vy))
     
-    # Define grid dimensions
-    width = 101
-    height = 103
-    seconds = 100
-    
-    # Calculate final positions after 100 seconds
+    # Simulate 100 seconds
     positions = []
-    for (px, py), (vx, vy) in robots:
-        final_x = (px + vx * seconds) % width
-        final_y = (py + vy * seconds) % height
-        positions.append((final_x, final_y))
+    for px, py, vx, vy in robots:
+        new_x = (px + vx * seconds) % width
+        new_y = (py + vy * seconds) % height
+        positions.append((new_x, new_y))
     
     # Count robots in each quadrant
     # Middle lines are at width//2 and height//2
     mid_x = width // 2
     mid_y = height // 2
     
-    q1 = q2 = q3 = q4 = 0
+    quad1 = quad2 = quad3 = quad4 = 0
+    
     for x, y in positions:
         if x == mid_x or y == mid_y:
-            continue  # Skip robots on middle lines
+            continue  # Skip middle line robots
+        
         if x < mid_x and y < mid_y:
-            q1 += 1
+            quad1 += 1
         elif x > mid_x and y < mid_y:
-            q2 += 1
+            quad2 += 1
         elif x < mid_x and y > mid_y:
-            q3 += 1
+            quad3 += 1
         elif x > mid_x and y > mid_y:
-            q4 += 1
+            quad4 += 1
     
-    return q1 * q2 * q3 * q4
+    return quad1 * quad2 * quad3 * quad4
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
