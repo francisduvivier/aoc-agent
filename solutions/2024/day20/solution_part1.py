@@ -42,8 +42,7 @@ def solve_part1(lines):
     count = 0
     threshold = 100
     
-    # Check all pairs of track positions within Manhattan distance <= 20
-    # (since we can only cheat for up to 2 picoseconds, max distance is 20)
+    # Check all pairs of track positions
     for i, (r1, c1) in enumerate(track_positions):
         for j, (r2, c2) in enumerate(track_positions):
             if i == j:
@@ -52,17 +51,20 @@ def solve_part1(lines):
             # Manhattan distance between positions
             manhattan = abs(r1 - r2) + abs(c1 - c2)
             
-            # Can only cheat for up to 2 picoseconds (distance 20)
-            if manhattan > 20:
+            # Can only cheat for up to 2 picoseconds (distance 2)
+            if manhattan > 2:
                 continue
             
             # Must be on the path (both positions must be reachable)
             if (r1, c1) not in dist_from_start or (r2, c2) not in dist_to_end:
                 continue
             
-            # Calculate time saved
+            # Calculate original time (going around walls if necessary)
             original_time = dist_from_start[(r1, c1)] + dist_to_end[(r2, c2)] + manhattan
+            
+            # Calculate cheat time (cutting through walls)
             cheat_time = dist_from_start[(r1, c1)] + 1 + dist_to_end[(r2, c2)]
+            
             time_saved = original_time - cheat_time
             
             if time_saved >= threshold:
@@ -84,3 +86,4 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
+
