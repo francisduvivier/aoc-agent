@@ -289,9 +289,6 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
 
     logging.info(f"{CYAN}OpenRouter RESPONSE:{RESET}\n{content}")
     return code
-    except Exception as e:
-        logging.warning(f"{CYAN}OpenRouter code generation failed: {e}{RESET}")
-        return ""
 
 
 
