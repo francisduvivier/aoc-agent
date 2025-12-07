@@ -189,21 +189,24 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
 
 
     system = (
-        f"You are a Python coding assistant that solves advent of code problems. Produce a Python 3.12 compatible script that reads 'input.txt' from the current working directory and prints the part {part} answer. "
-        "Do not include explanations, only return the python source code. Keep solution concise and robust."
+        f"You are a Python coding assistant that solves Advent of Code problems. Produce a Python 3.12 compatible script that reads 'input.txt' from the current working directory and prints the part {part} answer. "
+        "Do not include explanations, only return the python source code. Keep solution concise and robust but also follow the users' instructions."
         "Provide a python script that reads 'input.txt' and prints the part {part} answer. Use only standard library. Include necessary parsing."
         f"IMPORTANT: You MUST fill in the 'samples' list with (sample_input, expected_result) tuples extracted from the problem statement.\n"
         f"IMPORTANT: Your solution MUST use this scaffold because the output format is used for evaluating your result: ```python\n{scaffold}\n```\n"
     )
     INPUT_SAMPLE_SIZE = 400
     cutoff = int(INPUT_SAMPLE_SIZE / 2)
+    user_msg = ""
+    if previous_code and feedback:
+        user_msg += f"\nThe solution you provided did not work, so use asserts and debug prints in your solution in this retry. I'll provide you previous code, the error and problem statement again:\n"
+
     user_msg = (f"First and last part of the input.txt file:\n\n"
                 f"{input_sample[:cutoff] + "..." + input_sample[-max(0, min(cutoff, len(input_sample) - cutoff)):]}"
                 f"\n\nProblem statement:\n{problem}\n\n")
-
     if previous_code and feedback:
-        user_msg += f"\nIMPORTANT: You failed previously, please use asserts, reasoning comments and debug prints in your solution in this retry.\n"
-        user_msg += f"\n\nPrevious attempt code:\n```python\n{previous_code}\n```\nnFeedback: {feedback}\n\nPlease fix the code."
+        user_msg += f"\n\nPrevious failed attempt code:\n```python\n{previous_code}\n```\nnFeedback: {feedback}\n\nPlease fix the code."
+
     payload = {"model": model,
                "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_msg}],
                "temperature": 0.01, "top_p": 0.01}

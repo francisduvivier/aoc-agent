@@ -143,11 +143,6 @@ def main():
                 logging.info("Part 1 Attempt %d/%d", attempt, max_attempts)
                 output = None
 
-                # Reset to scaffold on fresh start
-                if attempt == 1 and not feedback:
-                    # Load template again to be sure     
-                    feedback = "Starting fresh. Please implement the solution starting from this scaffold. Fill in sample_input and sample_answer. The script MUST print the test result first, then the real result."
-
                 # Try to run existing solution first if no feedback yet (skipped if we just reset)
                 final_out_pattern_1, sample_out_pattern_1 = getOutputCheckRegex(1, scaffold)
 
@@ -174,12 +169,12 @@ def main():
                                 final_match = re.search(final_out_pattern_1, proc.stdout)
                                 outputTail = proc.stdout[-OUTPUT_TAIL_SIZE:]
                                 if not sample_match:
-                                    feedback = "Solution code did print any sample check formatted as \'---- Sample (.+?) Solution Part 1: (.+?) ----\': Instead, the following {0} chars where printed last: {1}".format(
+                                    feedback = "Solution code did print any Sample result in the format of the scaffold: Instead, the following {0} chars where printed last: {1}".format(
                                         str(OUTPUT_TAIL_SIZE), outputTail)
                                     previous_code = code
                                     logging.warning("Verification failed: %s", feedback)
                                 elif not final_match:
-                                    feedback = "Solution code did print the final output formatted as ---- Final Solution Part 1: (.+?) ----.\n Instead, the following {0} chars where printed last: {1}".format(
+                                    feedback = "Solution code did not any Final result in the format of the scaffold. Instead, the following {0} chars where printed last: {1}".format(
                                         str(OUTPUT_TAIL_SIZE), outputTail)
                                     previous_code = code
                                     logging.warning("Verification failed: %s", feedback)
@@ -210,6 +205,7 @@ def main():
                         logging.warning("No code generated.")
                         # If generation fails, maybe break or continue? Continue allows retry if transient.
 
+                feedback += f"\nThis was try number {str(attempt)}!!! Make sure not to do the exact same thing again.\n"
                 if output:
                     if _should_submit_interactive(output, 1):
                         res = submit_solution(year, day, 1, output, session)
@@ -238,6 +234,7 @@ def main():
 
                 if attempt == max_attempts:
                     logging.error("Part 1 failed after %d attempts.", max_attempts)
+                
         else:
             logging.info("Part 1 already solved.")
 
@@ -319,7 +316,7 @@ def main():
                                 logging.warning("Failed to run generated solution_part2.py: %s", e)
                                 feedback = f"Execution failed: {e}"
                                 previous_code = code
-
+                    feedback += f"\nThis was try number {str(attempt)}!!! Make sure not to do the exact same thing again.\n"
                     if output:
                         if _should_submit_interactive(output, 2):
                             res = submit_solution(year, day, 2, output, session)
@@ -419,8 +416,8 @@ def main():
                                 previous_code = code
                         else:
                             logging.warning("Failed to generate verification code.")
-
-                        if attempt == max_attempts:
+                    feedback += f"\nThis was try number {str(attempt)}!!! Make sure not to do the exact same thing again.\n"
+                    if attempt == max_attempts:
                             logging.error("Verification failed after %d attempts.", max_attempts)
 
     logging.info("Scaffold ready in %s. Use submit_solution() from aoc_tools to submit answers manually if needed.",
