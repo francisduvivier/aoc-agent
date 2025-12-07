@@ -39,7 +39,7 @@ def solve_part2(lines):
                     corners.add((x+1, y+1))
                 
                 sides = 0
-                for corner in list(corners):
+                for corner in corners:
                     x, y = corner
                     count = 0
                     for dx, dy in [(0, 0), (0, -1), (-1, 0), (-1, -1)]:
