@@ -23,7 +23,7 @@ def solve_part2(lines):
     def count_trails(start_r, start_c):
         # Use DFS to count all distinct paths from start to any 9
         # We need to track visited positions per path to avoid cycles
-        def dfs(r, c, visited):
+        def dfs(r, c):
             if grid[r][c] == 9:
                 return 1
             
@@ -32,13 +32,10 @@ def solve_part2(lines):
                 nr, nc = r + dr, c + dc
                 if 0 <= nr < rows and 0 <= nc < cols:
                     if grid[nr][nc] != -1 and grid[nr][nc] == grid[r][c] + 1:
-                        if (nr, nc) not in visited:
-                            new_visited = visited.copy()
-                            new_visited.add((nr, nc))
-                            total += dfs(nr, nc, new_visited)
+                        total += dfs(nr, nc)
             return total
         
-        return dfs(start_r, start_c, {(start_r, start_c)})
+        return dfs(start_r, start_c)
     
     total_rating = 0
     for r, c in trailheads:
@@ -64,4 +61,3 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part2(lines)
 print(f"---- Final result Part 2: {final_result} ----") # YOU MUST NOT change this output format
-
