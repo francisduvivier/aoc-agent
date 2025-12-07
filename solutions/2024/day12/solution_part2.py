@@ -48,31 +48,34 @@ def solve_part2(lines):
             if j + 1 >= cols or (i, j + 1) not in region:
                 right_fences.append((i, j))
         
-        # Count sides for top and bottom (horizontal)
-        for fences, is_top in [(top_fences, True), (bottom_fences, False)]:
-            row_groups = defaultdict(list)
-            for i, j in fences:
-                row_groups[i].append(j)
-            for i, js in row_groups.items():
-                js.sort()
-                count = 1
-                for k in range(1, len(js)):
-                    if js[k] > js[k-1] + 1:
-                        count += 1
-                sides += count
+        # Function to count sides for a direction
+        def count_sides(fences, is_row=True):
+            if is_row:
+                sigs = defaultdict(set)
+                for i, j in fences:
+                    sigs[i].add(j)
+                keys = sorted(sigs)
+            else:
+                sigs = defaultdict(set)
+                for i, j in fences:
+                    sigs[j].add(i)
+                keys = sorted(sigs)
+            count = 0
+            i = 0
+            while i < len(keys):
+                count += 1
+                j = i + 1
+                while j < len(keys) and sigs[keys[j]] == sigs[keys[i]]:
+                    j += 1
+                i = j
+            return count
         
-        # Count sides for left and right (vertical)
-        for fences, is_left in [(left_fences, True), (right_fences, False)]:
-            col_groups = defaultdict(list)
-            for i, j in fences:
-                col_groups[j].append(i)
-            for j, is_ in col_groups.items():
-                is_.sort()
-                count = 1
-                for k in range(1, len(is_)):
-                    if is_[k] > is_[k-1] + 1:
-                        count += 1
-                sides += count
+        count_top = count_sides(top_fences, True)
+        count_bottom = count_sides(bottom_fences, True)
+        count_left = count_sides(left_fences, False)
+        count_right = count_sides(right_fences, False)
+        
+        sides = count_top + count_bottom + count_left + count_right
         
         price = area * sides
         total_price += price
