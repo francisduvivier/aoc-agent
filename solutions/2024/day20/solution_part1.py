@@ -40,6 +40,7 @@ def solve_part1(lines):
     track_positions = [(r, c) for r in range(R) for c in range(C) if grid[r][c] != '#']
     
     count = 0
+    seen_cheats = set()
     for u in track_positions:
         for v in track_positions:
             if u == v:
@@ -56,7 +57,11 @@ def solve_part1(lines):
             if normal != float('inf') and cheated != float('inf'):
                 saved = normal - cheated
                 if saved >= 100:
-                    count += 1
+                    # Ensure unique cheats by start and end positions
+                    cheat = (u, v)
+                    if cheat not in seen_cheats:
+                        seen_cheats.add(cheat)
+                        count += 1
     return count
 
 # Sample data – may contain multiple samples from the problem statement.
@@ -73,3 +78,4 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
+
