@@ -35,35 +35,44 @@ def solve_part1(lines):
     dist_to_end = bfs_distances(end)
     
     # Total shortest path distance
-    total_dist = dist_from_start[end]
+    total_dist = dist_from_start.get(end, float('inf'))
     
     # Count cheats that save at least 100 picoseconds
     count = 0
     threshold = 100
     
     # Check all pairs of positions within Manhattan distance <= 20 (cheat distance)
-    # Optimization: only check positions that could potentially save time
-    for r1 in range(rows):
-        for c1 in range(cols):
-            if grid[r1][c1] == '#' or (r1, c1) not in dist_from_start:
-                continue
-            for r2 in range(max(0, r1 - 20), min(rows, r1 + 21)):
-                for c2 in range(max(0, c1 - 20), min(cols, c1 + 21)):
-                    if grid[r2][c2] == '#' or (r2, c2) not in dist_to_end:
-                        continue
-                    # Manhattan distance between positions
-                    cheat_dist = abs(r1 - r2) + abs(c1 - c2)
-                    if cheat_dist > 20 or cheat_dist == 0:
-                        continue
-                    
-                    # Original distance via normal path
-                    original_dist = dist_from_start[(r1, c1)] + dist_to_end[(r2, c2)]
-                    # New distance with cheat
-                    new_dist = dist_from_start[(r1, c1)] + cheat_dist + dist_to_end[(r2, c2)]
-                    # Time saved
-                    saved = original_dist - new_dist
-                    if saved >= threshold:
-                        count += 1
+    for pos1 in dist_from_start:
+        r1, c1 = pos1
+        for dr in range(-20, 21):
+            for dc in range(-20, 21):
+                if abs(dr) + abs(dc) > 20:  # Manhattan distance limit
+                    continue
+                r2, c2 = r1 + dr, c1 + dc
+                pos2 = (r2, c2)
+                
+                if not (0 <= r2 < rows and 0 <= c2 < cols):
+                    continue
+                if pos1 == pos2:
+                    continue
+                
+                # Calculate cheat distance (Manhattan distance)
+                cheat_dist = abs(dr) + abs(dc)
+                if cheat_dist > 20:  # Cheat limit
+                    continue
+                
+                # Check if both positions are on the shortest path
+                if pos1 not in dist_from_start or pos2 not in dist_to_end:
+                    continue
+                
+                # Calculate new path length with cheat
+                new_dist = dist_from_start[pos1] + cheat_dist + dist_to_end[pos2]
+                
+                # Calculate time saved
+                saved = total_dist - new_dist
+                
+                if saved >= threshold:
+                    count += 1
     
     return count
 
@@ -81,4 +90,3 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
-
