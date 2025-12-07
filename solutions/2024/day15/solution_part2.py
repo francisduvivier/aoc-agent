@@ -1,185 +1,152 @@
 # Edit this file: implement solve_part2
 
 def solve_part2(lines):
-    # Parse the map and moves
+    # Find map lines and moves
+    i = 0
     map_lines = []
-    moves = []
-    parsing_moves = False
+    while i < len(lines) and lines[i] and lines[i][0] == '#':
+        map_lines.append(lines[i])
+        i += 1
+    moves = ''.join(lines[i:]).replace('\n', '')
     
-    for line in lines:
-        if line.strip() == "":
-            parsing_moves = True
-            continue
-        if parsing_moves:
-            moves.extend(list(line.strip()))
-        else:
-            map_lines.append(line.strip())
+    # Scale the map for part 2
+    new_map = []
+    for line in map_lines:
+        new_line = ''
+        for ch in line:
+            if ch == '#':
+                new_line += '##'
+            elif ch == 'O':
+                new_line += '[]'
+            elif ch == '.':
+                new_line += '..'
+            elif ch == '@':
+                new_line += '@.'
+        new_map.append(new_line)
     
-    # Build the wide map (2x width)
-    wide_map = []
-    for row in map_lines:
-        wide_row = ""
-        for ch in row:
-            if ch == "#":
-                wide_row += "##"
-            elif ch == "O":
-                wide_row += "[]"
-            elif ch == ".":
-                wide_row += ".."
-            elif ch == "@":
-                wide_row += "@."
-        wide_map.append(wide_row)
+    # Create grid
+    grid = [list(row) for row in new_map]
     
     # Find robot position
-    robot_r, robot_c = -1, -1
-    for r, row in enumerate(wide_map):
-        for c, ch in enumerate(row):
-            if ch == "@":
-                robot_r, robot_c = r, c
+    r, c = None, None
+    for i in range(len(grid)):
+        for j in range(len(grid[0])):
+            if grid[i][j] == '@':
+                r, c = i, j
                 break
-        if robot_r != -1:
+        if r is not None:
             break
     
-    # Process moves
+    # Directions
+    dirs = {'<': (0, -1), '>': (0, 1), '^': (-1, 0), 'v': (1, 0)}
+    
+    # Simulate moves
     for move in moves:
-        dr, dc = 0, 0
-        if move == "^":
-            dr = -1
-        elif move == "v":
-            dr = 1
-        elif move == "<":
-            dc = -1
-        elif move == ">":
-            dc = 1
-        
-        # Check what's in the way
-        next_r, next_c = robot_r + dr, robot_c + dc
-        if wide_map[next_r][next_c] == "#":
-            # Wall - can't move
+        dr, dc = dirs[move]
+        nr, nc = r + dr, c + dc
+        if grid[nr][nc] == '#':
             continue
-        
-        if wide_map[next_r][next_c] == ".":
-            # Empty space - move robot
-            wide_map[robot_r] = wide_map[robot_r][:robot_c] + "." + wide_map[robot_r][robot_c+1:]
-            wide_map[next_r] = wide_map[next_r][:next_c] + "@" + wide_map[next_r][next_c+1:]
-            robot_r, robot_c = next_r, next_c
+        if grid[nr][nc] == '.':
+            grid[r][c] = '.'
+            grid[nr][nc] = '@'
+            r, c = nr, nc
             continue
-        
-        if wide_map[next_r][next_c] in ["[", "]"]:
-            # Box - need to check if it can be pushed
-            if can_push_box(wide_map, next_r, next_c, dr, dc):
-                push_box(wide_map, next_r, next_c, dr, dc)
-                # Move robot
-                wide_map[robot_r] = wide_map[robot_r][:robot_c] + "." + wide_map[robot_r][robot_c+1:]
-                wide_map[next_r] = wide_map[next_r][:next_c] + "@" + wide_map[next_r][next_c+1:]
-                robot_r, robot_c = next_r, next_c
+        # Try to push
+        if dc != 0:  # Horizontal
+            if dc == 1:  # Right
+                pos = c + 1
+                if grid[r][pos] == '.':
+                    grid[r][c] = '.'
+                    grid[r][pos] = '@'
+                    r, c = r, pos
+                elif grid[r][pos] == '#':
+                    continue
+                else:
+                    end_pos = pos
+                    while end_pos < len(grid[0]) and grid[r][end_pos] in '[]':
+                        end_pos += 2
+                    if end_pos >= len(grid[0]) or grid[r][end_pos] == '#':
+                        continue
+                    for p in range(end_pos, pos, -1):
+                        grid[r][p] = grid[r][p-1]
+                    grid[r][pos] = '.'
+                    grid[r][c] = '.'
+                    grid[r][c+1] = '@'
+                    r, c = r, c+1
+            else:  # Left
+                pos = c - 1
+                if grid[r][pos] == '.':
+                    grid[r][c] = '.'
+                    grid[r][pos] = '@'
+                    r, c = r, pos
+                elif grid[r][pos] == '#':
+                    continue
+                else:
+                    end_pos = pos
+                    while end_pos >= 0 and grid[r][end_pos] in '[]':
+                        end_pos -= 2
+                    if end_pos < 0 or grid[r][end_pos] == '#':
+                        continue
+                    for p in range(end_pos, pos):
+                        grid[r][p] = grid[r][p+1]
+                    grid[r][pos] = '.'
+                    grid[r][c] = '.'
+                    grid[r][c-1] = '@'
+                    r, c = r, c-1
+        else:  # Vertical
+            from collections import deque
+            to_move = set()
+            q = deque()
+            if grid[nr][nc] == '[':
+                box = (nr, nc)
+            else:
+                box = (nr, nc-1)
+            q.append(box)
+            to_move.add(box)
+            can_move = True
+            while q and can_move:
+                br, bc = q.popleft()
+                new_r = br + dr
+                for cc in [bc, bc+1]:
+                    if grid[new_r][cc] == '#':
+                        can_move = False
+                        break
+                    elif grid[new_r][cc] == '[':
+                        new_box = (new_r, cc)
+                        if new_box not in to_move:
+                            to_move.add(new_box)
+                            q.append(new_box)
+                    elif grid[new_r][cc] == ']':
+                        new_box = (new_r, cc-1)
+                        if new_box not in to_move:
+                            to_move.add(new_box)
+                            q.append(new_box)
+            if not can_move:
+                continue
+            # Move boxes
+            for br, bc in to_move:
+                grid[br][bc] = '.'
+                grid[br][bc+1] = '.'
+            for br, bc in to_move:
+                new_r = br + dr
+                grid[new_r][bc] = '['
+                grid[new_r][bc+1] = ']'
+            # Move robot
+            grid[r][c] = '.'
+            grid[nr][nc] = '@'
+            r, c = nr, nc
     
-    # Calculate GPS coordinates
-    total_gps = 0
-    for r, row in enumerate(wide_map):
-        for c, ch in enumerate(row):
-            if ch == "[":
-                # This is the left half of a box
-                total_gps += 100 * r + c
-    
-    return total_gps
-
-def can_push_box(wide_map, r, c, dr, dc):
-    """Check if a box at (r,c) can be pushed in direction (dr,dc)"""
-    if wide_map[r][c] == "[":
-        # Left half of box - check both halves
-        if dc != 0:  # Horizontal push
-            # Check if right half can move
-            if not can_move_tile(wide_map, r, c+1, dr, dc):
-                return False
-        elif dr != 0:  # Vertical push
-            # Check if both halves can move down/up
-            if not can_move_tile(wide_map, r, c, dr, dc):
-                return False
-            if not can_move_tile(wide_map, r, c+1, dr, dc):
-                return False
-    elif wide_map[r][c] == "]":
-        # Right half of box - check both halves
-        if dc != 0:  # Horizontal push
-            # Check if left half can move
-            if not can_move_tile(wide_map, r, c-1, dr, dc):
-                return False
-        elif dr != 0:  # Vertical push
-            # Check if both halves can move down/up
-            if not can_move_tile(wide_map, r, c, dr, dc):
-                return False
-            if not can_move_tile(wide_map, r, c-1, dr, dc):
-                return False
-    
-    return True
-
-def can_move_tile(wide_map, r, c, dr, dc):
-    """Check if a single tile can move"""
-    new_r, new_c = r + dr, c + dc
-    if new_r < 0 or new_r >= len(wide_map) or new_c < 0 or new_c >= len(wide_map[0]):
-        return False
-    if wide_map[new_r][new_c] == "#":
-        return False
-    if wide_map[new_r][new_c] in ["[", "]"]:
-        # Recursively check if the box can be pushed
-        return can_push_box(wide_map, new_r, new_c, dr, dc)
-    return True
-
-def push_box(wide_map, r, c, dr, dc):
-    """Push a box at (r,c) in direction (dr,dc)"""
-    if wide_map[r][c] == "[":
-        if dc != 0:  # Horizontal push
-            # Move right half
-            new_r, new_c = r + dr, c + dc + 1
-            wide_map[new_r] = wide_map[new_r][:new_c] + "]" + wide_map[new_r][new_c+1:]
-            # Clear old position of right half
-            wide_map[r] = wide_map[r][:c+1] + "." + wide_map[r][c+2:]
-            
-            # Move left half
-            new_r, new_c = r + dr, c + dc
-            wide_map[new_r] = wide_map[new_r][:new_c] + "[" + wide_map[new_r][new_c+1:]
-            # Clear old position of left half
-            wide_map[r] = wide_map[r][:c] + "." + wide_map[r][c+1:]
-        elif dr != 0:  # Vertical push
-            # Move both halves down/up
-            for offset in [0, 1]:  # Left and right halves
-                new_r, new_c = r + dr, c + offset
-                wide_map[new_r] = wide_map[new_r][:new_c] + wide_map[r][c+offset] + wide_map[new_r][new_c+1:]
-                wide_map[r] = wide_map[r][:c+offset] + "." + wide_map[r][c+offset+1:]
-    elif wide_map[r][c] == "]":
-        if dc != 0:  # Horizontal push
-            # Move left half
-            new_r, new_c = r + dr, c + dc - 1
-            wide_map[new_r] = wide_map[new_r][:new_c] + "[" + wide_map[new_r][new_c+1:]
-            # Clear old position of left half
-            wide_map[r] = wide_map[r][:c-1] + "." + wide_map[r][c:]
-            
-            # Move right half
-            new_r, new_c = r + dr, c + dc
-            wide_map[new_r] = wide_map[new_r][:new_c] + "]" + wide_map[new_r][new_c+1:]
-            # Clear old position of right half
-            wide_map[r] = wide_map[r][:c] + "." + wide_map[r][c+1:]
-        elif dr != 0:  # Vertical push
-            # Move both halves down/up
-            for offset in [-1, 0]:  # Left and right halves
-                new_r, new_c = r + dr, c + offset
-                wide_map[new_r] = wide_map[new_r][:new_c] + wide_map[r][c+offset] + wide_map[new_r][new_c+1:]
-                wide_map[r] = wide_map[r][:c+offset] + "." + wide_map[r][c+offset+1:]
+    # Calculate GPS sum
+    total = 0
+    for i in range(len(grid)):
+        for j in range(len(grid[0])):
+            if grid[i][j] == '[':
+                total += 100 * i + j
+    return total
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples IF there are any samples given for part 2.
-samples = [
-    ("""########
-#..O.O.#
-##@.O..#
-#...O..#
-#.#.O..#
-#...O..#
-#......#
-########
-
-<^^>>>vv<v>>v<<""", 2028),
-    ("""##########
+samples = [("""##########
 #..O..O.O#
 #......O.#
 #.OO..O.O#
@@ -190,8 +157,7 @@ samples = [
 #....O...#
 ##########
 
-<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^<<>><>>v<vvv<>^v^>^<<<><<<v<<<v<^v>^<<>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<""", 9021)
-]  # TODO: fill with actual samples and expected results
+<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<<>><>v<vvv<>^v^>^<<<><<<v<<<v^vv^v>vvv<><>vv<<<^^>>>>v<>^>^v<v^vv^v^<^>vvv>v>^^v^v<>vv>>><^<>v>vvv>vv<<v>^^>>^^^><>v^<^^v>vv<^^v< v^v^v<<<^^v<v>^<""", 9021)]  # TODO: fill with actual samples and expected results
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     sample_result = solve_part2(sample_input.strip().splitlines())
@@ -203,4 +169,3 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part2(lines)
 print(f"---- Final result Part 2: {final_result} ----") # YOU MUST NOT change this output format
-
