@@ -23,6 +23,8 @@ def solve_part2(lines):
     def count_trails(start_r, start_c):
         # Use DFS to count all distinct paths from start to any 9
         # We can visit the same cell multiple times if we reach it through different paths
+        # The key insight: we count distinct paths, not just reachable 9s
+        
         def dfs(r, c):
             if grid[r][c] == 9:
                 return 1
