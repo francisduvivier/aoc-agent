@@ -15,12 +15,14 @@ def solve_part1(lines):
             elif grid[r][c] == 'E':
                 end = (r, c)
     
-    # BFS to get shortest distances from start and to end
-    def bfs(src):
+    # BFS to get distances from start and to end
+    def bfs(src, target=None):
         dist = {src: 0}
         q = deque([src])
         while q:
             r, c = q.popleft()
+            if target is not None and (r, c) == target:
+                return dist[target]
             for dr, dc in [(1,0), (-1,0), (0,1), (0,-1)]:
                 nr, nc = r + dr, c + dc
                 if 0 <= nr < R and 0 <= nc < C and grid[nr][nc] != '#' and (nr, nc) not in dist:
@@ -32,37 +34,43 @@ def solve_part1(lines):
     dist_to_end = bfs(end)
     
     # Cheats: exactly 2 steps through walls allowed
-    # For each pair of track positions (u, v) with Manhattan distance <= 2,
-    # if u and v are both track, the cheat saves:
-    #   dist_from_start[u] + dist_to_end[v] + 2 - dist_from_start[v]
-    # where dist_from_start[v] is the normal time.
+    # For each pair of points (u, v) with Manhattan distance <= 2,
+    # if u and v are both track and reachable,
+    # cheat time = dist_from_start[u] + 1 + (1 if dist(u,v)==2 else 0) + dist_to_end[v]
+    # Actually simpler: cheat saves (dist_from_start[u] + dist_to_end[v] + cheat_len) - (dist_from_start[v] + dist_to_end[v])
+    # But since we want savings >= 100, we can compute savings directly.
     
-    track_positions = [(r, c) for r in range(R) for c in range(C) if grid[r][c] != '#']
+    savings_threshold = 100
+    cheats = 0
     
-    count = 0
-    seen_cheats = set()
-    for u in track_positions:
-        for v in track_positions:
-            if u == v:
+    # All track positions
+    track = [(r, c) for r in range(R) for c in range(C) if grid[r][c] != '#']
+    
+    # For each track position u as cheat start
+    for r1, c1 in track:
+        if (r1, c1) not in dist_from_start:
+            continue
+        # For each track position v as cheat end within Manhattan distance 2
+        for r2, c2 in track:
+            if (r2, c2) not in dist_to_end:
                 continue
-            # Manhattan distance must be <= 2
-            if abs(u[0] - v[0]) + abs(u[1] - v[1]) > 2:
+            # Manhattan distance
+            md = abs(r1 - r2) + abs(c1 - c2)
+            if md == 0 or md > 2:
                 continue
             # Cheats are uniquely identified by start and end positions
-            # Start position is u, end position is v
-            # Normal time: dist_from_start[v]
-            # Cheated time: dist_from_start[u] + 2 + dist_to_end[v]
-            normal = dist_from_start.get(v, float('inf'))
-            cheated = dist_from_start.get(u, float('inf')) + 2 + dist_to_end.get(v, float('inf'))
-            if normal != float('inf') and cheated != float('inf'):
-                saved = normal - cheated
-                if saved >= 100:
-                    # Ensure unique cheats by start and end positions
-                    cheat = (u, v)
-                    if cheat not in seen_cheats:
-                        seen_cheats.add(cheat)
-                        count += 1
-    return count
+            # Normal time from u to v along track
+            normal_time = dist_from_start.get((r2, c2), float('inf')) - dist_from_start[(r1, c1)]
+            if normal_time < 0:
+                continue
+            # Cheat time: md steps (through walls)
+            cheat_time = md
+            # Savings
+            savings = normal_time - cheat_time
+            if savings >= savings_threshold:
+                cheats += 1
+                
+    return cheats
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
@@ -78,4 +86,3 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
-
