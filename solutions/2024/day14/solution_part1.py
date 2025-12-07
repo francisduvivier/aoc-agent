@@ -15,8 +15,8 @@ def solve_part1(lines):
         robots.append(((px, py), (vx, vy)))
 
     # Dimensions
-    W = 11
-    H = 7
+    W = 101
+    H = 103
     seconds = 100
 
     # Compute final positions after 100 seconds
@@ -28,18 +28,18 @@ def solve_part1(lines):
 
     # Count robots in each quadrant after 100 seconds
     # Quadrants: top-left, top-right, bottom-left, bottom-right
-    # Middle lines (x=5 or y=3) are excluded
+    # Middle lines (x=50 or y=51) are excluded
     q1 = q2 = q3 = q4 = 0
     for x, y in positions:
-        if x == 5 or y == 3:
+        if x == 50 or y == 51:
             continue
-        if x < 5 and y < 3:
+        if x < 50 and y < 51:
             q1 += 1
-        elif x > 5 and y < 3:
+        elif x > 50 and y < 51:
             q2 += 1
-        elif x < 5 and y > 3:
+        elif x < 50 and y > 51:
             q3 += 1
-        elif x > 5 and y > 3:
+        elif x > 50 and y > 51:
             q4 += 1
 
     return q1 * q2 * q3 * q4
