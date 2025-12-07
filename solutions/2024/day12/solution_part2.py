@@ -51,24 +51,35 @@ def solve_part2(lines):
         # Function to count sides for a direction
         def count_sides(fences, is_row=True):
             if is_row:
-                sigs = defaultdict(set)
+                sigs = defaultdict(list)
                 for i, j in fences:
-                    sigs[i].add(j)
-                keys = sorted(sigs)
+                    sigs[i].append(j)
+                total = 0
+                for row in sigs:
+                    cols = sorted(sigs[row])
+                    if not cols:
+                        continue
+                    count = 1
+                    for k in range(1, len(cols)):
+                        if cols[k] != cols[k-1] + 1:
+                            count += 1
+                    total += count
+                return total
             else:
-                sigs = defaultdict(set)
+                sigs = defaultdict(list)
                 for i, j in fences:
-                    sigs[j].add(i)
-                keys = sorted(sigs)
-            count = 0
-            i = 0
-            while i < len(keys):
-                count += 1
-                j = i + 1
-                while j < len(keys) and sigs[keys[j]] == sigs[keys[i]]:
-                    j += 1
-                i = j
-            return count
+                    sigs[j].append(i)
+                total = 0
+                for col in sigs:
+                    rows_list = sorted(sigs[col])
+                    if not rows_list:
+                        continue
+                    count = 1
+                    for k in range(1, len(rows_list)):
+                        if rows_list[k] != rows_list[k-1] + 1:
+                            count += 1
+                    total += count
+                return total
         
         count_top = count_sides(top_fences, True)
         count_bottom = count_sides(bottom_fences, True)
