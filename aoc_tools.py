@@ -101,6 +101,32 @@ def download_input(year: int, day: int, session_cookie: str, out_dir: str) -> st
     out_path.write_text(r.text)
     return str(out_path)
 
+
+def check_pricing(model: str) -> bool:
+    """Check if the model's pricing is within the limit (0.0001 per 1M tokens)."""
+    try:
+        r = requests.get("https://openrouter.ai/api/v1/models", timeout=10)
+        r.raise_for_status()
+        data = r.json()
+        for m in data.get("data", []):
+            if m.get("id") == model:
+                pricing = m.get("pricing", {})
+                prompt = float(pricing.get("prompt", 0)) * 1_000_000
+                completion = float(pricing.get("completion", 0)) * 1_000_000
+                
+                # Limit: 0.0001 per 1M tokens
+                limit = 0.0001
+                if prompt > limit or completion > limit:
+                    logging.warning(f"Model {model} pricing too high: Prompt=${prompt:.6f}/1M, Completion=${completion:.6f}/1M. Limit=${limit}/1M.")
+                    return False
+                return True
+        logging.warning(f"Model {model} not found in pricing list. Proceeding with caution.")
+        return True
+    except Exception as e:
+        logging.warning(f"Failed to check pricing: {e}. Proceeding.")
+        return True
+
+
 # kwaipilot/kat-coder-pro:free
 # tngtech/deepseek-r1t2-chimera:free
 # deepseek/deepseek-chat-v3.1
@@ -135,6 +161,11 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
     CYAN = '\033[36m'
     RESET = '\033[0m'
     logging.info(f"{YELLOW}OpenRouter REQUEST payload:{RESET}\n{payload}")
+    
+    if not check_pricing(model):
+        logging.error("Pricing check failed. Request skipped.")
+        return ""
+
     try:
         r = requests.post(url, headers=headers, json=payload, timeout=60)
         try:
@@ -162,6 +193,14 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
         # extract code block if present
         m = re.search(r"```(?:python)?\n([\s\S]*?)```", content)
         code = m.group(1) if m else content
+        
+        usage = j.get("usage", {})
+        if usage:
+            prompt_tokens = usage.get("prompt_tokens")
+            completion_tokens = usage.get("completion_tokens")
+            total_tokens = usage.get("total_tokens")
+            logging.info(f"Token Usage: Prompt={prompt_tokens}, Completion={completion_tokens}, Total={total_tokens}")
+
         logging.info(f"{CYAN}OpenRouter RESPONSE:{RESET}\n{content}")
         return code
     except Exception as e:
