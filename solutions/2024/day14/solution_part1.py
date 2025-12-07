@@ -1,8 +1,8 @@
 # Edit this file: implement solve_part1
 
 def solve_part1(lines):
-    width = 101
-    height = 103
+    width = 11
+    height = 7
     seconds = 100
     
     quadrants = [0, 0, 0, 0]
