@@ -451,17 +451,27 @@ def main():
                             try:
                                 proc = subprocess.run(["python3", "solution_part2_verify.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
                                 if proc.returncode == 0 and proc.stdout.strip():
-                                    output = proc.stdout.strip().splitlines()[-1]
-                                    logging.info("Generated Answer: %s", output)
+                                if proc.returncode == 0 and proc.stdout.strip():
+                                    # Parse output with regex
+                                    sample_match = re.search(r"---- Sample Solution Part 2: (.+?) ----", proc.stdout)
+                                    final_match = re.search(r"---- Final Solution Part 2: (.+?) ----", proc.stdout)
                                     
-                                    if output == known_answer:
-                                        logging.info("VERIFICATION SUCCESS: Generated answer matches known answer.")
-                                        os.rename(sol2_verify, os.path.join(workdir, "solution_part2.py"))
-                                        git_commit([os.path.join(workdir, "solution_part2.py")], f"Agent verified solution_part2 for {year} day {day}")
-                                        break
+                                    if sample_match and final_match:
+                                        output = final_match.group(1).strip()
+                                        logging.info("Generated Answer: %s", output)
+                                        
+                                        if output == known_answer:
+                                            logging.info("VERIFICATION SUCCESS: Generated answer matches known answer.")
+                                            os.rename(sol2_verify, os.path.join(workdir, "solution_part2.py"))
+                                            git_commit([os.path.join(workdir, "solution_part2.py")], f"Agent verified solution_part2 for {year} day {day}")
+                                            break
+                                        else:
+                                            logging.warning("VERIFICATION FAILED: Generated answer '%s' != Known answer '%s'", output, known_answer)
+                                            feedback = f"Generated answer '{output}' is incorrect. Expected '{known_answer}'."
+                                            previous_code = code
                                     else:
-                                        logging.warning("VERIFICATION FAILED: Generated answer '%s' != Known answer '%s'", output, known_answer)
-                                        feedback = f"Generated answer '{output}' is incorrect."
+                                        logging.warning("Verification script produced insufficient output (missing format markers). Output:\n%s", proc.stdout)
+                                        feedback = "Verification script produced insufficient output (missing format markers)."
                                         previous_code = code
                                 else:
                                     logging.warning("Verification script failed or produced no output.")
