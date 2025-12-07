@@ -6,6 +6,7 @@ import logging
 import re
 import requests
 import subprocess
+import sys
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO)
@@ -166,15 +167,59 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
         logging.error("Pricing check failed. Request skipped.")
         return ""
 
+    max_retries = 3
+    retry_delay = 5
+    user_approved_retry = False
+
+    for attempt in range(max_retries + 1):
+        try:
+            r = requests.post(url, headers=headers, json=payload, timeout=60)
+            if r.status_code == 429:
+                logging.warning(f"{CYAN}OpenRouter Rate Limit (429).{RESET}")
+                if not user_approved_retry:
+                    # Ask user if they want to wait/retry
+                    # If auto-submit is on, maybe we assume yes? But user said "ask user interaction"
+                    # We'll use input() if interactive
+                    if sys.stdin and sys.stdin.isatty():
+                        try:
+                            resp = input("Rate limited. Continue and retry? (y/N): ").strip().lower()
+                            if resp in ("y", "yes"):
+                                user_approved_retry = True
+                            else:
+                                logging.error("User cancelled retry.")
+                                return ""
+                        except Exception:
+                            logging.warning("Failed to read input. Aborting.")
+                            return ""
+                    else:
+                         # Non-interactive: log and fail, or maybe wait?
+                         # User said "if user interaction was requested and approved, it should never be rate limited"
+                         # which implies we should handle it. But without interaction, we can't ask.
+                         # Let's just log and fail for now if non-interactive.
+                         logging.error("Rate limited in non-interactive mode. Aborting.")
+                         return ""
+                
+                # If we are here, user approved (or we are retrying)
+                logging.info(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+                retry_delay *= 2 # Exponential backoff
+                continue
+
+            try:
+                r.raise_for_status()
+            except requests.HTTPError:
+                logging.warning(f"{CYAN}OpenRouter returned status {r.status_code}: {r.text[:1000]}{RESET}")
+                return ""
+            break # Success
+        except Exception as e:
+             logging.warning(f"{CYAN}Request failed: {e}{RESET}")
+             return ""
+    else:
+        logging.error("Max retries exceeded.")
+        return ""
+
+    # parse json
     try:
-        r = requests.post(url, headers=headers, json=payload, timeout=60)
-        try:
-            r.raise_for_status()
-        except requests.HTTPError:
-            logging.warning(f"{CYAN}OpenRouter returned status {r.status_code}: {r.text[:1000]}{RESET}")
-            return ""
-        # parse json
-        try:
             j = r.json()
         except Exception:
             logging.warning(f"{CYAN}OpenRouter returned non-json response: {r.text[:1000]}{RESET}")
@@ -202,6 +247,7 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
             logging.info(f"Token Usage: Prompt={prompt_tokens}, Completion={completion_tokens}, Total={total_tokens}")
 
         logging.info(f"{CYAN}OpenRouter RESPONSE:{RESET}\n{content}")
+        return code
         return code
     except Exception as e:
         logging.warning(f"{CYAN}OpenRouter code generation failed: {e}{RESET}")
