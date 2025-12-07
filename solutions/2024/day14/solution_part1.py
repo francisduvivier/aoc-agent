@@ -1,63 +1,57 @@
 # Edit this file: implement solve_part1
 
 def solve_part1(lines):
-    width = 101
-    height = 103
-    seconds = 100
-    
-    # Count robots in each quadrant
-    # Quadrants: 0=top-left, 1=top-right, 2=bottom-left, 3=bottom-right
-    quadrants = [0, 0, 0, 0]
-    
+    # Parse input
+    robots = []
     for line in lines:
         if not line.strip():
             continue
-            
-        # Parse line: p=46,91 v=80,-6
+        # Format: p=x,y v=x,y
         parts = line.split()
         pos_part = parts[0][2:]  # Remove 'p='
         vel_part = parts[1][2:]  # Remove 'v='
         
         px, py = map(int, pos_part.split(','))
         vx, vy = map(int, vel_part.split(','))
-        
-        # Calculate final position after 100 seconds
-        final_x = (px + vx * seconds) % width
-        final_y = (py + vy * seconds) % height
-        
-        # Check if robot is in any quadrant (not on middle lines)
-        # Middle lines are at width//2 = 50 and height//2 = 51
-        if final_x != width // 2 and final_y != height // 2:
-            # Determine which quadrant
-            if final_x < width // 2:  # Left half
-                if final_y < height // 2:  # Top half
-                    quadrants[0] += 1  # Top-left
-                else:  # Bottom half
-                    quadrants[2] += 1  # Bottom-left
-            else:  # Right half
-                if final_y < height // 2:  # Top half
-                    quadrants[1] += 1  # Top-right
-                else:  # Bottom half
-                    quadrants[3] += 1  # Bottom-right
+        robots.append(((px, py), (vx, vy)))
     
-    # Return product of all four quadrants
-    return quadrants[0] * quadrants[1] * quadrants[2] * quadrants[3]
+    # Simulate 100 seconds
+    width, height = 101, 103
+    for _ in range(100):
+        new_robots = []
+        for (px, py), (vx, vy) in robots:
+            new_px = (px + vx) % width
+            new_py = (py + vy) % height
+            new_robots.append(((new_px, new_py), (vx, vy)))
+        robots = new_robots
+    
+    # Count robots in each quadrant
+    # Quadrants are defined by splitting the grid in half (excluding middle lines)
+    mid_x = width // 2
+    mid_y = height // 2
+    
+    q1 = q2 = q3 = q4 = 0
+    
+    for (px, py), _ in robots:
+        # Skip robots on middle lines
+        if px == mid_x or py == mid_y:
+            continue
+            
+        if px < mid_x and py < mid_y:
+            q1 += 1
+        elif px > mid_x and py < mid_y:
+            q2 += 1
+        elif px < mid_x and py > mid_y:
+            q3 += 1
+        elif px > mid_x and py > mid_y:
+            q4 += 1
+    
+    return q1 * q2 * q3 * q4
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
 samples = [
-("""p=0,4 v=3,-3
-p=6,3 v=-1,-3
-p=10,3 v=-1,2
-p=2,0 v=2,-1
-p=0,0 v=1,3
-p=3,0 v=-2,-2
-p=7,6 v=-1,-3
-p=3,0 v=-1,-2
-p=9,3 v=2,3
-p=7,3 v=-1,2
-p=2,4 v=2,-3
-p=9,5 v=-3,-3""", 12)
+    ("p=0,4 v=3,-3\np=6,3 v=-1,-3\np=10,3 v=-1,2\np=2,0 v=2,-1\np=0,0 v=1,3\np=3,0 v=-2,-2\np=7,6 v=-1,-3\np=3,0 v=-1,-2\np=9,3 v=2,3\np=7,3 v=-1,2\np=2,4 v=2,-3\np=9,5 v=-3,-3", 12)
 ]  # TODO: fill with actual samples and expected results
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
