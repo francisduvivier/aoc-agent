@@ -1,23 +1,22 @@
 # Edit this file: implement solve_part1
 
 def solve_part1(lines):
-    left_list = []
-    right_list = []
-    
+    left = []
+    right = []
     for line in lines:
-        if not line.strip():
+        if not line:
             continue
         parts = line.split()
         if len(parts) >= 2:
-            left_list.append(int(parts[0]))
-            right_list.append(int(parts[1]))
+            left.append(int(parts[0]))
+            right.append(int(parts[1]))
     
-    left_list.sort()
-    right_list.sort()
+    left.sort()
+    right.sort()
     
     total_distance = 0
-    for left_val, right_val in zip(left_list, right_list):
-        total_distance += abs(left_val - right_val)
+    for l, r in zip(left, right):
+        total_distance += abs(l - r)
     
     return total_distance
 
@@ -37,3 +36,4 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
+
