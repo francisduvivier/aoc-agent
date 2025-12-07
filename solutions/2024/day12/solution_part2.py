@@ -7,83 +7,98 @@ def solve_part2(lines):
     total_price = 0
 
     def get_neighbors(r, c):
-        return [(nr, nc) for nr, nc in [(r-1,c), (r+1,c), (r,c-1), (r,c+1)] if 0 <= nr < rows and 0 <= nc < cols]
+        return [(nr, nc) for nr, nc in [(r-1,c), (r+1,c), (r,c-1), (r,c+1)] 
+                if 0 <= nr < rows and 0 <= nc < cols]
 
-    def flood_fill(r, c, plant):
-        region = []
-        q = deque([(r, c)])
+    def bfs(r, c, plant_type):
+        queue = deque([(r, c)])
         visited[r][c] = True
-        while q:
-            cr, cc = q.popleft()
-            region.append((cr, cc))
+        region_cells = []
+        while queue:
+            cr, cc = queue.popleft()
+            region_cells.append((cr, cc))
             for nr, nc in get_neighbors(cr, cc):
-                if not visited[nr][nc] and grid[nr][nc] == plant:
+                if not visited[nr][nc] and grid[nr][nc] == plant_type:
                     visited[nr][nc] = True
-                    q.append((nr, nc))
-        return region
+                    queue.append((nr, nc))
+        return region_cells
 
-    def count_sides(region):
+    def count_sides(cells):
+        # Create a set of region cells for fast lookup
+        region_set = set(cells)
+        
         # For each direction, count straight segments
-        # Represent edges as (r, c, dir) where dir: 0=up,1=right,2=down,3=left
-        edges = set()
-        for r, c in region:
-            # Check each side of this cell
-            # Top edge (r, c, 0)
-            if r == 0 or grid[r-1][c] != plant:
-                edges.add((r, c, 0))
-            # Bottom edge (r, c, 2)
-            if r == rows-1 or grid[r+1][c] != plant:
-                edges.add((r, c, 2))
-            # Left edge (r, c, 3)
-            if c == 0 or grid[r][c-1] != plant:
-                edges.add((r, c, 3))
-            # Right edge (r, c, 1)
-            if c == cols-1 or grid[r][c+1] != plant:
-                edges.add((r, c, 1))
-
-        # Count connected segments for each direction
         sides = 0
-        # Group edges by direction
-        by_dir = {0: [], 1: [], 2: [], 3: []}
-        for r, c, d in edges:
-            by_dir[d].append((r, c))
-
-        # For horizontal edges (top/bottom), merge adjacent ones in same row
-        for d in [0, 2]:  # top/bottom
-            by_row = {}
-            for r, c in by_dir[d]:
-                by_row.setdefault(r, []).append(c)
-            for row_cols in by_row.values():
-                row_cols.sort()
-                # Count segments
-                segments = 1 if row_cols else 0
-                for i in range(1, len(row_cols)):
-                    if row_cols[i] != row_cols[i-1] + 1:
-                        segments += 1
-                sides += segments
-
-        # For vertical edges (left/right), merge adjacent ones in same col
-        for d in [1, 3]:  # right/left
-            by_col = {}
-            for r, c in by_dir[d]:
-                by_col.setdefault(c, []).append(r)
-            for col_rows in by_col.values():
-                col_rows.sort()
-                segments = 1 if col_rows else 0
-                for i in range(1, len(col_rows)):
-                    if col_rows[i] != col_rows[i-1] + 1:
-                        segments += 1
-                sides += segments
-
+        
+        # Horizontal segments (top/bottom edges)
+        for r, c in cells:
+            # Check top edge
+            if (r-1, c) not in region_set:
+                # Extend segment to the left
+                left = c
+                while left > 0 and (r, left-1) in region_set and (r-1, left-1) not in region_set:
+                    left -= 1
+                # Extend segment to the right
+                right = c
+                while right < cols-1 and (r, right+1) in region_set and (r-1, right+1) not in region_set:
+                    right += 1
+                # Count this as one side if it's the leftmost cell of this segment
+                if c == left:
+                    sides += 1
+            
+            # Check bottom edge
+            if (r+1, c) not in region_set:
+                # Extend segment to the left
+                left = c
+                while left > 0 and (r, left-1) in region_set and (r+1, left-1) not in region_set:
+                    left -= 1
+                # Extend segment to the right
+                right = c
+                while right < cols-1 and (r, right+1) in region_set and (r+1, right+1) not in region_set:
+                    right += 1
+                # Count this as one side if it's the leftmost cell of this segment
+                if c == left:
+                    sides += 1
+        
+        # Vertical segments (left/right edges)
+        for r, c in cells:
+            # Check left edge
+            if (r, c-1) not in region_set:
+                # Extend segment upward
+                up = r
+                while up > 0 and (up-1, c) in region_set and (up-1, c-1) not in region_set:
+                    up -= 1
+                # Extend segment downward
+                down = r
+                while down < rows-1 and (down+1, c) in region_set and (down+1, c-1) not in region_set:
+                    down += 1
+                # Count this as one side if it's the topmost cell of this segment
+                if r == up:
+                    sides += 1
+            
+            # Check right edge
+            if (r, c+1) not in region_set:
+                # Extend segment upward
+                up = r
+                while up > 0 and (up-1, c) in region_set and (up-1, c+1) not in region_set:
+                    up -= 1
+                # Extend segment downward
+                down = r
+                while down < rows-1 and (down+1, c) in region_set and (down+1, c+1) not in region_set:
+                    down += 1
+                # Count this as one side if it's the topmost cell of this segment
+                if r == up:
+                    sides += 1
+        
         return sides
 
     for r in range(rows):
         for c in range(cols):
             if not visited[r][c]:
-                plant = grid[r][c]
-                region = flood_fill(r, c, plant)
-                area = len(region)
-                sides = count_sides(region)
+                plant_type = grid[r][c]
+                region_cells = bfs(r, c, plant_type)
+                area = len(region_cells)
+                sides = count_sides(region_cells)
                 total_price += area * sides
 
     return total_price
