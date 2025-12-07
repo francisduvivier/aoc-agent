@@ -8,7 +8,7 @@ import argparse
 import logging
 import subprocess
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from aoc_tools import fetch_problem_statement, download_input, create_day_dir, generate_solver_with_openrouter, git_commit, fetch_puzzle_status
 from submit import submit_solution
 
@@ -17,8 +17,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 def main():
     parser = argparse.ArgumentParser(description="AoC agent scaffold")
-    parser.add_argument("--year", type=int, default=datetime.now(timezone.utc).year)
-    parser.add_argument("--day", type=int, default=datetime.now(timezone.utc).day)
+    # AoC unlocks at midnight EST (UTC-5)
+    est = timezone(timedelta(hours=-5))
+    parser.add_argument("--year", type=int, default=datetime.now(est).year)
+    parser.add_argument("--day", type=int, default=datetime.now(est).day)
     parser.add_argument("--fetch-only", action="store_true", help="Only fetch problem and input and create scaffold")
     parser.add_argument("--run-only", action="store_true", help="Only run existing scaffold/solution and attempt submission; do not fetch")
     parser.add_argument("--auto-submit", action="store_true", help="Automatically submit answers without prompting")
