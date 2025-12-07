@@ -1,30 +1,30 @@
 # Edit this file: implement solve_part2
 
 def solve_part2(lines):
-    # Parse the program from the input lines
-    program = []
+    program = None
     for line in lines:
         if line.startswith("Program: "):
             program = list(map(int, line.split(": ")[1].split(",")))
             break
     target = program
     
-    def find_a(remaining):
+    def get_possible(remaining):
         if not remaining:
-            return 0
-        out = remaining[0]
-        for x in range(8):
-            B = x ^ 3
-            C = B ^ out ^ 5
-            D = 1 << B
-            candidate_a = C * D + x
-            required_next = candidate_a // 8
-            a_next = find_a(remaining[1:])
-            if a_next == required_next:
-                return a_next * 8 + (candidate_a % 8)
-        return None
+            return {0}
+        required_out = remaining[0]
+        res = set()
+        for next_a in get_possible(remaining[1:]):
+            for x in range(8):
+                a = next_a * 8 + x
+                b_start = x ^ 3
+                c = a >> b_start
+                b = b_start ^ 5 ^ c
+                if b % 8 == required_out:
+                    res.add(a)
+        return res
     
-    return find_a(target)
+    possibles = get_possible(target)
+    return min(possibles) if possibles else None
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples IF there are any samples given for part 2.
