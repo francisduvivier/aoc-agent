@@ -20,7 +20,7 @@ def create_day_dir(year: int, day: int) -> str:
     path.mkdir(parents=True, exist_ok=True)
     return str(path)
 
-
+import html
 def fetch_problem_statement(year: int, day: int, session_cookie: str) -> str:
     """Fetch the problem page and return a cleaned plaintext of the statement.
     Attempts to extract the main <article class="day-desc"> block and preserve line breaks.
@@ -54,7 +54,7 @@ def fetch_problem_statement(year: int, day: int, session_cookie: str) -> str:
     clean = re.sub(r"\n[ \t]*\n+", "\n\n", clean)
     # Trim leading/trailing whitespace on each line
     clean = "\n".join([ln.rstrip() for ln in clean.splitlines()]).strip() + "\n"
-    return clean
+    return html.unescape(clean)
 
 
 def fetch_puzzle_status(year: int, day: int, session_cookie: str) -> dict:
