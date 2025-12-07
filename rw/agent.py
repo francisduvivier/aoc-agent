@@ -306,7 +306,7 @@ if __name__ == '__main__':
                 elif not api_key:
                     logging.warning("No API key. Skipping verification.")
                 else:
-                    max_attempts = 3
+                    max_attempts = 10
                     feedback = None
                     previous_code = None
                     
