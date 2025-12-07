@@ -4,5 +4,4 @@
 - when the request is rate limited, it should not be handled like a failure, but instead, user interaction should be asked to continue.
  - also, if user interaction was requested and approved, it should never be rate limited.
  - So the whole rate limiting system should be reworked.
-- Token usage counts should be logged in the console.
 - the previous tries of results should be persisted and checked so that we never try to submit the same wrong answer again.
