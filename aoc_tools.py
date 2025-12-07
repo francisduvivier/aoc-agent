@@ -35,15 +35,8 @@ def fetch_problem_statement(year: int, day: int, session_cookie: str) -> str:
     text = re.sub(r"<script[\s\S]*?</script>", "", text, flags=re.I)
     # Try to extract all article.day-desc blocks (part 1 and part 2) which contain the problem descriptions
     matches = re.findall(r'<article[^>]*class="[^\"]*day-desc[^\"]*"[^>]*>([\s\S]*?)</article>', text, flags=re.I)
-    
-    # Also look for the answer lines, which are usually outside the article
-    # <p>Your puzzle answer was <code>...</code>.</p>
-    answer_matches = re.findall(r'<p>Your puzzle answer was <code>.*?</code>.</p>', text, flags=re.I)
-
     if matches:
         text = "\n\n".join(matches)
-        if answer_matches:
-            text += "\n\n" + "\n".join(answer_matches)
     # remove known unwanted tags/blocks
     text = re.sub(r"<current_datetime>[\s\S]*?</current_datetime>", "", text, flags=re.I)
     # replace block-level closing tags with newlines to preserve paragraphs
@@ -98,6 +91,41 @@ def fetch_puzzle_status(year: int, day: int, session_cookie: str) -> dict:
         status['part2_answer'] = answers[1]
         
     return status
+
+
+def check_accepted_files(workdir: str) -> dict | None:
+    """Check for accepted_part{1,2}.txt files in the work directory.
+    Returns a status dict if any accepted files are found, else None.
+    """
+    p1_file = os.path.join(workdir, "accepted_part1.txt")
+    p2_file = os.path.join(workdir, "accepted_part2.txt")
+    
+    status = {
+        'part1_solved': False,
+        'part1_answer': None,
+        'part2_solved': False,
+        'part2_answer': None
+    }
+    
+    found_any = False
+    
+    if os.path.exists(p1_file):
+        try:
+            status['part1_answer'] = open(p1_file).read().strip()
+            status['part1_solved'] = True
+            found_any = True
+        except Exception:
+            pass
+            
+    if os.path.exists(p2_file):
+        try:
+            status['part2_answer'] = open(p2_file).read().strip()
+            status['part2_solved'] = True
+            found_any = True
+        except Exception:
+            pass
+            
+    return status if found_any else None
 
 
 def download_input(year: int, day: int, session_cookie: str, out_dir: str) -> str:
