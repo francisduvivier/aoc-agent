@@ -288,7 +288,6 @@ def main():
                 sol2 = os.path.join(workdir, "solution_part2.py")
                 
                 # Check local status again just in case
-                # Check local status again just in case
                 accepted_status = check_accepted_files(workdir)
                 
                 if accepted_status and accepted_status['part2_solved']:
