@@ -39,7 +39,30 @@ def solve_part2(lines):
                     if nx < 0 or nx >= rows or ny < 0 or ny >= cols or lines[nx][ny] != plant_type:
                         sides += 1
             
-            total_price += area * sides
+            corners = 0
+            for x, y in region_cells:
+                neighbors = []
+                for dx, dy in [(0,0), (0,1), (1,0), (1,1)]:
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx <= rows and 0 <= ny <= cols:
+                        if (nx < rows and ny < cols and (nx, ny) in region_cells):
+                            neighbors.append(1)
+                        else:
+                            neighbors.append(0)
+                if neighbors == [1,0,0,0] or neighbors == [0,1,0,0] or neighbors == [0,0,1,0] or neighbors == [0,0,0,1]:
+                    corners += 1
+                elif neighbors == [1,1,0,0] or neighbors == [0,1,1,0] or neighbors == [0,0,1,1] or neighbors == [1,0,0,1]:
+                    corners += 2
+                elif neighbors == [1,0,1,0] or neighbors == [0,1,0,1]:
+                    corners += 0
+                elif neighbors == [1,1,1,0] or neighbors == [0,1,1,1] or neighbors == [1,0,1,1] or neighbors == [1,1,0,1]:
+                    corners += 2
+                elif neighbors == [1,1,1,1]:
+                    corners += 4
+                else:
+                    corners += 1
+            
+            total_price += area * corners
             
     return total_price
 
