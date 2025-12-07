@@ -265,10 +265,6 @@ def main():
                     logging.info("Part 2 Attempt %d/%d", attempt, max_attempts)
                     output = None
 
-                    # Reset to scaffold on fresh start
-                    if attempt == 1 and not feedback:
-                        feedback = "Starting fresh. Please implement the solution starting from this scaffold. Fill in sample_input and sample_answer. The script MUST print the results in the format: ---- Sample Solution Part 2: [result] ---- and ---- Final Solution Part 2: [result] ----"
-
                     if not output and api_key:
                         logging.info("Generating solution for Part 2...")
                         problem_txt = open(os.path.join(workdir, "problem.txt"), "r").read()

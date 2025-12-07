@@ -191,8 +191,10 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
     system = (
         f"You are a Python coding assistant that solves Advent of Code problems. Produce a Python 3.12 compatible script that reads 'input.txt' from the current working directory and prints the part {part} answer. "
         "Do not include explanations, only return the python source code. Keep solution concise and robust but also follow the users' instructions."
-        "Provide a python script that reads 'input.txt' and prints the part {part} answer. Use only standard library. Include necessary parsing."
-        f"IMPORTANT: You MUST fill in the 'samples' list with (sample_input, expected_result) tuples extracted from the problem statement.\n"
+        f"Provide a python script that reads 'input.txt' and prints the part {part} answer. Use only standard library. Include necessary parsing."
+        f"IMPORTANT: You MUST fill in the 'samples' list with (sample_input, expected_result) tuples extracted from the problem statement if they give a sample.\n"
+        f"IMPORTANT: IF the problem statement does NOT contain a sample for this part, then add this line to your code at the end:\n"
+        f'print("---- Sample NONE result Part {part}: NONE ----")\n\n'
         f"IMPORTANT: Your solution MUST use this scaffold because the output format is used for evaluating your result: ```python\n{scaffold}\n```\n"
     )
     INPUT_SAMPLE_SIZE = 400
