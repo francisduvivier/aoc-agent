@@ -51,63 +51,47 @@ def solve_part2(lines):
             grid[nr][nc] = '@'
             r, c = nr, nc
             continue
-        # Try to push
-        if dc != 0:  # Horizontal
+        # Horizontal movement
+        if dc != 0:
             if dc == 1:  # Right
-                pos = c + 1
-                if grid[r][pos] == '.':
-                    grid[r][c] = '.'
-                    grid[r][pos] = '@'
-                    r, c = r, pos
-                elif grid[r][pos] == '#':
+                start_col = c + 1
+                while start_col < len(grid[0]) and grid[r][start_col] in '[]':
+                    start_col += 1
+                if start_col >= len(grid[0]) or grid[r][start_col] == '#':
                     continue
-                else:
-                    end_pos = pos
-                    while end_pos < len(grid[0]) and grid[r][end_pos] in '[]':
-                        end_pos += 2
-                    if end_pos >= len(grid[0]) or grid[r][end_pos] == '#':
-                        continue
-                    for p in range(end_pos, pos, -1):
-                        grid[r][p] = grid[r][p-1]
-                    grid[r][pos] = '.'
-                    grid[r][c] = '.'
-                    grid[r][c+1] = '@'
-                    r, c = r, c+1
+                # Shift right
+                for p in range(start_col, c, -1):
+                    grid[r][p] = grid[r][p - 1]
+                grid[r][c] = '.'
+                r, c = r, c + 1
             else:  # Left
-                pos = c - 1
-                if grid[r][pos] == '.':
-                    grid[r][c] = '.'
-                    grid[r][pos] = '@'
-                    r, c = r, pos
-                elif grid[r][pos] == '#':
+                start_col = c - 1
+                while start_col >= 0 and grid[r][start_col] in '[]':
+                    start_col -= 1
+                if start_col < 0 or grid[r][start_col] == '#':
                     continue
-                else:
-                    end_pos = pos
-                    while end_pos >= 0 and grid[r][end_pos] in '[]':
-                        end_pos -= 2
-                    if end_pos < 0 or grid[r][end_pos] == '#':
-                        continue
-                    for p in range(end_pos, pos):
-                        grid[r][p] = grid[r][p+1]
-                    grid[r][pos] = '.'
-                    grid[r][c] = '.'
-                    grid[r][c-1] = '@'
-                    r, c = r, c-1
+                # Shift left
+                for p in range(start_col, c):
+                    grid[r][p] = grid[r][p + 1]
+                grid[r][c] = '.'
+                r, c = r, c - 1
         else:  # Vertical
             from collections import deque
             to_move = set()
             q = deque()
             if grid[nr][nc] == '[':
                 box = (nr, nc)
+            elif grid[nr][nc] == ']':
+                box = (nr, nc - 1)
             else:
-                box = (nr, nc-1)
+                continue  # Should not happen
             q.append(box)
             to_move.add(box)
             can_move = True
             while q and can_move:
                 br, bc = q.popleft()
                 new_r = br + dr
-                for cc in [bc, bc+1]:
+                for cc in [bc, bc + 1]:
                     if grid[new_r][cc] == '#':
                         can_move = False
                         break
@@ -117,20 +101,22 @@ def solve_part2(lines):
                             to_move.add(new_box)
                             q.append(new_box)
                     elif grid[new_r][cc] == ']':
-                        new_box = (new_r, cc-1)
+                        new_box = (new_r, cc - 1)
                         if new_box not in to_move:
                             to_move.add(new_box)
                             q.append(new_box)
+                if not can_move:
+                    break
             if not can_move:
                 continue
             # Move boxes
             for br, bc in to_move:
                 grid[br][bc] = '.'
-                grid[br][bc+1] = '.'
+                grid[br][bc + 1] = '.'
             for br, bc in to_move:
                 new_r = br + dr
                 grid[new_r][bc] = '['
-                grid[new_r][bc+1] = ']'
+                grid[new_r][bc + 1] = ']'
             # Move robot
             grid[r][c] = '.'
             grid[nr][nc] = '@'
