@@ -43,7 +43,7 @@ def solve_part2(lines):
                     x, y = corner
                     adjacent_cells = [(x-1, y-1), (x-1, y), (x, y-1), (x, y)]
                     count_in_region = sum(1 for cell in adjacent_cells if cell in region_cells)
-                    if count_in_region == 1 or count_in_region == 3:
+                    if count_in_region % 2 == 1:
                         sides += 1
                 
                 total_price += area * sides
