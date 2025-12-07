@@ -147,8 +147,7 @@ def main():
                     feedback = "Starting fresh. Please implement the solution starting from this scaffold. Fill in sample_input and sample_answer. The script MUST print the test result first, then the real result."
 
                 # Try to run existing solution first if no feedback yet (skipped if we just reset)
-                partNb = r"1"
-                FINAL_OUTPUT_REGEX_1, SAMPLE_OUTPUT_REGEX_1 = getOutputCheckRegex(partNb, scaffold)
+                FINAL_OUTPUT_REGEX_1, SAMPLE_OUTPUT_REGEX_1 = getOutputCheckRegex(r"1", scaffold)
                 if attempt == 1 and os.path.exists(
                         sol1) and not feedback and False:  # Disabled because we always reset on attempt 1 now
                     try:
@@ -314,9 +313,8 @@ def main():
                         try:
                             proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir, capture_output=True,
                                                   text=True, timeout=30)
-                        FINAL_OUTPUT_REGEX_2, SAMPLE_OUTPUT_REGEX_2 = getOutputCheckRegex(r"2", scaffold)
-
-                        if proc.returncode == 0 and proc.stdout.strip():
+                            FINAL_OUTPUT_REGEX_2, SAMPLE_OUTPUT_REGEX_2 = getOutputCheckRegex(r"2", scaffold)
+                            if proc.returncode == 0 and proc.stdout.strip():
                                 sample_match = re.search(SAMPLE_OUTPUT_REGEX_2, proc.stdout)
                                 final_match = re.search(FINAL_OUTPUT_REGEX_2, proc.stdout)
                                 outputTail = proc.stdout[-OUTPUT_TAIL_SIZE:]
@@ -452,11 +450,9 @@ def main():
                                                       capture_output=True, text=True, timeout=60)
                                 if proc.returncode == 0 and proc.stdout.strip():
 
-                                    # Parse output with regex
-                                    sample_match = re.search(r"---- Sample (.+?) result Part 2: (.+?) ----",
-                                                             proc.stdout)
-                                    final_match = re.search(r"---- Final result Part 2: (.+?) ----", proc.stdout)
-
+                                    FINAL_OUTPUT_REGEX_2, SAMPLE_OUTPUT_REGEX_2 = getOutputCheckRegex(r"2", scaffold)
+                                    sample_match = re.search(SAMPLE_OUTPUT_REGEX_2, proc.stdout)
+                                    final_match = re.search(FINAL_OUTPUT_REGEX_2, proc.stdout)
                                     if sample_match and final_match:
                                         output = final_match.group(1).strip()
                                         logging.info("Generated Answer: %s", output)
