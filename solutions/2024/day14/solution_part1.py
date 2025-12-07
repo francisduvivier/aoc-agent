@@ -1,4 +1,3 @@
-```python
 # Edit this file: implement solve_part1
 
 def solve_part1(lines):
@@ -72,4 +71,4 @@ for idx, (sample_input, expected_result) in enumerate(samples, start=1):
 with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
-print(f"---- Final result Part 1:
+print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
