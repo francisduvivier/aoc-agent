@@ -1,166 +1,143 @@
 def solve_part2(lines):
-    # Parse input into map and moves
+    # Separate map lines and move lines
     map_lines = []
-    moves_lines = []
+    move_lines = []
     is_map = True
     for line in lines:
         stripped = line.strip()
         if not stripped:
-            is_map = False
             continue
-        if is_map and any(c in stripped for c in '#.O@'):
+        if is_map and all(c in '#.O@ ' for c in stripped):
             map_lines.append(stripped)
         else:
             is_map = False
-            moves_lines.append(stripped)
-    moves = ''.join(moves_lines).replace('\n', '')
+            move_lines.append(stripped)
+    moves = ''.join(move_lines).strip()
 
-    # Transform the map
-    transformed = []
+    # Scale the map
+    scaled_map = []
     for line in map_lines:
-        new_line = []
+        scaled_line = []
         for c in line:
             if c == '#':
-                new_line.append('##')
+                scaled_line.append('##')
             elif c == 'O':
-                new_line.append('[]')
+                scaled_line.append('[]')
             elif c == '.':
-                new_line.append('..')
+                scaled_line.append('..')
             elif c == '@':
-                new_line.append('@.')
+                scaled_line.append('@.')
             else:
-                new_line.append('  ')  # should not happen
-        transformed.append(''.join(new_line))
-    
-    # Parse the transformed map into grid, robot, and boxes
-    grid = []
-    robot = None
-    boxes = set()
-    for y, row in enumerate(transformed):
-        grid_row = list(row)
-        grid.append(grid_row)
-        x = 0
-        while x < len(grid_row):
-            c = grid_row[x]
+                scaled_line.append('  ')  # for spaces or others
+        scaled_map.append(''.join(scaled_line))
+
+    # Find robot's initial position
+    robot_pos = None
+    for i, row in enumerate(scaled_map):
+        for j, c in enumerate(row):
             if c == '@':
-                if robot is None:
-                    robot = (x, y)
-                x += 1  # skip the next '.' as it's part of robot
-            elif c == '[':
-                if x + 1 < len(grid_row) and grid_row[x+1] == ']':
-                    boxes.add((x, y))
-                    x += 1  # skip the ']'
-            x += 1
+                robot_pos = (i, j)
+                break
+        if robot_pos is not None:
+            break
+    if robot_pos is None:
+        return 0  # no robot found
 
-    # Define helper function to get push chain
-    def get_push_chain(box_x, box_y, dx, dy, grid, boxes, visited):
-        if (box_x, box_y) in visited:
-            return None
-        visited.add((box_x, box_y))
-        
-        width = len(grid[0])
-        height = len(grid)
-        
-        if dx != 0:
-            if dx == 1:
-                check_x = box_x + 2
-                check_y = box_y
-            else:
-                check_x = box_x - 1
-                check_y = box_y
-            cells_to_check = [(check_x, check_y)]
-        else:
-            if dy == -1:
-                check_y = box_y - 1
-            else:
-                check_y = box_y + 1
-            cells_to_check = [(box_x, check_y), (box_x + 1, check_y)]
-        
-        chain = [(box_x, box_y)]
-        for (cx, cy) in cells_to_check:
-            if cx < 0 or cx >= width or cy < 0 or cy >= height:
-                return None
-            cell = grid[cy][cx]
-            if cell == '#':
-                return None
-            elif cell == '[' or cell == ']':
-                if cell == ']':
-                    left_x = cx - 1
-                else:
-                    left_x = cx
-                if (left_x, cy) not in boxes:
-                    return None
-                sub_chain = get_push_chain(left_x, cy, dx, dy, grid, boxes, visited)
-                if sub_chain is None:
-                    return None
-                chain.extend(sub_chain)
-        return chain
+    # Convert to list of lists for mutability
+    scaled_map = [list(row) for row in scaled_map]
+    height = len(scaled_map)
+    width = len(scaled_map[0]) if height > 0 else 0
 
-    # Process each move
-    directions = {'>': (1, 0), '<': (-1, 0), '^': (0, -1), 'v': (0, 1)}
-    rx, ry = robot
+    directions = {'^': (-1, 0), 'v': (1, 0), '<': (0, -1), '>': (0, 1)}
+
     for move in moves:
-        dx, dy = directions[move]
-        new_rx = rx + dx
-        new_ry = ry + dy
-        
-        if new_ry < 0 or new_ry >= len(grid) or new_rx < 0 or new_rx >= len(grid[0]):
+        dr, dc = directions[move]
+        r, c = robot_pos
+        new_r = r + dr
+        new_c = c + dc
+
+        if not (0 <= new_r < height and 0 <= new_c < width):
             continue
-        
-        cell = grid[new_ry][new_rx]
-        if cell == '#':
+
+        target_char = scaled_map[new_r][new_c]
+
+        if target_char == '.':
+            scaled_map[r][c] = '.'
+            scaled_map[new_r][new_c] = '@'
+            robot_pos = (new_r, new_c)
+        elif target_char == '#':
             continue
-        elif cell == '.' or cell == '@':
-            grid[ry][rx] = '.'
-            grid[new_ry][new_rx] = '@'
-            rx, ry = new_rx, new_ry
-        elif cell == '[' or cell == ']':
-            if cell == '[':
-                box_x, box_y = new_rx, new_ry
-            else:
-                box_x, box_y = new_rx - 1, new_ry
-            
-            if (box_x, box_y) not in boxes:
+        elif target_char in ['[', ']']:
+            # Determine the box's left and right positions
+            if target_char == '[':
+                box_r = new_r
+                box_c1 = new_c
+                box_c2 = new_c + 1
+            else:  # target_char == ']'
+                box_r = new_r
+                box_c1 = new_c - 1
+                box_c2 = new_c
+
+            # Check if box_c2 is valid and part of the box
+            if box_c2 >= width or scaled_map[box_r][box_c2] != ']':
                 continue
-            
-            visited = set()
-            chain = get_push_chain(box_x, box_y, dx, dy, grid, boxes, visited)
-            if chain is None:
-                continue
-            
-            # Push boxes in reverse order
-            for (bx, by) in reversed(chain):
-                if (bx, by) not in boxes:
-                    continue  # Safety check to avoid KeyError
-                boxes.remove((bx, by))
-                grid[by][bx] = '.'
-                grid[by][bx + 1] = '.'
-                new_bx = bx + dx
-                new_by = by + dy
-                boxes.add((new_bx, new_by))
-                grid[new_by][new_bx] = '['
-                grid[new_by][new_bx + 1] = ']'
-            
-            # Move robot
-            grid[ry][rx] = '.'
-            grid[new_ry][new_rx] = '@'
-            rx, ry = new_rx, new_ry
-    
-    # Calculate GPS sum
+
+            # Calculate new box positions
+            new_box_r = box_r + dr
+            new_box_c1 = box_c1 + dc
+            new_box_c2 = box_c2 + dc
+
+            # Check if new positions are within bounds and empty
+            if (0 <= new_box_r < height and 
+                0 <= new_box_c1 < width and 
+                0 <= new_box_c2 < width and 
+                scaled_map[new_box_r][new_box_c1] == '.' and 
+                scaled_map[new_box_r][new_box_c2] == '.'):
+                
+                # Move the box
+                scaled_map[box_r][box_c1] = '.'
+                scaled_map[box_r][box_c2] = '.'
+                scaled_map[new_box_r][new_box_c1] = '['
+                scaled_map[new_box_r][new_box_c2] = ']'
+                
+                # Move the robot
+                scaled_map[r][c] = '.'
+                scaled_map[new_r][new_c] = '@'
+                robot_pos = (new_r, new_c)
+
+    # Calculate the sum of GPS coordinates for all boxes
     total = 0
-    for (x, y) in boxes:
-        total += 100 * y + x
+    for i, row in enumerate(scaled_map):
+        for j, c in enumerate(row):
+            if c == '[':
+                total += 100 * i + j
     return total
 
-samples = []  # No samples provided for part 2 in the problem statement
+# Sample data
+samples = []
+# Sample from the problem statement (scaled larger example)
+sample_input = """
+####################
+##....[]....[]..[]##
+##............[]..##
+##..[][]....[]..[]##
+##....[]@.....[]..##
+##[]##....[]......##
+##[]....[]....[]..##
+##..[][]..[]..[][]##
+##........[]......##
+####################
+<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^>^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^<><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^
+""".strip()
+expected_result = 9021
+samples.append((sample_input, expected_result))
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     sample_result = solve_part2(sample_input.strip().splitlines())
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
     print(f"---- Sample {idx} result Part 2: {sample_result} ----")
 
-print("---- Sample NONE result Part 2: NONE ----")
-
+# Run on the real puzzle input
 with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part2(lines)

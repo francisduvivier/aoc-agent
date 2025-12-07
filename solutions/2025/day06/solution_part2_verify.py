@@ -1,93 +1,54 @@
-import sys
-
-def parse_input():
-    with open('input.txt') as f:
-        lines = f.readlines()
+def solve_part2(lines):
+    # Find the width of the worksheet
+    width = max(len(line) for line in lines)
     
-    # Remove trailing newlines and pad to equal length
-    max_len = max(len(line.rstrip('\n')) for line in lines)
-    grid = []
-    for line in lines:
-        line = line.rstrip('\n')
-        if len(line) < max_len:
-            line += ' ' * (max_len - len(line))
-        grid.append(line)
+    # Pad all lines to the same width
+    for i in range(len(lines)):
+        lines[i] = lines[i].ljust(width)
     
-    return grid
-
-def split_into_columns(grid):
-    # Find column boundaries by looking for full columns of spaces
-    width = len(grid[0])
-    height = len(grid)
+    # Identify problem boundaries by finding columns of only spaces
+    problem_boundaries = []
+    col_idx = 0
     
-    # Identify columns that are entirely spaces (separators)
-    separator_cols = []
-    for col in range(width):
-        if all(grid[row][col] == ' ' for row in range(height)):
-            separator_cols.append(col)
-    
-    # Split into groups of columns
-    groups = []
-    start = 0
-    for sep in separator_cols:
-        if sep > start:
-            groups.append(list(range(start, sep)))
-        start = sep + 1
-    if start < width:
-        groups.append(list(range(start, width)))
-    
-    return groups, grid
-
-def extract_number(grid, cols):
-    # Extract digits from the specified columns, top to bottom
-    digits = []
-    for col in cols:
-        for row in range(len(grid)):
-            char = grid[row][col]
-            if char.isdigit():
-                digits.append(char)
-    return int(''.join(digits)) if digits else 0
-
-def solve():
-    grid = parse_input()
-    groups, grid = split_into_columns(grid)
+    while col_idx < width:
+        # Skip spaces
+        while col_idx < width and lines[0][col_idx] == ' ':
+            col_idx += 1
+        
+        if col_idx >= width:
+            break
+            
+        start_col = col_idx
+        
+        # Find the end of this problem (next column of only spaces)
+        while col_idx < width and not all(lines[row_idx][col_idx] == ' ' for row_idx in range(len(lines))):
+            col_idx += 1
+            
+        end_col = col_idx - 1
+        problem_boundaries.append((start_col, end_col))
     
     total = 0
     
-    # Process groups from right to left
-    for group_cols in reversed(groups):
-        # Find the operator at the bottom of this group
-        operator_row = len(grid) - 1
-        while operator_row >= 0 and not grid[operator_row][group_cols[0]] in '+*':
-            operator_row -= 1
+    # Process each problem from right to left
+    for start_col, end_col in reversed(problem_boundaries):
+        # Extract the operator from the bottom row
+        operator = lines[-1][start_col]
         
-        if operator_row < 0:
-            continue
-            
-        operator = grid[operator_row][group_cols[0]]
-        
-        # Split this group into sub-columns for each number
-        # Find spaces within this group that separate numbers
-        subgroups = []
-        current_subgroup = []
-        
-        for col in group_cols:
-            if grid[operator_row][col] == ' ':
-                if current_subgroup:
-                    subgroups.append(current_subgroup)
-                    current_subgroup = []
-            else:
-                current_subgroup.append(col)
-        
-        if current_subgroup:
-            subgroups.append(current_subgroup)
-        
-        # Extract numbers from each subgroup
+        # Extract numbers from each column in this problem
         numbers = []
-        for subgroup in subgroups:
-            numbers.append(extract_number(grid, subgroup))
         
-        # Apply the operation
+        for col_idx in range(start_col, end_col + 1):
+            # Build the number from top to bottom
+            num_str = ""
+            for row_idx in range(len(lines) - 1):  # Exclude the operator row
+                char = lines[row_idx][col_idx]
+                if char != ' ':
+                    num_str += char
+            
+            if num_str:  # Only process if we found digits
+                numbers.append(int(num_str))
+        
+        # Calculate the result for this problem
         if operator == '+':
             result = sum(numbers)
         elif operator == '*':
@@ -97,7 +58,21 @@ def solve():
         
         total += result
     
-    print(total)
+    return total
 
-if __name__ == '__main__':
-    solve()
+# Sample data – may contain multiple samples from the problem statement.
+# Populate this list with (sample_input, expected_result) tuples IF there are any samples given for part 2.
+samples = [
+    ("123 328  51 64\n 45 64  387 23\n  6 98  215 314\n*   +   *   +", 3263827)
+]
+
+for idx, (sample_input, expected_result) in enumerate(samples, start=1):
+    sample_result = solve_part2(sample_input.strip().splitlines())
+    assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
+    print(f"---- Sample {idx} result Part 2: {sample_result} ----") # YOU MUST NOT change this output format
+# print(f"---- Sample NONE result Part 2: NONE ----") # Uncomment this if no samples are given for part 2
+# Run on the real puzzle input
+with open('input.txt') as f:
+    lines = [line.strip() for line in f]
+final_result = solve_part2(lines)
+print(f"---- Final result Part 2: {final_result} ----") # YOU MUST NOT change this output format
