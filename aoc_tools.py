@@ -189,9 +189,9 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
         "Do not include explanations, only return the python source code. Keep solution concise and robust."
     )
     user_msg = f"Problem statement:\n{problem}\n\nProvide a python script that reads 'input.txt' and prints the part {part} answer. Use only standard library. Include necessary parsing.\n" + \
-               f"You are encouraged to include debug output in your solution in case of errors.\n" + \
-               f"IMPORTANT: You MUST fill in the 'sample_input' and 'sample_answer' variables in the scaffold with data from the problem statement.\n" + \
-               f"IMPORTANT: The script MUST maintain the sample assert and the output format." + ("\n\nInput sample[:100]...[-100:]" + input_sample[:100]+"..."+input_sample[-max(0,min(100, len(input_sample)-1000)):])
+                f"IMPORTANT: You are encouraged to include reasoning and debug output in your solution in case of errors.\n" + \
+                f"IMPORTANT: You MUST fill in the 'samples' list with (sample_input, expected_result) tuples extracted from the problem statement.\n" + \
+                f"IMPORTANT: The script MUST iterate over the 'samples' list, assert each sample result, and print each sample solution using the format '---- Sample {{idx}} Solution Part {part}: {{sample_res}} ----'.\n" + ("\n\nInput sample[:100]...[-100:]" + input_sample[:100]+"..."+input_sample[-max(0,min(100, len(input_sample)-1000)):])
     
     if previous_code and feedback:
         user_msg += f"\n\nPrevious attempt failed:\n```python\n{previous_code}\n```\nFeedback: {feedback}\nPlease fix the code."
@@ -246,7 +246,7 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
             try:
                 r.raise_for_status()
             except requests.HTTPError:
-                logging.warning(f"{CYAN}OpenRouter returned status {r.status_code}: {r.text[:1000]}{RESET}")
+                logging.warning(f"{CYAN}OpenRouter returned status {r.status_code}: {r.text}{RESET}")
                 return ""
             break # Success
         except Exception as e:
@@ -260,7 +260,7 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
     try:
         j = r.json()
     except Exception:
-        logging.warning(f"{CYAN}OpenRouter returned non-json response: {r.text[:1000]}{RESET}")
+        logging.warning(f"{CYAN}OpenRouter returned non-json response: {r.text}{RESET}")
         return ""
 
     content = ""
