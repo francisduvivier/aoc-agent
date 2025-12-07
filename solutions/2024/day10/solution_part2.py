@@ -1,7 +1,16 @@
 from collections import deque
 
 def solve_part2(lines):
-    grid = [list(map(int, line)) for line in lines]
+    grid = []
+    for line in lines:
+        row = []
+        for char in line:
+            if char == '.':
+                row.append(-1)  # Mark impassable tiles
+            else:
+                row.append(int(char))
+        grid.append(row)
+    
     rows, cols = len(grid), len(grid[0])
     
     # Find all trailheads (height 0)
@@ -33,7 +42,7 @@ def solve_part2(lines):
             for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
                 nr, nc = r + dr, c + dc
                 if 0 <= nr < rows and 0 <= nc < cols:
-                    if grid[nr][nc] == grid[r][c] + 1:
+                    if grid[nr][nc] != -1 and grid[nr][nc] == grid[r][c] + 1:
                         new_path = path + (nr, nc)
                         state = (nr, nc, new_path)
                         if state not in visited:
