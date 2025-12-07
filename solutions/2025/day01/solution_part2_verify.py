@@ -17,13 +17,12 @@ L82""", 6)
 
 def solve(input_str: str) -> int:
     """
-    Solve part 2 of the problem.
-    
-    Count the number of times the dial points at 0 during any rotation in the sequence.
+    Solve the problem by counting the number of times the dial points at 0
+    during or at the end of any rotation.
     """
     lines = input_str.strip().split('\n')
     
-    # Parse rotations
+    # Parse the rotations
     rotations = []
     for line in lines:
         line = line.strip()
@@ -39,57 +38,41 @@ def solve(input_str: str) -> int:
     current_pos = 50
     zero_count = 0
     
+    # Process each rotation
     for direction, distance in rotations:
         # Count how many times we pass through 0 during this rotation
         if direction == 'R':
-            # Moving right (increasing numbers)
-            # We pass through 0 if we cross the boundary from 99 to 0
-            # Calculate final position
-            final_pos = (current_pos + distance) % 100
-            
-            # Count how many times we hit 0
-            # If we cross the boundary, we hit 0
-            if current_pos + distance >= 100:
-                # Calculate how many full cycles of 100 we make
-                full_cycles = (current_pos + distance) // 100
-                zero_count += full_cycles
-            
-            current_pos = final_pos
-            
-        else:  # direction == 'L'
-            # Moving left (decreasing numbers)
-            # We pass through 0 if we cross the boundary from 0 to 99
-            # Calculate final position
-            final_pos = (current_pos - distance) % 100
-            
-            # Count how many times we hit 0
-            # If we cross the boundary, we hit 0
-            if current_pos - distance < 0:
-                # Calculate how many full cycles of 100 we make
-                full_cycles = (distance - current_pos) // 100
-                zero_count += full_cycles
-                # If there's a remainder that crosses 0, add one more
-                if (distance - current_pos) % 100 > 0:
+            # Moving right (toward higher numbers)
+            # We pass through 0 if we cross from 99 to 0
+            # Calculate the positions we'll visit
+            for _ in range(distance):
+                current_pos = (current_pos + 1) % 100
+                if current_pos == 0:
                     zero_count += 1
-            
-            current_pos = final_pos
+        else:  # direction == 'L'
+            # Moving left (toward lower numbers)
+            # We pass through 0 if we cross from 0 to 99
+            for _ in range(distance):
+                current_pos = (current_pos - 1) % 100
+                if current_pos == 0:
+                    zero_count += 1
     
     return zero_count
 
 # Test with samples first
 for idx, (sample_input, expected) in enumerate(samples):
-    sample_result = solve(sample_input)
-    print(f"---- Sample {idx} Solution Part 2: {sample_result} ----")
-    assert sample_result == expected, f"Expected {expected}, got {sample_result}"
+    result = solve(sample_input)
+    print(f"---- Sample {idx + 1} Solution Part 2: {result} ----")
+    assert result == expected, f"Expected {expected}, got {result}"
 
-# Now solve for the actual input
+# Solve for actual input
 try:
     with open('input.txt', 'r') as f:
         input_data = f.read()
     
-    result = solve(input_data)
-    print(result)
+    answer = solve(input_data)
+    print(f"---- Actual Solution Part 2: {answer} ----")
 except FileNotFoundError:
-    print("input.txt not found, cannot solve for actual input")
+    print("Error: input.txt not found")
 except Exception as e:
     print(f"Error reading input: {e}")
