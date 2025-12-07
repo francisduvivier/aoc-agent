@@ -21,11 +21,15 @@ def solve_part2(lines):
         if det == 0:
             continue
             
-        a_presses = (px * by - py * bx) / det
-        b_presses = (ax * py - ay * px) / det
+        # Use exact integer arithmetic to avoid floating point errors
+        a_numer = px * by - py * bx
+        b_numer = ax * py - ay * px
         
-        if a_presses == int(a_presses) and b_presses == int(b_presses) and a_presses >= 0 and b_presses >= 0:
-            total_cost += int(a_presses) * 3 + int(b_presses)
+        if a_numer % det == 0 and b_numer % det == 0:
+            a_presses = a_numer // det
+            b_presses = b_numer // det
+            if a_presses >= 0 and b_presses >= 0:
+                total_cost += a_presses * 3 + b_presses
             
     return total_cost
 
