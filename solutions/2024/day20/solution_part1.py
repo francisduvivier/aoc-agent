@@ -39,35 +39,66 @@ def solve_part1(lines):
     # Get shortest path distance without cheating
     shortest_path = bfs(start, end)
     
+    # Precompute distances from start and to end for all track positions
+    from collections import deque
+    
+    # Distances from start
+    dist_from_start = {}
+    queue = deque([(start[0], start[1], 0)])
+    visited = set([start])
+    
+    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+    
+    while queue:
+        r, c, dist = queue.popleft()
+        dist_from_start[(r, c)] = dist
+        
+        for dr, dc in directions:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] != '#' and (nr, nc) not in visited:
+                visited.add((nr, nc))
+                queue.append((nr, nc, dist + 1))
+    
+    # Distances to end
+    dist_to_end = {}
+    queue = deque([(end[0], end[1], 0)])
+    visited = set([end])
+    
+    while queue:
+        r, c, dist = queue.popleft()
+        dist_to_end[(r, c)] = dist
+        
+        for dr, dc in directions:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] != '#' and (nr, nc) not in visited:
+                visited.add((nr, nc))
+                queue.append((nr, nc, dist + 1))
+    
     # Find all possible cheats
     cheats_count = 0
     
-    # For each pair of positions, check if using a cheat between them saves time
-    for r1 in range(rows):
-        for c1 in range(cols):
-            if grid[r1][c1] == '#':
+    # For each pair of track positions, check if using a cheat between them saves time
+    track_positions = [pos for pos in dist_from_start.keys()]
+    
+    for i, (r1, c1) in enumerate(track_positions):
+        for j, (r2, c2) in enumerate(track_positions):
+            if i == j:
                 continue
             
-            for r2 in range(rows):
-                for c2 in range(cols):
-                    if grid[r2][c2] == '#':
-                        continue
-                    
-                    # Manhattan distance between positions
-                    cheat_distance = abs(r1 - r2) + abs(c1 - c2)
-                    
-                    # If cheat distance is 2 or less (max 2 picoseconds cheat)
-                    if cheat_distance <= 2 and cheat_distance > 0:
-                        # Calculate new path length: distance to cheat start + cheat distance + distance from cheat end to finish
-                        dist_to_start = bfs(start, (r1, c1))
-                        dist_from_end = bfs((r2, c2), end)
-                        
-                        if dist_to_start != float('inf') and dist_from_end != float('inf'):
-                            new_path_length = dist_to_start + cheat_distance + dist_from_end
-                            time_saved = shortest_path - new_path_length
-                            
-                            if time_saved >= 100:
-                                cheats_count += 1
+            # Manhattan distance between positions
+            cheat_distance = abs(r1 - r2) + abs(c1 - c2)
+            
+            # If cheat distance is 2 or less (max 2 picoseconds cheat)
+            if cheat_distance <= 2:
+                # Calculate new path length: distance to cheat start + cheat distance + distance from cheat end to finish
+                dist_to_start = dist_from_start[(r1, c1)]
+                dist_from_end = dist_to_end[(r2, c2)]
+                
+                new_path_length = dist_to_start + cheat_distance + dist_from_end
+                time_saved = shortest_path - new_path_length
+                
+                if time_saved >= 100:
+                    cheats_count += 1
     
     return cheats_count
 
@@ -85,3 +116,4 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
+
