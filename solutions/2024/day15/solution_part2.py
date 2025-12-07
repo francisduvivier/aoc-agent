@@ -7,7 +7,7 @@ def solve_part2(lines):
     while i < len(lines) and lines[i] and lines[i][0] == '#':
         map_lines.append(lines[i])
         i += 1
-    moves = ''.join(lines[i:]).replace('\n', '')
+    moves = ''.join(lines[i:]).replace('\n', '').replace(' ', '')
     
     # Scale the map for part 2
     new_map = []
