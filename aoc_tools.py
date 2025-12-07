@@ -222,10 +222,10 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
 
     # parse json
     try:
-            j = r.json()
-        except Exception:
-            logging.warning(f"{CYAN}OpenRouter returned non-json response: {r.text[:1000]}{RESET}")
-            return ""
+        j = r.json()
+    except Exception:
+        logging.warning(f"{CYAN}OpenRouter returned non-json response: {r.text[:1000]}{RESET}")
+        return ""
         content = ""
         # OpenRouter responses: choices[0].message.content
         if isinstance(j, dict):
