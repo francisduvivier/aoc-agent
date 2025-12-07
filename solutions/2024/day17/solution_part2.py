@@ -1,31 +1,26 @@
 # Edit this file: implement solve_part2
 
 def solve_part2(lines):
-    # Parse input
-    A = int(lines[0].split(': ')[1])
-    B = int(lines[1].split(': ')[1])
-    C = int(lines[2].split(': ')[1])
-    program = list(map(int, lines[4].split(': ')[1].split(',')))
+    program_line = [line for line in lines if line.startswith('Program:')][0]
+    program = list(map(int, program_line.split(': ')[1].split(',')))
+    digits = program
     
-    target = program
+    def compute_output(A):
+        B = (A % 8) ^ 3
+        C = A // (2 ** B)
+        B = B ^ 5 ^ C
+        return B % 8
     
-    def find_possible_A(index):
-        if index == len(target):
-            return [0]
-        possible = []
-        for prev_A in find_possible_A(index + 1):
-            for x in range(8):
-                A_val = 8 * prev_A + x
-                y = x ^ 3
-                C_val = A_val // (2 ** y)
-                B_val = (y ^ 5) ^ C_val
-                out = B_val % 8
-                if out == target[index]:
-                    possible.append(A_val)
-        return possible
-    
-    possible_A = find_possible_A(0)
-    return min(a for a in possible_A if a > 0)
+    possible_A = {0}
+    for digit in reversed(digits):
+        new_possible = set()
+        for prev_A in possible_A:
+            for r in range(8):
+                A = prev_A * 8 + r
+                if compute_output(A) == digit:
+                    new_possible.add(A)
+        possible_A = new_possible
+    return min(possible_A)
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples IF there are any samples given for part 2.
