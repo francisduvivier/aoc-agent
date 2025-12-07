@@ -36,19 +36,40 @@ def solve_part2(lines):
                     break
         
         if incorrect:
-            # Sort the update correctly
-            n = len(update)
-            # Bubble sort with the rules
-            for i in range(n):
-                for j in range(n - 1):
-                    a, b = update[j], update[j + 1]
-                    # Check if b must come before a (which would be wrong)
-                    if a in must_come_before and b in must_come_before[a]:
-                        # Swap
-                        update[j], update[j + 1] = update[j + 1], update[j]
+            # Sort the update correctly using topological sort
+            # Build a set of all pages in this update
+            pages = set(update)
             
-            # Add middle page
-            total += update[n // 2]
+            # For each page, find which other pages must come before it in this update
+            before_map = {}
+            for page in pages:
+                before_map[page] = set()
+            
+            for x, y in rules:
+                if x in pages and y in pages:
+                    before_map[y].add(x)
+            
+            # Sort using Kahn's algorithm
+            sorted_update = []
+            # Start with pages that have no dependencies
+            available = [p for p in pages if len(before_map[p]) == 0]
+            
+            while available:
+                # Take a page with no remaining dependencies
+                page = available.pop()
+                sorted_update.append(page)
+                
+                # Remove this page from all dependency lists
+                for other in pages:
+                    if page in before_map[other]:
+                        before_map[other].remove(page)
+                        # If this other page now has no dependencies, add it to available
+                        if len(before_map[other]) == 0:
+                            available.append(other)
+            
+            # Add middle page of the correctly sorted update
+            n = len(sorted_update)
+            total += sorted_update[n // 2]
     
     return total
 
