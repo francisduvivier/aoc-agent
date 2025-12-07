@@ -79,17 +79,17 @@ def fetch_puzzle_status(year: int, day: int, session_cookie: str) -> dict:
     # If both are solved, there are two such blocks. The first one is part 1, second is part 2.
     # However, the page structure might be complex.
     # Let's look for the specific pattern.
-    
+
     answers = re.findall(r"Your puzzle answer was <code>(.*?)</code>", text)
-    
+
     if len(answers) >= 1:
         status['part1_solved'] = True
         status['part1_answer'] = answers[0]
-    
+
     if len(answers) >= 2:
         status['part2_solved'] = True
         status['part2_answer'] = answers[1]
-        
+
     return status
 
 
@@ -99,16 +99,16 @@ def check_accepted_files(workdir: str) -> dict | None:
     """
     p1_file = os.path.join(workdir, "accepted_part1.txt")
     p2_file = os.path.join(workdir, "accepted_part2.txt")
-    
+
     status = {
         'part1_solved': False,
         'part1_answer': None,
         'part2_solved': False,
         'part2_answer': None
     }
-    
+
     found_any = False
-    
+
     if os.path.exists(p1_file):
         try:
             status['part1_answer'] = open(p1_file).read().strip()
@@ -116,7 +116,7 @@ def check_accepted_files(workdir: str) -> dict | None:
             found_any = True
         except Exception:
             pass
-            
+
     if os.path.exists(p2_file):
         try:
             status['part2_answer'] = open(p2_file).read().strip()
@@ -124,9 +124,8 @@ def check_accepted_files(workdir: str) -> dict | None:
             found_any = True
         except Exception:
             pass
-            
-    return status if found_any else None
 
+    return status if found_any else None
 
     return status if found_any else None
 
@@ -142,7 +141,7 @@ def download_input(year: int, day: int, session_cookie: str, out_dir: str) -> st
 
 
 def check_pricing(model: str) -> bool:
-    return True # TODO: decide what to do with this
+    return True  # TODO: decide what to do with this
     """Check if the model's pricing is within the limit (0.0001 per 1M tokens)."""
     try:
         r = requests.get("https://openrouter.ai/api/v1/models", timeout=10)
@@ -153,11 +152,12 @@ def check_pricing(model: str) -> bool:
                 pricing = m.get("pricing", {})
                 prompt = float(pricing.get("prompt", 0)) * 1_000_000
                 completion = float(pricing.get("completion", 0)) * 1_000_000
-                
+
                 # Limit: 0.0001 per 1M tokens
                 limit = 0.0001
                 if prompt > limit or completion > limit:
-                    logging.warning(f"Model {model} pricing too high: Prompt=${prompt:.6f}/1M, Completion=${completion:.6f}/1M. Limit=${limit}/1M.")
+                    logging.warning(
+                        f"Model {model} pricing too high: Prompt=${prompt:.6f}/1M, Completion=${completion:.6f}/1M. Limit=${limit}/1M.")
                     return False
                 return True
         logging.warning(f"Model {model} not found in pricing list. Proceeding with caution.")
@@ -170,7 +170,9 @@ def check_pricing(model: str) -> bool:
 # kwaipilot/kat-coder-pro:free
 # tngtech/deepseek-r1t2-chimera:free
 # deepseek/deepseek-chat-v3.1
-def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: str, model: str = "kwaipilot/kat-coder-pro:free", part: int = 1, previous_code: str = None, feedback: str = None) -> str:
+def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: str, scaffold: str,
+                                    model: str = "kwaipilot/kat-coder-pro:free", part: int = 1,
+                                    previous_code: str = None, feedback: str = None) -> str:
     """Call OpenRouter's chat completions to generate a Python solver script.
     Returns the generated python code as a string (no surrounding ``` markers if possible).
     """
@@ -190,18 +192,22 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
         "Do not include explanations, only return the python source code. Keep solution concise and robust."
     )
     user_msg = f"Problem statement:\n{problem}\n\nProvide a python script that reads 'input.txt' and prints the part {part} answer. Use only standard library. Include necessary parsing.\n" + \
-                f"IMPORTANT: You are encouraged to include reasoning and debug output in your solution in case of errors.\n" + \
-                f"IMPORTANT: You MUST fill in the 'samples' list with (sample_input, expected_result) tuples extracted from the problem statement.\n" + \
-                f"IMPORTANT: The script MUST iterate over the 'samples' list, assert each sample result, and print each sample solution using the format '---- Sample {{idx}} Solution Part {part}: {{sample_res}} ----'.\n" + ("\n\nInput sample[:100]...[-100:]" + input_sample[:100]+"..."+input_sample[-max(0,min(100, len(input_sample)-1000)):])
-    
+               f"Here is a sample of the input.txt file(first and last 100 letters):" + (
+                           "\n\n" + input_sample[:100] + "..." + input_sample[
+                       -max(0, min(100, len(input_sample) - 100)):]) + \
+               f"IMPORTANT: You are encouraged to include reasoning and debug output in your solution in case of errors.\n" + \
+               f"IMPORTANT: Your solution MUST use this scaffold because the output format is used for evaluating your result: ```python\n{scaffold}\n```"
+
     if previous_code and feedback:
         user_msg += f"\n\nPrevious attempt failed:\n```python\n{previous_code}\n```\nFeedback: {feedback}\nPlease fix the code."
-    payload = {"model": model, "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_msg}], "temperature": 0.01, "top_p": 0.01}
+    payload = {"model": model,
+               "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_msg}],
+               "temperature": 0.01, "top_p": 0.01}
     YELLOW = '\033[33m'
     CYAN = '\033[36m'
     RESET = '\033[0m'
     logging.info(f"{YELLOW}OpenRouter REQUEST payload:{RESET}\n{payload}")
-    
+
     if not check_pricing(model):
         logging.error("Pricing check failed. Request skipped.")
         return ""
@@ -231,17 +237,17 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
                             logging.warning("Failed to read input. Aborting.")
                             return ""
                     else:
-                         # Non-interactive: log and fail, or maybe wait?
-                         # User said "if user interaction was requested and approved, it should never be rate limited"
-                         # which implies we should handle it. But without interaction, we can't ask.
-                         # Let's just log and fail for now if non-interactive.
-                         logging.error("Rate limited in non-interactive mode. Aborting.")
-                         return ""
-                
+                        # Non-interactive: log and fail, or maybe wait?
+                        # User said "if user interaction was requested and approved, it should never be rate limited"
+                        # which implies we should handle it. But without interaction, we can't ask.
+                        # Let's just log and fail for now if non-interactive.
+                        logging.error("Rate limited in non-interactive mode. Aborting.")
+                        return ""
+
                 # If we are here, user approved (or we are retrying)
                 logging.info(f"Retrying in {retry_delay} seconds...")
                 time.sleep(retry_delay)
-                retry_delay *= 2 # Exponential backoff
+                retry_delay *= 2  # Exponential backoff
                 continue
 
             try:
@@ -249,10 +255,10 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
             except requests.HTTPError:
                 logging.warning(f"{CYAN}OpenRouter returned status {r.status_code}: {r.text}{RESET}")
                 return ""
-            break # Success
+            break  # Success
         except Exception as e:
-             logging.warning(f"{CYAN}Request failed: {e}{RESET}")
-             return ""
+            logging.warning(f"{CYAN}Request failed: {e}{RESET}")
+            return ""
     else:
         logging.error("Max retries exceeded.")
         return ""
@@ -278,7 +284,7 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
     # extract code block if present
     m = re.search(r"```(?:python)?\n([\s\S]*?)```", content)
     code = m.group(1) if m else content
-    
+
     usage = j.get("usage", {})
     if usage:
         prompt_tokens = usage.get("prompt_tokens")
@@ -288,7 +294,6 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
 
     logging.info(f"{CYAN}OpenRouter RESPONSE:{RESET}\n{content}")
     return code
-
 
 
 def git_commit(paths: list[str], message: str) -> bool:

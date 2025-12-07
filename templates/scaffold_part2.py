@@ -9,12 +9,12 @@ def solve_part2(lines):
 samples = []  # TODO: fill with actual samples and expected results
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
-    sample_res = solve_part2(sample_input.strip().splitlines())
-    assert sample_res == expected_result, f"Sample {idx} result {sample_res} does not match expected {expected_result}"
-    print(f"---- Sample {idx} Solution Part 2: {sample_res} ----")
+    sample_result = solve_part2(sample_input.strip().splitlines())
+    assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
+    print(f"---- Sample {idx} result Part 2: {sample_result} ----") # YOU MUST NOT change this output format
 
 # Run on the real puzzle input
 with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part2(lines)
-print(f"---- Final Solution Part 2: {final_result} ----")
+print(f"---- FINAL result Part 2: {final_result} ----") # YOU MUST NOT change this output format
