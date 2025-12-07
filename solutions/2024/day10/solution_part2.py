@@ -5,10 +5,7 @@ def solve_part2(lines):
     for line in lines:
         row = []
         for char in line:
-            if char == '.':
-                row.append(-1)  # Mark impassable tiles
-            else:
-                row.append(int(char))
+            row.append(int(char))
         grid.append(row)
     
     rows, cols = len(grid), len(grid[0])
@@ -30,8 +27,8 @@ def solve_part2(lines):
         for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
             nr, nc = r + dr, c + dc
             if 0 <= nr < rows and 0 <= nc < cols:
-                # Check if the next cell is exactly 1 higher and not impassable
-                if grid[nr][nc] != -1 and grid[nr][nc] == grid[r][c] + 1:
+                # Check if the next cell is exactly 1 higher
+                if grid[nr][nc] == grid[r][c] + 1:
                     total += count_trails_from(nr, nc)
         return total
     
@@ -59,4 +56,3 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part2(lines)
 print(f"---- Final result Part 2: {final_result} ----") # YOU MUST NOT change this output format
-
