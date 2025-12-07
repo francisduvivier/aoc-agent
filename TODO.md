@@ -6,5 +6,4 @@
  - So the whole rate limiting system should be reworked.
 - Token usage counts should be logged in the console.
 - Fix current day not being used automatically anymore.
-- before making a request to the aoc website, check the problem.txt file. If it already contains part 2 including the answer, skip the request.
 - the previous tries of results should be persisted and checked so that we never try to submit the same wrong answer again.
