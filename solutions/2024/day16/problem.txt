@@ -32,13 +32,13 @@ There are many paths through this maze, but taking any of the best paths would i
 #.###.#####.#^#
 #.#.#.......#^#
 #.#.#####.###^#
-#..&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;v#^#
+#..>>>>>>>>v#^#
 ###^#.#####v#^#
-#&gt;&gt;^#.....#v#^#
+#>>^#.....#v#^#
 #^#.#.###.#v#^#
 #^....#...#v#^#
 #^###.#.#.#v#^#
-#S..#.....#&gt;&gt;^#
+#S..#.....#>>^#
 ###############
 
 Here's a second example:
@@ -68,17 +68,17 @@ In this maze, the best paths cost 11048 points; following one such path would lo
 #.#.#.#.#.#.#.#^#
 #.#.#.#...#...#^#
 #.#.#.#.###.#.#^#
-#&gt;&gt;v#.#.#.....#^#
+#>>v#.#.#.....#^#
 #^#v#.#.#.#####^#
-#^#v..#.#.#&gt;&gt;&gt;&gt;^#
+#^#v..#.#.#>>>>^#
 #^#v#####.#^###.#
-#^#v#..&gt;&gt;&gt;&gt;^#...#
+#^#v#..>>>>^#...#
 #^#v###^#####.###
-#^#v#&gt;&gt;^#.....#.#
+#^#v#>>^#.....#.#
 #^#v#^#####.###.#
 #^#v#^........#.#
 #^#v#^#########.#
-#S#&gt;&gt;^..........#
+#S#>>^..........#
 #################
 
 Note that the path shown above includes one 90 degree turn as the very first move, rotating the Reindeer from facing East to facing North.
