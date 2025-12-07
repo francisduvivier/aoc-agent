@@ -9,7 +9,7 @@ import logging
 import subprocess
 import re
 from datetime import datetime, timezone, timedelta
-from aoc_tools import fetch_problem_statement, download_input, create_day_dir, generate_solver_with_openrouter, git_commit, fetch_puzzle_status, parse_problem_file, check_accepted_files
+from aoc_tools import fetch_problem_statement, download_input, create_day_dir, generate_solver_with_openrouter, git_commit, fetch_puzzle_status, check_accepted_files
 from submit import submit_solution
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -71,10 +71,9 @@ def main():
 
     if do_fetch:
         # Check if problem.txt already exists and has Part 2 answer
-        local_status = parse_problem_file(os.path.join(workdir, "problem.txt"))
         accepted_status = check_accepted_files(workdir)
         
-        if (local_status and local_status['part2_solved']) or (accepted_status and accepted_status['part2_solved']):
+        if accepted_status and accepted_status['part2_solved']:
             logging.info("Local files indicate Part 2 is solved. Skipping fetch.")
         else:
             logging.info("Fetching problem statement HTML and cleaning to text")
@@ -117,7 +116,9 @@ def main():
             sys.exit(1)
         
         # Check puzzle status
-        status = parse_problem_file(os.path.join(workdir, "problem.txt"))
+        # Check puzzle status
+        # status = parse_problem_file(os.path.join(workdir, "problem.txt")) # Removed as unreliable
+        status = None
         accepted_status = check_accepted_files(workdir)
         
         if accepted_status:
@@ -134,7 +135,7 @@ def main():
                 status = accepted_status
         
         if status and status['part2_solved']: # If part2_solved, then part1 must also be solved.
-            logging.info("Using local status from problem.txt/accepted files: %s", status)
+            logging.info("Using local status from accepted files: %s", status)
         else:
             status = fetch_puzzle_status(year, day, session)
             logging.info("Puzzle status from AoC: %s", status)
@@ -287,10 +288,10 @@ def main():
                 sol2 = os.path.join(workdir, "solution_part2.py")
                 
                 # Check local status again just in case
-                local_status = parse_problem_file(os.path.join(workdir, "problem.txt"))
+                # Check local status again just in case
                 accepted_status = check_accepted_files(workdir)
                 
-                if (local_status and local_status['part2_solved']) or (accepted_status and accepted_status['part2_solved']):
+                if accepted_status and accepted_status['part2_solved']:
                     logging.info("Local files indicate Part 2 is solved. Skipping fetch.")
                 else:
                     stmt = fetch_problem_statement(year, day, session)
