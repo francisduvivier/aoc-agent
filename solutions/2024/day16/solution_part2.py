@@ -1,88 +1,127 @@
-from heapq import heappush, heappop
+import heapq
 from collections import defaultdict
 
 def solve_part2(lines):
-    # Parse grid
-    grid = [list(line) for line in lines]
-    rows, cols = len(grid), len(grid[0])
+    # Parse the maze
+    maze = [list(line) for line in lines]
+    rows, cols = len(maze), len(maze[0])
     
     # Find start and end positions
     start = end = None
     for r in range(rows):
         for c in range(cols):
-            if grid[r][c] == 'S':
+            if maze[r][c] == 'S':
                 start = (r, c)
-            elif grid[r][c] == 'E':
+            elif maze[r][c] == 'E':
                 end = (r, c)
     
-    # Dijkstra to find shortest path distances
-    # State: (row, col, direction)
+    # Dijkstra's algorithm to find shortest path cost
+    # State: (cost, row, col, direction)
     # Directions: 0=East, 1=South, 2=West, 3=North
-    INF = float('inf')
-    dist = defaultdict(lambda: INF)
-    prev = defaultdict(list)  # state -> list of previous states
+    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
     
-    # Priority queue: (cost, row, col, direction)
+    # Priority queue for Dijkstra
     pq = [(0, start[0], start[1], 0)]  # Start facing East
-    dist[(start[0], start[1], 0)] = 0
     
-    # Movement deltas for each direction
-    dr = [0, 1, 0, -1]  # East, South, West, North
-    dc = [1, 0, -1, 0]
+    # Distance array: dist[r][c][dir] = minimum cost to reach (r,c) facing dir
+    INF = float('inf')
+    dist = [[[INF] * 4 for _ in range(cols)] for _ in range(rows)]
+    dist[start[0]][start[1]][0] = 0
+    
+    # Track predecessors for path reconstruction
+    prev = {}  # key: (r, c, dir), value: (prev_r, prev_c, prev_dir, move_type)
     
     while pq:
-        cost, r, c, d = heappop(pq)
+        cost, r, c, dir_idx = heapq.heappop(pq)
         
-        if cost > dist[(r, c, d)]:
+        if cost > dist[r][c][dir_idx]:
             continue
             
+        # If we reached the end, we can stop
+        if (r, c) == end:
+            break
+            
         # Try moving forward
-        nr, nc = r + dr[d], c + dc[d]
-        if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] != '#':
+        dr, dc = directions[dir_idx]
+        nr, nc = r + dr, c + dc
+        if 0 <= nr < rows and 0 <= nc < cols and maze[nr][nc] != '#':
             new_cost = cost + 1
-            if new_cost < dist[(nr, nc, d)]:
-                dist[(nr, nc, d)] = new_cost
-                prev[(nr, nc, d)] = [(r, c, d)]
-                heappush(pq, (new_cost, nr, nc, d))
-            elif new_cost == dist[(nr, nc, d)]:
-                prev[(nr, nc, d)].append((r, c, d))
+            if new_cost < dist[nr][nc][dir_idx]:
+                dist[nr][nc][dir_idx] = new_cost
+                prev[(nr, nc, dir_idx)] = (r, c, dir_idx, 'forward')
+                heapq.heappush(pq, (new_cost, nr, nc, dir_idx))
         
-        # Try rotating clockwise and counterclockwise
-        for nd in [(d + 1) % 4, (d - 1) % 4]:
-            new_cost = cost + 1000
-            if new_cost < dist[(r, c, nd)]:
-                dist[(r, c, nd)] = new_cost
-                prev[(r, c, nd)] = [(r, c, d)]
-                heappush(pq, (new_cost, r, c, nd))
-            elif new_cost == dist[(r, c, nd)]:
-                prev[(r, c, nd)].append((r, c, d))
-    
-    # Find minimum distance to end position (any direction)
-    min_dist = min(dist[(end[0], end[1], d)] for d in range(4))
-    
-    # Backtrack to find all tiles on any shortest path
-    visited_tiles = set()
-    
-    def backtrack(state):
-        r, c, d = state
-        # Mark this tile as visited
-        visited_tiles.add((r, c))
+        # Try rotating clockwise
+        new_dir = (dir_idx + 1) % 4
+        new_cost = cost + 1000
+        if new_cost < dist[r][c][new_dir]:
+            dist[r][c][new_dir] = new_cost
+            prev[(r, c, new_dir)] = (r, c, dir_idx, 'rotate_cw')
+            heapq.heappush(pq, (new_cost, r, c, new_dir))
         
-        # Continue backtracking
-        for prev_state in prev[state]:
-            backtrack(prev_state)
+        # Try rotating counterclockwise
+        new_dir = (dir_idx - 1) % 4
+        new_cost = cost + 1000
+        if new_cost < dist[r][c][new_dir]:
+            dist[r][c][new_dir] = new_cost
+            prev[(r, c, new_dir)] = (r, c, dir_idx, 'rotate_ccw')
+            heapq.heappush(pq, (new_cost, r, c, new_dir))
     
-    # Start backtracking from all end states that have minimum distance
-    for d in range(4):
-        if dist[(end[0], end[1], d)] == min_dist:
-            backtrack((end[0], end[1], d))
+    # Find the minimum cost to reach the end
+    min_cost = min(dist[end[0]][end[1]])
     
-    return len(visited_tiles)
+    # Collect all tiles that are part of any optimal path
+    # Use BFS from the end to find all reachable states with optimal cost
+    visited_states = set()
+    queue = []
+    
+    # Start from all end states that have the minimum cost
+    for dir_idx in range(4):
+        if dist[end[0]][end[1]][dir_idx] == min_cost:
+            queue.append((end[0], end[1], dir_idx))
+            visited_states.add((end[0], end[1], dir_idx))
+    
+    # Track all visited positions (regardless of direction)
+    visited_positions = set()
+    for r, c, _ in queue:
+        visited_positions.add((r, c))
+    
+    # Work backwards to find all states that can reach the end with optimal cost
+    while queue:
+        r, c, dir_idx = queue.pop(0)
+        
+        # Check all possible previous states
+        # 1. Came from forward move
+        dr, dc = directions[dir_idx]
+        pr, pc = r - dr, c - dc
+        if 0 <= pr < rows and 0 <= pc < cols and maze[pr][pc] != '#':
+            if dist[pr][pc][dir_idx] + 1 == dist[r][c][dir_idx]:
+                if (pr, pc, dir_idx) not in visited_states:
+                    visited_states.add((pr, pc, dir_idx))
+                    visited_positions.add((pr, pc))
+                    queue.append((pr, pc, dir_idx))
+        
+        # 2. Rotated from clockwise
+        prev_dir = (dir_idx - 1) % 4
+        if dist[r][c][prev_dir] + 1000 == dist[r][c][dir_idx]:
+            if (r, c, prev_dir) not in visited_states:
+                visited_states.add((r, c, prev_dir))
+                visited_positions.add((r, c))
+                queue.append((r, c, prev_dir))
+        
+        # 3. Rotated from counterclockwise
+        prev_dir = (dir_idx + 1) % 4
+        if dist[r][c][prev_dir] + 1000 == dist[r][c][dir_idx]:
+            if (r, c, prev_dir) not in visited_states:
+                visited_states.add((r, c, prev_dir))
+                visited_positions.add((r, c))
+                queue.append((r, c, prev_dir))
+    
+    return len(visited_positions)
 
-# Sample data – may contain multiple samples from the problem statement.
-# Populate this list with (sample_input, expected_result) tuples IF there are any samples given for part 2.
+# Sample data
 samples = [
-    ("""###############
+("""###############
 #.......#....E#
 #.#.###.#.###.#
 #.....#.#...#.#
@@ -97,7 +136,7 @@ samples = [
 #.###.#.#.#.#.#
 #S..#.....#...#
 ###############""", 45),
-    ("""#################
+("""#################
 #...#...#...#..E#
 #.#.#.#.#.#.#.#.#
 #.#.#.#...#...#.#
@@ -114,15 +153,14 @@ samples = [
 #.#.#.#########.#
 #S#.............#
 #################""", 64)
-]  # TODO: fill with actual samples and expected results
+]
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     sample_result = solve_part2(sample_input.strip().splitlines())
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
-    print(f"---- Sample {idx} result Part 2: {sample_result} ----") # YOU MUST NOT change this output format
-# print(f"---- Sample NONE result Part 2: NONE ----") # Uncomment this if no samples are given for part 2
+    print(f"---- Sample {idx} result Part 2: {sample_result} ----")
 # Run on the real puzzle input
 with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part2(lines)
-print(f"---- Final result Part 2: {final_result} ----") # YOU MUST NOT change this output format
+print(f"---- Final result Part 2: {final_result} ----")
