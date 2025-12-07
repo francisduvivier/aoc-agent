@@ -30,7 +30,7 @@ def solve_part1(lines):
             quadrant_idx = y_quad * 2 + x_quad
             quadrants[quadrant_idx] += 1
     
-    return quadrants[0] * quadrants[1] * quadrants[2] * quadrants[3]
+    return quadrants[0] * quadrants[2] * quadrants[1] * quadrants[3]
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
