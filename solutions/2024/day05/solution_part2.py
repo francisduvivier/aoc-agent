@@ -14,62 +14,36 @@ def solve_part2(lines):
         else:
             updates.append(list(map(int, line.split(","))))
     
-    # Build rule map: for each page, which pages must come before it
-    must_come_before = {}
-    for x, y in rules:
-        if y not in must_come_before:
-            must_come_before[y] = set()
-        must_come_before[y].add(x)
+    # Build a set of valid orderings for quick lookup
+    valid_order = set(rules)
+    
+    def is_correct(update):
+        # Check if update respects all relevant rules
+        for i in range(len(update)):
+            for j in range(i + 1, len(update)):
+                if (update[i], update[j]) not in valid_order:
+                    return False
+        return True
+    
+    def fix_update(update):
+        # Bubble sort using the rules
+        fixed = update[:]
+        n = len(fixed)
+        for i in range(n):
+            for j in range(n - 1):
+                # If (fixed[j], fixed[j+1]) is not a valid rule,
+                # we need to swap them
+                if (fixed[j], fixed[j+1]) not in valid_order:
+                    # Find if the reverse is a valid rule
+                    if (fixed[j+1], fixed[j]) in valid_order:
+                        fixed[j], fixed[j+1] = fixed[j+1], fixed[j]
+        return fixed
     
     total = 0
-    
     for update in updates:
-        # Check if update is correct
-        incorrect = False
-        for i, page in enumerate(update):
-            if page in must_come_before:
-                # Check that all pages that must come before 'page' are indeed before it
-                required_before = must_come_before[page]
-                actual_before = set(update[:i])
-                if not required_before.issubset(actual_before):
-                    incorrect = True
-                    break
-        
-        if incorrect:
-            # Sort the update correctly using topological sort
-            # Build a set of all pages in this update
-            pages = set(update)
-            
-            # For each page, find which other pages must come before it in this update
-            before_map = {}
-            for page in pages:
-                before_map[page] = set()
-            
-            for x, y in rules:
-                if x in pages and y in pages:
-                    before_map[y].add(x)
-            
-            # Sort using Kahn's algorithm
-            sorted_update = []
-            # Start with pages that have no dependencies
-            available = [p for p in pages if len(before_map[p]) == 0]
-            
-            while available:
-                # Take a page with no remaining dependencies
-                page = available.pop()
-                sorted_update.append(page)
-                
-                # Remove this page from all dependency lists
-                for other in pages:
-                    if page in before_map[other]:
-                        before_map[other].remove(page)
-                        # If this other page now has no dependencies, add it to available
-                        if len(before_map[other]) == 0:
-                            available.append(other)
-            
-            # Add middle page of the correctly sorted update
-            n = len(sorted_update)
-            total += sorted_update[n // 2]
+        if not is_correct(update):
+            fixed = fix_update(update)
+            total += fixed[len(fixed) // 2]
     
     return total
 
@@ -116,4 +90,3 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part2(lines)
 print(f"---- Final result Part 2: {final_result} ----") # YOU MUST NOT change this output format
-
