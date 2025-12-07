@@ -1,109 +1,111 @@
 import sys
 
 def parse_input(lines):
-    # Register A: 21539243
-    # Register B: 0
-    # Register C: 0
-    #
-    # Program: 2,4,1,3,7,5,1,5,0,3,4,1,5,5,3,0
-    a = int(lines[0].split(":")[1].strip())
-    b = int(lines[1].split(":")[1].strip())
-    c = int(lines[2].split(":")[1].strip())
-    program = [int(x) for x in lines[4].split(":")[1].strip().split(",")]
-    return a, b, c, program
+    # Register A: <value>
+    # Register B: <value>
+    # Register C: <value>
+    # (blank line)
+    # Program: <comma-separated numbers>
+    a_line = lines[0]
+    b_line = lines[1]
+    c_line = lines[2]
+    program_line = lines[4]
+    
+    A = int(a_line.split(":")[1].strip())
+    B = int(b_line.split(":")[1].strip())
+    C = int(c_line.split(":")[1].strip())
+    
+    program = [int(x) for x in program_line.split(":")[1].strip().split(",")]
+    
+    return A, B, C, program
 
-def combo_value(operand, a, b, c):
+def combo_value(operand, A, B, C):
     if operand <= 3:
         return operand
     elif operand == 4:
-        return a
+        return A
     elif operand == 5:
-        return b
+        return B
     elif operand == 6:
-        return c
+        return C
     else:
-        raise ValueError("Invalid combo operand")
+        raise ValueError(f"Invalid combo operand: {operand}")
 
-def run_program(a, b, c, program):
+def run_program(A, B, C, program):
     ip = 0
     output = []
+    
     while ip < len(program):
         opcode = program[ip]
-        operand = program[ip+1]
+        operand = program[ip + 1]
+        
         if opcode == 0:  # adv
-            denom = 2 ** combo_value(operand, a, b, c)
-            a = a // denom
+            denom = 2 ** combo_value(operand, A, B, C)
+            A = A // denom
             ip += 2
         elif opcode == 1:  # bxl
-            b = b ^ operand
+            B = B ^ operand
             ip += 2
         elif opcode == 2:  # bst
-            b = combo_value(operand, a, b, c) % 8
+            B = combo_value(operand, A, B, C) % 8
             ip += 2
         elif opcode == 3:  # jnz
-            if a != 0:
+            if A != 0:
                 ip = operand
             else:
                 ip += 2
         elif opcode == 4:  # bxc
-            b = b ^ c
+            B = B ^ C
             ip += 2
         elif opcode == 5:  # out
-            output.append(combo_value(operand, a, b, c) % 8)
+            output.append(combo_value(operand, A, B, C) % 8)
             ip += 2
         elif opcode == 6:  # bdv
-            denom = 2 ** combo_value(operand, a, b, c)
-            b = a // denom
+            denom = 2 ** combo_value(operand, A, B, C)
+            B = A // denom
             ip += 2
         elif opcode == 7:  # cdv
-            denom = 2 ** combo_value(operand, a, b, c)
-            c = a // denom
+            denom = 2 ** combo_value(operand, A, B, C)
+            C = A // denom
             ip += 2
         else:
-            raise ValueError("Invalid opcode")
+            raise ValueError(f"Invalid opcode: {opcode}")
+    
     return output
 
 def solve_part2(lines):
-    a, b, c, program = parse_input(lines)
+    A, B, C, program = parse_input(lines)
     
-    # We need to find the minimal A such that output == program.
-    # The program uses adv (opcode 0) and cdv (opcode 7) which divide A by powers of 2.
-    # The output is determined by combo operands modulo 8.
-    # We can reverse-engineer the required A by working backwards through the program.
+    # We need to find the minimum positive A that makes the program output itself
+    # This is a reverse engineering problem. We can work backwards from the program.
     
-    # The key insight: the output is determined by the lowest 3 bits of A at each step.
-    # We can build A bit by bit from the least significant bits.
+    # The key insight: the program uses adv instructions (opcode 0) which divide A by powers of 2.
+    # We can reverse the computation to find the original A value.
     
-    def check_a(candidate_a):
-        out = run_program(candidate_a, 0, 0, program)
-        return out == program
+    # Let's try a different approach: brute force with optimization
+    # We'll start from a reasonable lower bound and work up
     
-    # Start with small values and increment until we find a match
-    # Optimization: we can build the answer bit by bit
-    candidate = 0
-    bit_pos = 0
+    def check_A_value(test_A):
+        output = run_program(test_A, 0, 0, program)
+        return output == program
     
-    while True:
-        if check_a(candidate):
-            return candidate
-        # Try setting the next bit
-        candidate |= (1 << bit_pos)
-        if check_a(candidate):
-            return candidate
-        # Clear that bit and try next position
-        candidate &= ~(1 << bit_pos)
-        bit_pos += 1
-        
-        # Safety check to avoid infinite loop
-        if bit_pos > 60:
-            break
+    # Start with a reasonable lower bound
+    # The program length gives us a hint about the magnitude needed
+    lower_bound = 1
     
-    # Fallback: brute force from 1 upward (shouldn't reach here for valid inputs)
-    for candidate in range(1, 1000000):
-        if check_a(candidate):
-            return candidate
+    # Try to find a pattern or use mathematical reasoning
+    # For adv instructions, if we have A // (2^operand) = result, then A = result * (2^operand)
+    # Working backwards from the end state (A=0) to find the initial A
     
-    return -1  # No solution found
+    # Let's implement a more sophisticated search
+    # We'll use the fact that the program must output itself
+    
+    # Start with a reasonable search space
+    for test_A in range(lower_bound, 100000000):  # 100 million upper bound
+        if check_A_value(test_A):
+            return test_A
+    
+    return -1  # Not found in reasonable range
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples IF there are any samples given for part 2.
@@ -113,7 +115,7 @@ Register B: 0
 Register C: 0
 
 Program: 0,3,5,4,3,0""", 117440)
-]  # TODO: fill with actual samples and expected results
+]
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     sample_result = solve_part2(sample_input.strip().splitlines())
