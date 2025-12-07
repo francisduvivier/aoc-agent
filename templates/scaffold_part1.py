@@ -1,5 +1,5 @@
-```python
 # Edit this file: implement solve_part1
+
 def solve_part1(lines):
     # replace with actual solution
     return 0
@@ -19,4 +19,3 @@ if __name__ == '__main__':
         lines = [line.strip() for line in f]
     final_result = solve_part1(lines)
     print(f"---- Final Solution Part 1: {final_result} ----")
-```
