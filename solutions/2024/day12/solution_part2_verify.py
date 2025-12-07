@@ -1,141 +1,136 @@
 import sys
 from collections import deque
 
-def read_input():
-    try:
-        with open('input.txt', 'r') as f:
-            return [line.strip() for line in f.readlines()]
-    except FileNotFoundError:
-        print("Error: input.txt not found", file=sys.stderr)
-        sys.exit(1)
-
-def get_neighbors(r, c, rows, cols):
-    neighbors = []
-    if r > 0:
-        neighbors.append((r-1, c))
-    if r < rows - 1:
-        neighbors.append((r+1, c))
-    if c > 0:
-        neighbors.append((r, c-1))
-    if c < cols - 1:
-        neighbors.append((r, c+1))
-    return neighbors
-
-def flood_fill(grid, start_r, start_c, visited, plant_type):
-    rows, cols = len(grid), len(grid[0])
-    queue = deque([(start_r, start_c)])
-    visited.add((start_r, start_c))
-    region_cells = [(start_r, start_c)]
+def solve_part2(lines):
+    if not lines:
+        return 0
     
-    while queue:
-        r, c = queue.popleft()
-        for nr, nc in get_neighbors(r, c, rows, cols):
-            if (nr, nc) not in visited and grid[nr][nc] == plant_type:
-                visited.add((nr, nc))
-                queue.append((nr, nc))
-                region_cells.append((nr, nc))
+    rows = len(lines)
+    cols = len(lines[0])
     
-    return region_cells
-
-def get_region_sides(grid, region_cells):
-    # For each cell in the region, check its 4 sides
-    # A side is part of the perimeter if it's on the map boundary or adjacent to a different plant type
-    sides = []
-    
-    for r, c in region_cells:
-        plant_type = grid[r][c]
-        rows, cols = len(grid), len(grid[0])
-        
-        # Check each of the 4 sides
-        # Top side
-        if r == 0 or grid[r-1][c] != plant_type:
-            sides.append(('top', r, c))
-        
-        # Bottom side
-        if r == rows - 1 or grid[r+1][c] != plant_type:
-            sides.append(('bottom', r, c))
-        
-        # Left side
-        if c == 0 or grid[r][c-1] != plant_type:
-            sides.append(('left', r, c))
-        
-        # Right side
-        if c == cols - 1 or grid[r][c+1] != plant_type:
-            sides.append(('right', r, c))
-    
-    # Group sides by direction and merge adjacent sides
-    total_sides = 0
-    
-    # Group by direction
-    for direction in ['top', 'bottom', 'left', 'right']:
-        direction_sides = [s for s in sides if s[0] == direction]
-        
-        if not direction_sides:
-            continue
-            
-        # Sort sides based on direction
-        if direction in ['top', 'bottom']:
-            # For top/bottom, sort by column (c), then row (r)
-            direction_sides.sort(key=lambda x: (x[1], x[2]))
-        else:
-            # For left/right, sort by row (r), then column (c)
-            direction_sides.sort(key=lambda x: (x[2], x[1]))
-        
-        # Merge adjacent sides
-        merged = []
-        for side in direction_sides:
-            if not merged:
-                merged.append(side)
-            else:
-                last = merged[-1]
-                # Check if this side is adjacent to the last one
-                if direction == 'top':
-                    # Adjacent if same row and consecutive columns
-                    if side[1] == last[1] and side[2] == last[2] + 1:
-                        # Extend the last side (we'll count it as one side)
-                        continue
-                elif direction == 'bottom':
-                    # Adjacent if same row and consecutive columns
-                    if side[1] == last[1] and side[2] == last[2] + 1:
-                        continue
-                elif direction == 'left':
-                    # Adjacent if same column and consecutive rows
-                    if side[2] == last[2] and side[1] == last[1] + 1:
-                        continue
-                elif direction == 'right':
-                    # Adjacent if same column and consecutive rows
-                    if side[2] == last[2] and side[1] == last[1] + 1:
-                        continue
-                
-                # Not adjacent, add as new side
-                merged.append(side)
-        
-        total_sides += len(merged)
-    
-    return total_sides
-
-def solve():
-    grid = read_input()
-    if not grid:
-        return
-    
-    rows, cols = len(grid), len(grid[0])
-    visited = set()
+    # Find all regions
+    visited = [[False] * cols for _ in range(rows)]
     total_price = 0
     
     for r in range(rows):
         for c in range(cols):
-            if (r, c) not in visited:
-                plant_type = grid[r][c]
-                region_cells = flood_fill(grid, r, c, visited, plant_type)
+            if not visited[r][c]:
+                # Start BFS/DFS for this region
+                plant_type = lines[r][c]
+                queue = deque([(r, c)])
+                visited[r][c] = True
+                region_cells = []
                 
+                # Collect all cells in this region
+                while queue:
+                    curr_r, curr_c = queue.popleft()
+                    region_cells.append((curr_r, curr_c))
+                    
+                    # Check neighbors
+                    for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+                        nr, nc = curr_r + dr, curr_c + dc
+                        if 0 <= nr < rows and 0 <= nc < cols and not visited[nr][nc] and lines[nr][nc] == plant_type:
+                            visited[nr][nc] = True
+                            queue.append((nr, nc))
+                
+                # Calculate area and sides
                 area = len(region_cells)
-                sides = get_region_sides(grid, region_cells)
+                sides = count_sides(lines, region_cells, plant_type)
                 price = area * sides
-                
                 total_price += price
     
-    print(total_price)
+    return total_price
 
-if __name__ == "__main__":
-    solve()
+def count_sides(grid, region_cells, plant_type):
+    """
+    Count the number of sides for a region.
+    A side is a continuous straight section of the boundary.
+    """
+    # Create a set for faster lookup
+    region_set = set(region_cells)
+    
+    # Find all boundary edges (edges between region and non-region)
+    # Each edge is represented as (cell_position, direction)
+    boundary_edges = []
+    
+    for r, c in region_cells:
+        # Check each of the 4 directions
+        for dr, dc, direction in [(0, 1, 'right'), (1, 0, 'down'), (0, -1, 'left'), (-1, 0, 'up')]:
+            nr, nc = r + dr, c + dc
+            
+            # If neighbor is outside grid or different plant type, this is a boundary edge
+            if (nr < 0 or nr >= len(grid) or nc < 0 or nc >= len(grid[0]) or 
+                grid[nr][nc] != plant_type):
+                boundary_edges.append(((r, c), direction))
+    
+    if not boundary_edges:
+        return 0
+    
+    # Group boundary edges by direction and position to find continuous sides
+    sides = 0
+    
+    # For horizontal edges (left/right), group by row and check for continuity
+    horizontal_edges = [((r, c), d) for (r, c), d in boundary_edges if d in ['left', 'right']]
+    horizontal_edges.sort()
+    
+    # For vertical edges (up/down), group by column and check for continuity  
+    vertical_edges = [((r, c), d) for (r, c), d in boundary_edges if d in ['up', 'down']]
+    vertical_edges.sort()
+    
+    # Count horizontal sides
+    sides += count_continuous_sides(horizontal_edges)
+    
+    # Count vertical sides
+    sides += count_continuous_sides(vertical_edges)
+    
+    return sides
+
+def count_continuous_sides(edges):
+    """
+    Count continuous sides from sorted edges.
+    Two edges are continuous if they're adjacent in the same direction.
+    """
+    if not edges:
+        return 0
+    
+    sides = 1  # Start with 1 for the first edge
+    
+    for i in range(1, len(edges)):
+        prev_pos, prev_dir = edges[i-1]
+        curr_pos, curr_dir = edges[i]
+        
+        # Check if edges are continuous
+        if prev_dir == curr_dir:
+            if prev_dir in ['left', 'right']:
+                # Horizontal edges: continuous if same row and adjacent columns
+                if prev_pos[0] == curr_pos[0] and prev_pos[1] + 1 == curr_pos[1]:
+                    continue  # Part of same side
+            else:
+                # Vertical edges: continuous if same column and adjacent rows
+                if prev_pos[1] == curr_pos[1] and prev_pos[0] + 1 == curr_pos[0]:
+                    continue  # Part of same side
+        
+        # If not continuous, start a new side
+        sides += 1
+    
+    return sides
+
+# Sample data – may contain multiple samples from the problem statement.
+# Populate this list with (sample_input, expected_result) tuples.
+samples = [
+    ("AAAA\nBBCD\nBBCC\nEEEC", 80),
+    ("OOOOO\nOXOXO\nOOOOO\nOXOXO\nOOOOO", 436),
+    ("EEEEE\nEXXXX\nEEEEE\nEXXXX\nEEEEE", 236),
+    ("AAAAAA\nAAABBA\nAAABBA\nABBAAA\nABBAAA\nAAAAAA", 368)
+]
+
+for idx, (sample_input, expected_result) in enumerate(samples, start=1):
+    sample_result = solve_part2(sample_input.strip().splitlines())
+    assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
+    print(f"---- Sample {idx} result Part 2: {sample_result} ----") # YOU MUST NOT change this output format
+
+# Run on the real puzzle input
+with open('input.txt') as f:
+    lines = [line.strip() for line in f]
+final_result = solve_part2(lines)
+print(f"---- FINAL result Part 2: {final_result} ----") # YOU MUST NOT change this output format
