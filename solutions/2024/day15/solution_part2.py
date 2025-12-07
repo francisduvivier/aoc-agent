@@ -132,24 +132,13 @@ def solve_part2(lines):
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples IF there are any samples given for part 2.
-samples = [("""##########
-#..O..O.O#
-#......O.#
-#.OO..O.O#
-#..O@..O.#
-#O#..O...#
-#O..O..O.#
-#.OO.O.OO#
-#....O...#
-##########
-
-<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<<>><>v<vvv<>^v^>^<<<><<<v<<<v^vv^v>vvv<><>vv<<<^^>>>>v<>^>^v<v^vv^v^<^>vvv>v>^^v^v<>vv>>><^<>v>vvv>vv<<v>^^>>^^^><>v^<^^v>vv<^^v< v^v^v<<<^^v<v>^<""", 9021)]  # TODO: fill with actual samples and expected results
+samples = []  # TODO: fill with actual samples and expected results
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     sample_result = solve_part2(sample_input.strip().splitlines())
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
     print(f"---- Sample {idx} result Part 2: {sample_result} ----") # YOU MUST NOT change this output format
-# print(f"---- Sample NONE result Part 2: NONE ----") # Uncomment this if no samples are given for part 2
+print("---- Sample NONE result Part 2: NONE ----") # Uncomment this if no samples are given for part 2
 # Run on the real puzzle input
 with open('input.txt') as f:
     lines = [line.strip() for line in f]
