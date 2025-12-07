@@ -1,24 +1,36 @@
 # Edit this file: implement solve_part2
 
 def solve_part2(lines):
-    program_line = [line for line in lines if line.startswith('Program:')][0]
-    program = list(map(int, program_line.split(': ')[1].split(',')))
-    digits = program
+    A = B = C = 0
+    prog = []
+    for line in lines:
+        if line.startswith("Register A:"):
+            A = int(line.split(": ")[1])
+        elif line.startswith("Register B:"):
+            B = int(line.split(": ")[1])
+        elif line.startswith("Register C:"):
+            C = int(line.split(": ")[1])
+        elif line.startswith("Program:"):
+            prog = list(map(int, line.split(": ")[1].split(",")))
+    
+    S = prog
     
     def compute_output(A):
-        B = (A % 8) ^ 3
+        B = A % 8
+        B ^= 3
         C = A // (2 ** B)
-        B = B ^ 5 ^ C
+        B ^= 5
+        B ^= C
         return B % 8
     
-    possible_A = {0}
-    for digit in reversed(digits):
-        new_possible = set()
-        for prev_A in possible_A:
+    possible_A = [0]
+    for target in reversed(S):
+        new_possible = []
+        for prev in possible_A:
             for r in range(8):
-                A = prev_A * 8 + r
-                if compute_output(A) == digit:
-                    new_possible.add(A)
+                cand_A = 8 * prev + r
+                if compute_output(cand_A) == target:
+                    new_possible.append(cand_A)
         possible_A = new_possible
     return min(possible_A)
 
