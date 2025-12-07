@@ -1,48 +1,54 @@
 # Edit this file: implement solve_part1
 
 def solve_part1(lines):
-    # Parse robots
+    # Parse input
     robots = []
     for line in lines:
         if not line.strip():
             continue
         parts = line.split()
-        # p=0,4 v=3,-3
-        p_part = parts[0][2:]  # remove "p="
-        v_part = parts[1][2:]  # remove "v="
+        p_part = parts[0].replace('p=', '')
+        v_part = parts[1].replace('v=', '')
         px, py = map(int, p_part.split(','))
         vx, vy = map(int, v_part.split(','))
         robots.append(((px, py), (vx, vy)))
     
-    # Simulate 100 seconds
-    width, height = 101, 103
-    for _ in range(100):
-        new_robots = []
-        for (px, py), (vx, vy) in robots:
-            px = (px + vx) % width
-            py = (py + vy) % height
-            new_robots.append(((px, py), (vx, vy)))
-        robots = new_robots
+    # Dimensions for the actual puzzle
+    width = 101
+    height = 103
+    seconds = 100
     
-    # Count robots in each quadrant
-    # Middle lines are at width//2 and height//2 (index 50 and 51)
-    mid_x = width // 2  # 50
-    mid_y = height // 2  # 51
+    # Calculate positions after 100 seconds
+    quadrants = [0, 0, 0, 0]  # top-left, top-right, bottom-left, bottom-right
     
-    q1 = q2 = q3 = q4 = 0
-    for (px, py), _ in robots:
-        if px == mid_x or py == mid_y:
+    for (px, py), (vx, vy) in robots:
+        # Calculate new position after 100 seconds
+        new_px = (px + vx * seconds) % width
+        new_py = (py + vy * seconds) % height
+        
+        # Skip robots exactly in the middle
+        mid_x = width // 2
+        mid_y = height // 2
+        
+        if new_px == mid_x or new_py == mid_y:
             continue
-        if px < mid_x and py < mid_y:
-            q1 += 1
-        elif px > mid_x and py < mid_y:
-            q2 += 1
-        elif px < mid_x and py > mid_y:
-            q3 += 1
-        elif px > mid_x and py > mid_y:
-            q4 += 1
+            
+        # Determine which quadrant
+        if new_px < mid_x and new_py < mid_y:
+            quadrants[0] += 1  # top-left
+        elif new_px > mid_x and new_py < mid_y:
+            quadrants[1] += 1  # top-right
+        elif new_px < mid_x and new_py > mid_y:
+            quadrants[2] += 1  # bottom-left
+        elif new_px > mid_x and new_py > mid_y:
+            quadrants[3] += 1  # bottom-right
     
-    return q1 * q2 * q3 * q4
+    # Calculate safety factor
+    result = 1
+    for count in quadrants:
+        result *= count
+    
+    return result
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
