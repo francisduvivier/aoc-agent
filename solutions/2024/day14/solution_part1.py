@@ -11,10 +11,10 @@ def solve_part1(lines):
         if not line.strip():
             continue
             
-        # Parse line: p=x,y v=x,y
+        # Parse line: p=46,91 v=80,-6
         parts = line.split()
-        pos_part = parts[0][2:]  # Remove 'p='
-        vel_part = parts[1][2:]  # Remove 'v='
+        pos_part = parts[0][2:]  # Remove "p="
+        vel_part = parts[1][2:]  # Remove "v="
         
         px, py = map(int, pos_part.split(','))
         vx, vy = map(int, vel_part.split(','))
@@ -28,16 +28,13 @@ def solve_part1(lines):
             continue
             
         # Determine quadrant
-        left = final_x < width // 2
-        top = final_y < height // 2
-        
-        if left and top:
+        if final_x < width // 2 and final_y < height // 2:
             quadrants[0] += 1
-        elif not left and top:
+        elif final_x > width // 2 and final_y < height // 2:
             quadrants[1] += 1
-        elif left and not top:
+        elif final_x < width // 2 and final_y > height // 2:
             quadrants[2] += 1
-        else:  # not left and not top
+        elif final_x > width // 2 and final_y > height // 2:
             quadrants[3] += 1
     
     return quadrants[0] * quadrants[1] * quadrants[2] * quadrants[3]
