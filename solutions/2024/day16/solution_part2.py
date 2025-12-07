@@ -64,10 +64,6 @@ def solve_part2(lines):
     visited_tiles = set()
     
     def backtrack(state):
-        if state in visited_tiles:
-            return
-        visited_tiles.add(state)
-        
         r, c, d = state
         # Mark this tile as visited
         visited_tiles.add((r, c))
