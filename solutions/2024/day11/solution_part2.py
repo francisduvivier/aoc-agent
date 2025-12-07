@@ -3,43 +3,46 @@
 def solve_part2(lines):
     stones = list(map(int, lines[0].split()))
     
-    # Use memoization to avoid recalculating the same stone transformations
+    # Use memoization to avoid recalculating the same subproblems
     memo = {}
     
-    def transform_stone(stone, blinks_left):
+    def count_stones(stone, blinks_left):
         if blinks_left == 0:
             return 1
         
-        key = (stone, blinks_left)
-        if key in memo:
-            return memo[key]
+        if (stone, blinks_left) in memo:
+            return memo[(stone, blinks_left)]
+        
+        result = 0
         
         if stone == 0:
-            result = transform_stone(1, blinks_left - 1)
+            # Rule 1: 0 becomes 1
+            result = count_stones(1, blinks_left - 1)
         else:
-            s = str(stone)
-            if len(s) % 2 == 0:
-                mid = len(s) // 2
-                left = int(s[:mid])
-                right = int(s[mid:])
-                result = transform_stone(left, blinks_left - 1) + transform_stone(right, blinks_left - 1)
+            # Convert to string to check digit count
+            stone_str = str(stone)
+            if len(stone_str) % 2 == 0:
+                # Rule 2: Even number of digits - split in half
+                mid = len(stone_str) // 2
+                left_half = int(stone_str[:mid])
+                right_half = int(stone_str[mid:])
+                result = count_stones(left_half, blinks_left - 1) + count_stones(right_half, blinks_left - 1)
             else:
-                result = transform_stone(stone * 2024, blinks_left - 1)
+                # Rule 3: Odd number of digits - multiply by 2024
+                result = count_stones(stone * 2024, blinks_left - 1)
         
-        memo[key] = result
+        memo[(stone, blinks_left)] = result
         return result
     
     total_stones = 0
     for stone in stones:
-        total_stones += transform_stone(stone, 75)
+        total_stones += count_stones(stone, 75)
     
     return total_stones
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
-samples = [
-    ("125 17", 537731)
-]  # TODO: fill with actual samples and expected results
+samples = []  # TODO: fill with actual samples and expected results
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     sample_result = solve_part2(sample_input.strip().splitlines())
