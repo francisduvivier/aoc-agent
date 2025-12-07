@@ -21,35 +21,24 @@ def solve_part2(lines):
                 trailheads.append((r, c))
     
     def count_trails(start_r, start_c):
-        # BFS to find all distinct paths from start to any 9
-        # State: (r, c, path_as_tuple)
-        queue = deque()
-        queue.append((start_r, start_c, (start_r, start_c)))
-        visited = set()
-        visited.add((start_r, start_c, (start_r, start_c)))
-        
-        trails = set()
-        
-        while queue:
-            r, c, path = queue.popleft()
-            
-            # If we reached height 9, record this path
+        # Use DFS to count all distinct paths from start to any 9
+        # We need to track visited positions per path to avoid cycles
+        def dfs(r, c, visited):
             if grid[r][c] == 9:
-                trails.add(path)
-                continue
+                return 1
             
-            # Explore neighbors
+            total = 0
             for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
                 nr, nc = r + dr, c + dc
                 if 0 <= nr < rows and 0 <= nc < cols:
                     if grid[nr][nc] != -1 and grid[nr][nc] == grid[r][c] + 1:
-                        new_path = path + (nr, nc)
-                        state = (nr, nc, new_path)
-                        if state not in visited:
-                            visited.add(state)
-                            queue.append((nr, nc, new_path))
+                        if (nr, nc) not in visited:
+                            new_visited = visited.copy()
+                            new_visited.add((nr, nc))
+                            total += dfs(nr, nc, new_visited)
+            return total
         
-        return len(trails)
+        return dfs(start_r, start_c, {(start_r, start_c)})
     
     total_rating = 0
     for r, c in trailheads:
