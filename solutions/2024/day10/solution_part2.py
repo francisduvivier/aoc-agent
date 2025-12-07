@@ -71,7 +71,7 @@ samples = [
 6543456
 765.987
 876....
-987....""", 227)
+987....""", 13)
 ]  # TODO: fill with actual samples and expected results
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
