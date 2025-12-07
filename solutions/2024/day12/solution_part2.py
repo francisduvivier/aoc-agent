@@ -3,67 +3,96 @@ from collections import deque
 def solve_part2(lines):
     if not lines or not lines[0]:
         return 0
-        
-    grid = [list(line.strip()) for line in lines if line.strip()]
+    
+    grid = [list(line.strip()) for line in lines]
     rows, cols = len(grid), len(grid[0])
-    visited = [[False] * cols for _ in range(rows)]
+    visited = set()
     total_price = 0
     
-    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+    # Directions: up, down, left, right
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
     
-    for i in range(rows):
-        for j in range(cols):
-            if not visited[i][j]:
-                char = grid[i][j]
-                q = deque([(i, j)])
-                visited[i][j] = True
-                region_cells = set()
-                region_cells.add((i, j))
+    for r in range(rows):
+        for c in range(cols):
+            if (r, c) in visited:
+                continue
                 
-                while q:
-                    x, y = q.popleft()
-                    for dx, dy in directions:
-                        nx, ny = x + dx, y + dy
-                        if 0 <= nx < rows and 0 <= ny < cols and not visited[nx][ny] and grid[nx][ny] == char:
-                            visited[nx][ny] = True
-                            q.append((nx, ny))
-                            region_cells.add((nx, ny))
-                
-                area = len(region_cells)
-                
-                corners = set()
-                for x, y in region_cells:
-                    corners.add((x, y))
-                    corners.add((x, y+1))
-                    corners.add((x+1, y))
-                    corners.add((x+1, y+1))
-                
-                sides = 0
-                for corner in corners:
-                    x, y = corner
-                    count = 0
-                    for dx, dy in [(0, 0), (0, -1), (-1, 0), (-1, -1)]:
-                        nx, ny = x + dx, y + dy
-                        if (nx, ny) in region_cells:
-                            count += 1
-                    if count == 1 or count == 3:
+            plant_type = grid[r][c]
+            # BFS to find the entire region
+            queue = deque([(r, c)])
+            region_cells = set([(r, c)])
+            visited.add((r, c))
+            
+            while queue:
+                cr, cc = queue.popleft()
+                for dr, dc in directions:
+                    nr, nc = cr + dr, cc + dc
+                    if 0 <= nr < rows and 0 <= nc < cols:
+                        if grid[nr][nc] == plant_type and (nr, nc) not in region_cells:
+                            region_cells.add((nr, nc))
+                            visited.add((nr, nc))
+                            queue.append((nr, nc))
+            
+            # Calculate number of sides
+            sides = 0
+            for cr, cc in region_cells:
+                # Check all four directions for boundaries
+                for dr, dc in directions:
+                    nr, nc = cr + dr, cc + dc
+                    # If neighbor is out of bounds or different plant type, it's a side
+                    if not (0 <= nr < rows and 0 <= nc < cols) or grid[nr][nc] != plant_type:
                         sides += 1
-                
-                total_price += area * sides
+            
+            area = len(region_cells)
+            total_price += area * sides
     
     return total_price
 
-sample_input = """AAAA
+# Sample data from problem statement
+samples = [
+    ("""AAAA
 BBCD
 BBCC
-EEEC"""
-sample_answer = 80
+EEEC""", 80),
+    
+    ("""OOOOO
+OXOXO
+OOOOO
+OXOXO
+OOOOO""", 436),
+    
+    ("""EEEEE
+EXXXX
+EEEEE
+EXXXX
+EEEEE""", 236),
+    
+    ("""AAAAAA
+AAABBA
+AAABBA
+ABBAAA
+ABBAAA
+AAAAAA""", 368),
+    
+    ("""RRRRIICCFF
+RRRRIICCCF
+VVRRRCCFFF
+VVRCCCJFFF
+VVVVCJJCFE
+VVIVCCJJEE
+VVIIICJJEE
+MIIIIIJJEE
+MIIISIJEEE
+MMMISSJEEE""", 1206)
+]
 
-sample_result = solve_part2(sample_input.strip().splitlines())
-assert sample_result == sample_answer, f"Sample result {sample_result} does not match expected {sample_answer}"
+for idx, (sample_input, expected_result) in enumerate(samples, start=1):
+    sample_res = solve_part2(sample_input.strip().splitlines())
+    assert sample_res == expected_result, f"Sample {idx} result {sample_res} does not match expected {expected_result}"
+    print(f"---- Sample {idx} Solution Part 2: {sample_res} ----")
 
+# Run on the real puzzle input
 with open('input.txt') as f:
-    lines = f.readlines()
-
-result = solve_part2(lines)
-print(result)
+    lines = [line.strip() for line in f]
+final_result = solve_part2(lines)
+print(f"---- Final Solution Part 2: {final_result} ----")
