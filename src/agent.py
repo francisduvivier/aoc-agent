@@ -204,8 +204,8 @@ def main():
                     else:
                         logging.warning("No code generated.")
                         # If generation fails, maybe break or continue? Continue allows retry if transient.
-
-                feedback += f"\nThis was try number {str(attempt)}!!! Make sure not to do the exact same thing again.\n"
+                
+                if feedback: feedback += f"\nThis was try number {str(attempt)}!!! Make sure not to do the exact same thing again.\n"
                 if output:
                     if _should_submit_interactive(output, 1):
                         res = submit_solution(year, day, 1, output, session)
@@ -312,7 +312,7 @@ def main():
                                 logging.warning("Failed to run generated solution_part2.py: %s", e)
                                 feedback = f"Execution failed: {e}"
                                 previous_code = code
-                    feedback += f"\nThis was try number {str(attempt)}!!! Make sure not to do the exact same thing again.\n"
+                    if feedback: feedback += f"\nThis was try number {str(attempt)}!!! Make sure not to do the exact same thing again.\n"
                     if output:
                         if _should_submit_interactive(output, 2):
                             res = submit_solution(year, day, 2, output, session)
@@ -412,7 +412,7 @@ def main():
                                 previous_code = code
                         else:
                             logging.warning("Failed to generate verification code.")
-                    feedback += f"\nThis was try number {str(attempt)}!!! Make sure not to do the exact same thing again.\n"
+                    if feedback: feedback += f"\nThis was try number {str(attempt)}!!! Make sure not to do the exact same thing again.\n"
                     if attempt == max_attempts:
                             logging.error("Verification failed after %d attempts.", max_attempts)
 
