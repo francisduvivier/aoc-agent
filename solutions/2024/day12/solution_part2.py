@@ -33,47 +33,47 @@ def solve_part2(lines):
         
         # Top sides
         for i in range(rows):
-            in_top = False
+            in_fence = False
             for j in range(cols):
                 if (i, j) in region and (i - 1 < 0 or (i - 1, j) not in region):
-                    if not in_top:
+                    if not in_fence:
                         sides += 1
-                        in_top = True
+                        in_fence = True
                 else:
-                    in_top = False
+                    in_fence = False
         
         # Bottom sides
         for i in range(rows):
-            in_bottom = False
+            in_fence = False
             for j in range(cols):
                 if (i, j) in region and (i + 1 >= rows or (i + 1, j) not in region):
-                    if not in_bottom:
+                    if not in_fence:
                         sides += 1
-                        in_bottom = True
+                        in_fence = True
                 else:
-                    in_bottom = False
+                    in_fence = False
         
         # Left sides
         for j in range(cols):
-            in_left = False
+            in_fence = False
             for i in range(rows):
                 if (i, j) in region and (j - 1 < 0 or (i, j - 1) not in region):
-                    if not in_left:
+                    if not in_fence:
                         sides += 1
-                        in_left = True
+                        in_fence = True
                 else:
-                    in_left = False
+                    in_fence = False
         
         # Right sides
         for j in range(cols):
-            in_right = False
+            in_fence = False
             for i in range(rows):
                 if (i, j) in region and (j + 1 >= cols or (i, j + 1) not in region):
-                    if not in_right:
+                    if not in_fence:
                         sides += 1
-                        in_right = True
+                        in_fence = True
                 else:
-                    in_right = False
+                    in_fence = False
         
         price = area * sides
         total_price += price
