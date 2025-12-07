@@ -336,7 +336,7 @@ if __name__ == '__main__':
                                         break
                                     else:
                                         logging.warning("VERIFICATION FAILED: Generated answer '%s' != Known answer '%s'", output, known_answer)
-                                        feedback = f"Generated answer '{output}' does not match known answer '{known_answer}'."
+                                        feedback = f"Generated answer '{output}' is incorrect."
                                         previous_code = code
                                 else:
                                     logging.warning("Verification script failed or produced no output.")
