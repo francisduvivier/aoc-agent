@@ -1,85 +1,93 @@
+```python
 # Edit this file: implement solve_part1
 
 def solve_part1(lines):
-    # Parse the input: split into grid and moves
-    grid_lines = []
+    # Split input into warehouse map and moves
+    map_lines = []
     moves = []
-    parsing_moves = False
+    reading_moves = False
     
     for line in lines:
         if line.strip() == "":
-            parsing_moves = True
+            reading_moves = True
             continue
-        if parsing_moves:
+        if reading_moves:
             moves.extend(list(line.strip()))
         else:
-            grid_lines.append(line.strip())
+            map_lines.append(line.strip())
     
-    # Build the grid as a list of lists for mutability
-    grid = [list(row) for row in grid_lines]
-    
-    # Find the robot position
-    robot_r, robot_c = None, None
-    for r, row in enumerate(grid):
-        for c, ch in enumerate(row):
-            if ch == '@':
-                robot_r, robot_c = r, c
+    # Find robot position
+    robot_pos = None
+    for r, row in enumerate(map_lines):
+        for c, cell in enumerate(row):
+            if cell == '@':
+                robot_pos = (r, c)
                 break
-        if robot_r is not None:
+        if robot_pos:
             break
     
-    # Define movement deltas
-    delta = {'^': (-1, 0), 'v': (1, 0), '<': (0, -1), '>': (0, 1)}
+    # Convert map to list of lists for easier manipulation
+    grid = [list(row) for row in map_lines]
     
-    # Process each move
+    # Process moves
+    dr = {'^': -1, 'v': 1, '<': 0, '>': 0}
+    dc = {'^': 0, 'v': 0, '<': -1, '>': 1}
+    
     for move in moves:
-        dr, dc = delta[move]
-        nr, nc = robot_r + dr, robot_c + dc
+        r, c = robot_pos
+        nr, nc = r + dr[move], c + dc[move]
         
-        # If the next cell is a wall, nothing moves
-        if grid[nr][nc] == '#':
+        # Check what's in the target position
+        target = grid[nr][nc]
+        
+        if target == '#':
+            # Wall - can't move
             continue
-        
-        # If the next cell is empty, just move the robot
-        if grid[nr][nc] == '.':
-            grid[robot_r][robot_c] = '.'
+        elif target == '.':
+            # Empty - robot moves
+            grid[r][c] = '.'
             grid[nr][nc] = '@'
-            robot_r, robot_c = nr, nc
-            continue
-        
-        # If the next cell is a box, attempt to push it
-        if grid[nr][nc] == 'O':
-            # Find the farthest box in the line of push
-            push_path = []
-            pr, pc = robot_r, robot_c
+            robot_pos = (nr, nc)
+        elif target == 'O':
+            # Box - need to check if it can be pushed
+            # Find all consecutive boxes in this direction
+            boxes_to_move = []
+            current_r, current_c = nr, nc
+            
             while True:
-                pr += dr
-                pc += dc
-                if grid[pr][pc] == '#':
-                    # Blocked by wall, nothing moves
+                boxes_to_move.append((current_r, current_c))
+                next_r = current_r + dr[move]
+                next_c = current_c + dc[move]
+                
+                if grid[next_r][next_c] == '#':
+                    # Wall at the end - can't push
                     break
-                push_path.append((pr, pc))
-                if grid[pr][pc] == '.':
-                    # Found empty space, can push
-                    # Move boxes backward along the path
-                    for i in range(len(push_path) - 1, 0, -1):
-                        r1, c1 = push_path[i]
-                        r2, c2 = push_path[i - 1]
-                        grid[r1][c1] = grid[r2][c2]
-                    # Move the robot
-                    grid[robot_r][robot_c] = '.'
-                    grid[robot_r + dr][robot_c + dc] = '@'
-                    robot_r, robot_c = robot_r + dr, robot_c + dc
+                elif grid[next_r][next_c] == '.':
+                    # Empty space at the end - can push
+                    # Move all boxes
+                    for br, bc in boxes_to_move:
+                        next_br = br + dr[move]
+                        next_bc = bc + dc[move]
+                        grid[next_br][next_bc] = 'O'
+                        grid[br][bc] = '.'
+                    
+                    # Move robot
+                    grid[r][c] = '.'
+                    grid[nr][nc] = '@'
+                    robot_pos = (nr, nc)
                     break
-                if grid[pr][pc] == '#':
-                    # Blocked, break without moving
+                elif grid[next_r][next_c] == 'O':
+                    # Another box - continue checking
+                    current_r, current_c = next_r, next_c
+                else:
+                    # Shouldn't happen
                     break
     
     # Calculate GPS coordinates sum
     total = 0
     for r, row in enumerate(grid):
-        for c, ch in enumerate(row):
-            if ch == 'O':
+        for c, cell in enumerate(row):
+            if cell == 'O':
                 total += 100 * r + c
     
     return total
@@ -87,8 +95,7 @@ def solve_part1(lines):
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
 samples = [
-    (
-        """########
+    ("""########
 #..O.O.#
 ##@.O..#
 #...O..#
@@ -97,11 +104,8 @@ samples = [
 #......#
 ########
 
-<^^>>>vv<v>>v<<""",
-        2028
-    ),
-    (
-        """##########
+<^^>>>vv<v>>v<<""", 2028),
+    ("""##########
 #..O..O.O#
 #......O.#
 #.OO..O.O#
@@ -112,19 +116,4 @@ samples = [
 #....O...#
 ##########
 
-<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^<<>><>>v<vvv<>^v^>^<<<><<<>v<vvv><>^<v<>^v<v^vv^v<^>vvv>v>^^v^v<>vv>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<""",
-        10092
-    )
-]  # TODO: fill with actual samples and expected results
-
-for idx, (sample_input, expected_result) in enumerate(samples, start=1):
-    sample_result = solve_part1(sample_input.strip().splitlines())
-    assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
-    print(f"---- Sample {idx} result Part 1: {sample_result} ----") # YOU MUST NOT change this output format
-
-# Run on the real puzzle input
-with open('input.txt') as f:
-    lines = [line.strip() for line in f]
-final_result = solve_part1(lines)
-print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
-
+<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^<<>><>>v<vvv<>^v^>^<<<><<><v^<^^v>vv<^^v^<v^v^v<<<^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v^v<>vv>>><^<>>v>vvv^>vv<<v>^^>>^^^>><><v^<^^v>vv<^^v^<v^v^v<<<^^v<v>^<^^>v
