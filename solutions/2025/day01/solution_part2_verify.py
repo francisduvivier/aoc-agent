@@ -1,97 +1,51 @@
-import re
-from typing import List, Tuple
+# Edit this file: implement solve_part2
 
-# Sample inputs and expected results from the problem statement
-samples: List[Tuple[str, int]] = [
-    (
-        """L68
-L30
-R48
-L5
-R60
-L55
-L1
-L99
-R14
-L82""", 6
-    )
+def solve_part2(lines):
+    position = 50
+    count = 0
+    
+    for rotation in lines:
+        direction = rotation[0]
+        distance = int(rotation[1:])
+        
+        if direction == 'R':
+            # Moving right (toward higher numbers)
+            # Count how many times we pass 0 during this rotation
+            # We pass 0 when we complete a full cycle
+            # Calculate how many times we cross 0
+            end_position = (position + distance) % 100
+            # Number of times we pass 0 = number of full cycles
+            count += (position + distance) // 100
+            position = end_position
+        else:  # direction == 'L'
+            # Moving left (toward lower numbers)
+            # Count how many times we pass 0 during this rotation
+            end_position = (position - distance) % 100
+            # When moving left, we pass 0 when going from 0 to 99
+            # This happens when we cross the boundary
+            if distance > position:
+                # First pass through 0
+                count += 1
+                # After first pass, additional passes occur every 100 steps
+                remaining = distance - position
+                count += remaining // 100
+            position = end_position
+    
+    return count
+
+# Sample data – may contain multiple samples from the problem statement.
+# Populate this list with (sample_input, expected_result) tuples.
+samples = [
+    ("L68\nL30\nR48\nL5\nR60\nL55\nL1\nL99\nR14\nL82", 6)
 ]
 
-def solve_part2(input_str: str) -> int:
-    """
-    Count the number of times the dial points at 0 during the sequence of rotations.
-    This includes both times when the dial ends on 0 after a rotation and times when
-    the dial passes through 0 during a rotation.
-    """
-    # Parse the input into a list of (direction, distance) tuples
-    rotations = []
-    for line in input_str.strip().split('\n'):
-        line = line.strip()
-        if not line:
-            continue
-        match = re.match(r'([LR])(\d+)', line)
-        if match:
-            direction = match.group(1)
-            distance = int(match.group(2))
-            rotations.append((direction, distance))
-    
-    current_position = 50
-    zero_count = 0
-    
-    for direction, distance in rotations:
-        # Calculate the new position after the rotation
-        if direction == 'R':
-            new_position = (current_position + distance) % 100
-        else:  # direction == 'L'
-            new_position = (current_position - distance) % 100
-        
-        # Count how many times the dial points at 0 during this rotation
-        if direction == 'R':
-            # Moving right (clockwise)
-            if current_position < new_position:
-                # No wrap-around
-                if current_position < 0 <= new_position:
-                    zero_count += 1
-            else:
-                # Wrap-around (crosses 99 -> 0)
-                zero_count += 1
-        else:
-            # Moving left (counter-clockwise)
-            if current_position > new_position:
-                # No wrap-around
-                if current_position > 0 >= new_position:
-                    zero_count += 1
-            else:
-                # Wrap-around (crosses 0 -> 99)
-                zero_count += 1
-        
-        # Check if the rotation ends on 0
-        if new_position == 0:
-            zero_count += 1
-        
-        current_position = new_position
-    
-    return zero_count
+for idx, (sample_input, expected_result) in enumerate(samples, start=1):
+    sample_result = solve_part2(sample_input.strip().splitlines())
+    assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
+    print(f"---- Sample {idx} result Part 2: {sample_result} ----")
 
-def main():
-    # Test with samples first
-    for idx, (sample_input, expected) in enumerate(samples, 1):
-        result = solve_part2(sample_input)
-        print(f"---- Sample {idx} Solution Part 2: {result} ----")
-        assert result == expected, f"Sample {idx} failed: expected {expected}, got {result}"
-    
-    # Read and solve for the actual input
-    try:
-        with open('input.txt', 'r') as f:
-            input_data = f.read()
-        
-        answer = solve_part2(input_data)
-        print(f"---- Actual Answer Part 2: {answer} ----")
-        
-    except FileNotFoundError:
-        print("Error: 'input.txt' not found in the current directory.")
-    except Exception as e:
-        print(f"Error reading input file: {e}")
-
-if __name__ == "__main__":
-    main()
+# Run on the real puzzle input
+with open('input.txt') as f:
+    lines = [line.strip() for line in f]
+final_result = solve_part2(lines)
+print(f"---- FINAL result Part 2: {final_result} ----")
