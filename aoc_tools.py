@@ -35,8 +35,15 @@ def fetch_problem_statement(year: int, day: int, session_cookie: str) -> str:
     text = re.sub(r"<script[\s\S]*?</script>", "", text, flags=re.I)
     # Try to extract all article.day-desc blocks (part 1 and part 2) which contain the problem descriptions
     matches = re.findall(r'<article[^>]*class="[^\"]*day-desc[^\"]*"[^>]*>([\s\S]*?)</article>', text, flags=re.I)
+    
+    # Also look for the answer lines, which are usually outside the article
+    # <p>Your puzzle answer was <code>...</code>.</p>
+    answer_matches = re.findall(r'<p>Your puzzle answer was <code>.*?</code>.</p>', text, flags=re.I)
+
     if matches:
         text = "\n\n".join(matches)
+        if answer_matches:
+            text += "\n\n" + "\n".join(answer_matches)
     # remove known unwanted tags/blocks
     text = re.sub(r"<current_datetime>[\s\S]*?</current_datetime>", "", text, flags=re.I)
     # replace block-level closing tags with newlines to preserve paragraphs
@@ -91,41 +98,6 @@ def fetch_puzzle_status(year: int, day: int, session_cookie: str) -> dict:
         status['part2_answer'] = answers[1]
         
     return status
-
-
-def parse_problem_file(path: str) -> dict | None:
-    """Parse a local problem.txt file to determine solved status.
-    Returns a status dict if the file exists and appears to contain answers, else None.
-    """
-    if not os.path.exists(path):
-        return None
-    
-    try:
-        text = open(path, "r").read()
-    except Exception:
-        return None
-
-    status = {
-        'part1_solved': False,
-        'part1_answer': None,
-        'part2_solved': False,
-        'part2_answer': None
-    }
-
-    # Check for "Your puzzle answer was" blocks
-    # In the cleaned text, it usually looks like "Your puzzle answer was ANSWER."
-    answers = re.findall(r"Your puzzle answer was (.*?)\.", text)
-    
-    if len(answers) >= 1:
-        status['part1_solved'] = True
-        status['part1_answer'] = answers[0]
-    
-    if len(answers) >= 2:
-        status['part2_solved'] = True
-        status['part2_answer'] = answers[1]
-        
-    return status
-
 
 
 def download_input(year: int, day: int, session_cookie: str, out_dir: str) -> str:
