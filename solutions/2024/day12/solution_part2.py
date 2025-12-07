@@ -12,14 +12,12 @@ def solve_part2(lines):
         for j in range(cols):
             if not visited[i][j]:
                 char = grid[i][j]
-                area = 0
                 q = deque([(i, j)])
                 visited[i][j] = True
                 region_cells = set()
                 
                 while q:
                     x, y = q.popleft()
-                    area += 1
                     region_cells.add((x, y))
                     for dx, dy in directions:
                         nx, ny = x + dx, y + dy
@@ -27,25 +25,20 @@ def solve_part2(lines):
                             visited[nx][ny] = True
                             q.append((nx, ny))
                 
-                sides = 0
-                for x, y in region_cells:
-                    for dx, dy in directions:
-                        nx, ny = x + dx, y + dy
-                        if not (0 <= nx < rows and 0 <= ny < cols) or grid[nx][ny] != char:
-                            sides += 1
-                
+                area = len(region_cells)
                 corners = 0
+                
                 for x, y in region_cells:
-                    for dx1, dy1 in [(0, 0), (0, 1), (1, 0), (1, 1)]:
-                        has_cell = (x + dx1, y + dy1) in region_cells
-                        has_outside = False
-                        for dx2, dy2 in [(0, 0), (0, -1), (-1, 0), (-1, -1)]:
-                            nx, ny = x + dx1 + dx2, y + dy1 + dy2
-                            if not (0 <= nx < rows and 0 <= ny < cols) or grid[nx][ny] != char:
-                                has_outside = True
-                                break
-                        if has_outside and not has_cell:
-                            corners += 1
+                    for dx, dy in [(0, 0), (0, 1), (1, 0), (1, 1)]:
+                        nx, ny = x + dx, y + dy
+                        if (nx, ny) not in region_cells:
+                            count = 0
+                            for ddx, ddy in [(0, 0), (0, -1), (-1, 0), (-1, -1)]:
+                                cx, cy = nx + ddx, ny + ddy
+                                if (cx, cy) in region_cells:
+                                    count += 1
+                            if count == 0:
+                                corners += 1
                 
                 total_price += area * corners
     
