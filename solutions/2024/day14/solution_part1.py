@@ -5,45 +5,41 @@ def solve_part1(lines):
     height = 103
     seconds = 100
     
-    # Parse robots
-    robots = []
-    for line in lines:
-        if not line.strip():
-            continue
-        parts = line.split()
-        pos_part = parts[0][2:]  # Remove 'p='
-        vel_part = parts[1][2:]  # Remove 'v='
-        
-        px, py = map(int, pos_part.split(','))
-        vx, vy = map(int, vel_part.split(','))
-        robots.append((px, py, vx, vy))
-    
-    # Simulate 100 seconds
-    final_positions = []
-    for px, py, vx, vy in robots:
-        new_x = (px + vx * seconds) % width
-        new_y = (py + vy * seconds) % height
-        final_positions.append((new_x, new_y))
-    
-    # Count robots in each quadrant
-    # Middle lines are at width//2 and height//2
+    quadrants = [0, 0, 0, 0]
     mid_x = width // 2
     mid_y = height // 2
     
-    q1 = q2 = q3 = q4 = 0
-    for x, y in final_positions:
-        if x == mid_x or y == mid_y:
-            continue  # Skip middle line robots
-        if x < mid_x and y < mid_y:
-            q1 += 1
-        elif x > mid_x and y < mid_y:
-            q2 += 1
-        elif x < mid_x and y > mid_y:
-            q3 += 1
-        elif x > mid_x and y > mid_y:
-            q4 += 1
+    for line in lines:
+        if not line.strip():
+            continue
+            
+        # Parse line: p=x,y v=x,y
+        parts = line.split()
+        pos_part = parts[0][2:]  # Remove "p="
+        vel_part = parts[1][2:]  # Remove "v="
+        
+        px, py = map(int, pos_part.split(','))
+        vx, vy = map(int, vel_part.split(','))
+        
+        # Calculate final position after 100 seconds
+        final_x = (px + vx * seconds) % width
+        final_y = (py + vy * seconds) % height
+        
+        # Skip robots exactly on middle lines
+        if final_x == mid_x or final_y == mid_y:
+            continue
+            
+        # Count in quadrants
+        if final_x < mid_x and final_y < mid_y:
+            quadrants[0] += 1  # Top-left
+        elif final_x > mid_x and final_y < mid_y:
+            quadrants[1] += 1  # Top-right
+        elif final_x < mid_x and final_y > mid_y:
+            quadrants[2] += 1  # Bottom-left
+        elif final_x > mid_x and final_y > mid_y:
+            quadrants[3] += 1  # Bottom-right
     
-    return q1 * q2 * q3 * q4
+    return quadrants[0] * quadrants[1] * quadrants[2] * quadrants[3]
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
