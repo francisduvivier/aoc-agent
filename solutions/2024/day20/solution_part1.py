@@ -28,32 +28,58 @@ def solve_part1(lines):
     # Get shortest path distance without cheating
     shortest_path = bfs(start, end)
     
-    # Find all pairs of positions that are exactly 2 steps apart (Manhattan distance)
-    # and count cheats that save at least 100 picoseconds
-    count = 0
-    positions = []
+    # Precompute distances from start to all positions
+    start_distances = {}
+    queue = deque([(start, 0)])
+    visited = {start}
+    while queue:
+        (r, c), dist = queue.popleft()
+        start_distances[(r, c)] = dist
+        for dr, dc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < len(lines) and 0 <= nc < len(lines[0]) and lines[nr][nc] != '#' and (nr, nc) not in visited:
+                visited.add((nr, nc))
+                queue.append(((nr, nc), dist + 1))
+    
+    # Precompute distances from all positions to end
+    end_distances = {}
+    queue = deque([(end, 0)])
+    visited = {end}
+    while queue:
+        (r, c), dist = queue.popleft()
+        end_distances[(r, c)] = dist
+        for dr, dc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < len(lines) and 0 <= nc < len(lines[0]) and lines[nr][nc] != '#' and (nr, nc) not in visited:
+                visited.add((nr, nc))
+                queue.append(((nr, nc), dist + 1))
+    
+    # Find all track positions
+    track_positions = []
     for r in range(len(lines)):
         for c in range(len(lines[0])):
             if lines[r][c] != '#':
-                positions.append((r, c))
+                track_positions.append((r, c))
     
     # For each pair of positions with Manhattan distance <= 2
-    for i in range(len(positions)):
-        for j in range(i + 1, len(positions)):
-            r1, c1 = positions[i]
-            r2, c2 = positions[j]
+    count = 0
+    for i in range(len(track_positions)):
+        for j in range(i + 1, len(track_positions)):
+            r1, c1 = track_positions[i]
+            r2, c2 = track_positions[j]
             
             # Manhattan distance must be <= 2 for a valid cheat
             manhattan_dist = abs(r1 - r2) + abs(c1 - c2)
             if manhattan_dist > 2:
                 continue
             
-            # Calculate path distances
-            dist_start_to_cheat_start = bfs(start, (r1, c1))
-            dist_cheat_end_to_end = bfs((r2, c2), end)
-            
-            if dist_start_to_cheat_start == float('inf') or dist_cheat_end_to_end == float('inf'):
+            # Check if both positions are reachable
+            if (r1, c1) not in start_distances or (r2, c2) not in end_distances:
                 continue
+            
+            # Calculate path distances
+            dist_start_to_cheat_start = start_distances[(r1, c1)]
+            dist_cheat_end_to_end = end_distances[(r2, c2)]
             
             # Total distance with cheat
             total_with_cheat = dist_start_to_cheat_start + manhattan_dist + dist_cheat_end_to_end
