@@ -26,15 +26,25 @@ def solve_part2(lines):
         
         return region_cells
     
-    def count_sides(region_cells, plant_type):
+    def count_sides(region_cells):
         region_set = set(region_cells)
-        sides = 0
+        corners = set()
         
         for r, c in region_cells:
-            for dr, dc in dirs:
+            corners.add((r, c))
+            corners.add((r, c+1))
+            corners.add((r+1, c))
+            corners.add((r+1, c+1))
+        
+        sides = 0
+        for r, c in corners:
+            count = 0
+            for dr, dc in [(0,0), (0,-1), (-1,0), (-1,-1)]:
                 nr, nc = r + dr, c + dc
-                if (nr, nc) not in region_set:
-                    sides += 1
+                if (nr, nc) in region_set:
+                    count += 1
+            if count == 1 or count == 3:
+                sides += 1
         
         return sides
     
@@ -44,7 +54,7 @@ def solve_part2(lines):
                 plant_type = grid[r][c]
                 region_cells = bfs(r, c, plant_type)
                 area = len(region_cells)
-                sides = count_sides(region_cells, plant_type)
+                sides = count_sides(region_cells)
                 total_price += area * sides
     
     return total_price
