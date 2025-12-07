@@ -22,8 +22,8 @@ def solve_part2(lines):
     
     def count_trails(start_r, start_c):
         # Use DFS to count all distinct paths from start to any 9
-        # We need to track the path to ensure we count distinct trails
-        def dfs(r, c, path):
+        # We can visit the same cell multiple times if we reach it through different paths
+        def dfs(r, c):
             if grid[r][c] == 9:
                 return 1
             
@@ -33,13 +33,10 @@ def solve_part2(lines):
                 if 0 <= nr < rows and 0 <= nc < cols:
                     # Check if the next cell is valid (not impassable) and exactly 1 higher
                     if grid[nr][nc] != -1 and grid[nr][nc] == grid[r][c] + 1:
-                        # Only continue if we haven't visited this cell at this height
-                        if (nr, nc) not in path:
-                            new_path = path | {(nr, nc)}
-                            total += dfs(nr, nc, new_path)
+                        total += dfs(nr, nc)
             return total
         
-        return dfs(start_r, start_c, {(start_r, start_c)})
+        return dfs(start_r, start_c)
     
     total_rating = 0
     for r, c in trailheads:
