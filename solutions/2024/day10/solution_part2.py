@@ -23,7 +23,8 @@ def solve_part2(lines):
                 trailheads.append((r, c))
     
     @lru_cache(maxsize=None)
-    def count_paths(r, c, height):
+    def count_paths(r, c):
+        height = grid[r][c]
         # If we reached height 9, this is a valid trail end
         if height == 9:
             return 1
@@ -36,13 +37,13 @@ def solve_part2(lines):
                 next_height = grid[nr][nc]
                 # Only move to next height (exactly +1)
                 if next_height != -1 and next_height == height + 1:
-                    total += count_paths(nr, nc, next_height)
+                    total += count_paths(nr, nc)
         
         return total
     
     total_rating = 0
     for r, c in trailheads:
-        total_rating += count_paths(r, c, 0)
+        total_rating += count_paths(r, c)
     
     return total_rating
 
