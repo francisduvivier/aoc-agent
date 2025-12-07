@@ -28,35 +28,30 @@ def solve_part2(lines):
                         visited.add((nr, nc))
                         queue.append((nr, nc))
             
-            sides = 0
             corners = set()
-            
-            for cr, cc in region_cells:
-                for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
-                    nr, nc = cr + dx, cc + dy
-                    if not (0 <= nr < rows and 0 <= nc < cols) or grid[nr][nc] != plant_type:
-                        sides += 1
-            
             for cr, cc in region_cells:
                 for corner_x, corner_y in [(cr, cc), (cr, cc+1), (cr+1, cc), (cr+1, cc+1)]:
-                    if (corner_x, corner_y) in corners:
-                        continue
-                    
-                    adjacent_types = set()
-                    for check_r, check_c in [(corner_x-0.5, corner_y-0.5), (corner_x-0.5, corner_y+0.5),
-                                           (corner_x+0.5, corner_y-0.5), (corner_x+0.5, corner_y+0.5)]:
-                        if 0 <= check_r < rows and 0 <= check_c < cols:
-                            cell_r, cell_c = int(check_r), int(check_c)
-                            if (cell_r, cell_c) in region_cells:
-                                adjacent_types.add(plant_type)
-                            else:
-                                adjacent_types.add(grid[cell_r][cell_c])
-                    
-                    if len(adjacent_types) > 1:
-                        corners.add((corner_x, corner_y))
+                    corners.add((corner_x, corner_y))
             
-            area = len(region_cells)
-            total_price += area * (sides + len(corners))
+            connected_corners = set()
+            for corner in corners:
+                if corner in connected_corners:
+                    continue
+                    
+                queue = deque([corner])
+                component = set([corner])
+                connected_corners.add(corner)
+                
+                while queue:
+                    cx, cy = queue.popleft()
+                    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                        nx, ny = cx + dx, cy + dy
+                        if (nx, ny) in corners and (nx, ny) not in component:
+                            component.add((nx, ny))
+                            connected_corners.add((nx, ny))
+                            queue.append((nx, ny))
+                
+                total_price += len(region_cells) * len(component)
     
     return total_price
 
