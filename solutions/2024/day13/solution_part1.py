@@ -1,5 +1,4 @@
 import re
-from math import gcd
 
 def solve_part1(lines):
     total_cost = 0
@@ -27,25 +26,28 @@ def solve_part1(lines):
         
         # Using elimination:
         # a = (px * by - py * bx) / (ax * by - ay * bx)
-        # b = (px * ay - py * ax) / (bx * ay - by * ax)
+        # b = (px - ax * a) / bx (if bx != 0) or (py - ay * a) / by
         
-        denom = ax * by - ay * bx
-        if denom == 0:
+        denominator = ax * by - ay * bx
+        if denominator == 0:
             continue
             
-        a_presses = (px * by - py * bx) / denom
-        b_presses = (px * ay - py * ax) / denom
-        
-        # Check if solution is integer and non-negative
+        a_presses = (px * by - py * bx) / denominator
+        if bx != 0:
+            b_presses = (px - ax * a_presses) / bx
+        else:
+            b_presses = (py - ay * a_presses) / by
+            
+        # Check if both are integers and within valid range
         if a_presses == int(a_presses) and b_presses == int(b_presses):
             a_presses = int(a_presses)
             b_presses = int(b_presses)
-            if a_presses >= 0 and b_presses >= 0:
+            if 0 <= a_presses <= 100 and 0 <= b_presses <= 100:
                 total_cost += a_presses * 3 + b_presses * 1
-    
+                
     return total_cost
 
-# Sample data from problem statement
+# Sample data
 samples = [
 ("""Button A: X+94, Y+34
 Button B: X+22, Y+67
@@ -69,7 +71,6 @@ for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
     print(f"---- Sample {idx} result Part 1: {sample_result} ----")
 
-# Run on the real puzzle input
 with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
