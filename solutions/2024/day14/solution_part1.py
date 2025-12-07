@@ -1,8 +1,8 @@
 # Edit this file: implement solve_part1
 
 def solve_part1(lines):
-    width = 101
-    height = 103
+    width = 11
+    height = 7
     seconds = 100
     
     # Parse robots
@@ -26,9 +26,9 @@ def solve_part1(lines):
         positions.append((new_x, new_y))
     
     # Count robots in each quadrant
-    # Middle lines are at width//2 and height//2 (50 and 51)
-    mid_x = width // 2  # 50
-    mid_y = height // 2  # 51
+    # Middle lines are at width//2 and height//2 (5 and 3)
+    mid_x = width // 2  # 5
+    mid_y = height // 2  # 3
     
     q1 = q2 = q3 = q4 = 0
     for x, y in positions:
