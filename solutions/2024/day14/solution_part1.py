@@ -1,8 +1,8 @@
 # Edit this file: implement solve_part1
 
 def solve_part1(lines):
-    width = 101
-    height = 103
+    width = 11
+    height = 7
     seconds = 100
     
     # Count robots in each quadrant
@@ -26,7 +26,7 @@ def solve_part1(lines):
         final_y = (py + vy * seconds) % height
         
         # Check if robot is in any quadrant (not on middle lines)
-        # Middle lines are at width//2 = 50 and height//2 = 51
+        # Middle lines are at width//2 = 5 and height//2 = 3
         if final_x != width // 2 and final_y != height // 2:
             # Determine which quadrant
             if final_x < width // 2:  # Left half
