@@ -39,11 +39,14 @@ def solve_part2(lines):
                     corners.add((x+1, y+1))
                 
                 sides = 0
-                for corner in corners:
+                for corner in list(corners):
                     x, y = corner
-                    adjacent_cells = [(x-1, y-1), (x-1, y), (x, y-1), (x, y)]
-                    count_in_region = sum(1 for cell in adjacent_cells if cell in region_cells)
-                    if count_in_region % 2 == 1:
+                    count = 0
+                    for dx, dy in [(0, 0), (0, -1), (-1, 0), (-1, -1)]:
+                        nx, ny = x + dx, y + dy
+                        if (nx, ny) in region_cells:
+                            count += 1
+                    if count == 1 or count == 3:
                         sides += 1
                 
                 total_price += area * sides
