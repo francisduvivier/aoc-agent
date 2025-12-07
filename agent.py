@@ -148,17 +148,20 @@ def main():
                     try:
                         proc = subprocess.run(["python3", "solution_part1.py"], cwd=workdir, capture_output=True, text=True, timeout=30)
                         if proc.returncode == 0 and proc.stdout.strip():
-                            lines = proc.stdout.strip().splitlines()
-                            if len(lines) >= 2:
-                                test_res = lines[-2].strip()
-                                real_res = lines[-1].strip()
+                            # Parse output with regex
+                            sample_match = re.search(r"---- Sample Solution Part 1: (.+?) ----", proc.stdout)
+                            final_match = re.search(r"---- Final Solution Part 1: (.+?) ----", proc.stdout)
+                            
+                            if sample_match and final_match:
+                                test_res = sample_match.group(1).strip()
+                                real_res = final_match.group(1).strip()
                                 if test_res != real_res and test_res != "0" and real_res != "0":
                                     output = real_res
                                     logging.info("Output from existing solution_part1.py: Test=%s, Real=%s", test_res, real_res)
                                 else:
                                     feedback = f"Existing solution output invalid: Test='{test_res}', Real='{real_res}'. Must be distinct and non-zero."
                             else:
-                                feedback = "Existing solution produced insufficient output (need at least 2 lines)."
+                                feedback = "Existing solution produced insufficient output (missing format markers)."
                         else:
                             # Existing solution failed or no output
                             if proc.returncode != 0:
@@ -186,10 +189,14 @@ def main():
                         try:
                             proc = subprocess.run(["python3", "solution_part1.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
                             if proc.returncode == 0 and proc.stdout.strip():
-                                lines = proc.stdout.strip().splitlines()
-                                if len(lines) >= 2:
-                                    test_res = lines[-2].strip()
-                                    real_res = lines[-1].strip()
+                            if proc.returncode == 0 and proc.stdout.strip():
+                                # Parse output with regex
+                                sample_match = re.search(r"---- Sample Solution Part 1: (.+?) ----", proc.stdout)
+                                final_match = re.search(r"---- Final Solution Part 1: (.+?) ----", proc.stdout)
+                                
+                                if sample_match and final_match:
+                                    test_res = sample_match.group(1).strip()
+                                    real_res = final_match.group(1).strip()
                                     if test_res != real_res and test_res != "0" and real_res != "0":
                                         output = real_res
                                         logging.info("Output from generated solution_part1.py: Test=%s, Real=%s", test_res, real_res)
@@ -198,7 +205,7 @@ def main():
                                         previous_code = code
                                         logging.warning("Verification failed: %s", feedback)
                                 else:
-                                    feedback = "Generated solution produced insufficient output (need at least 2 lines)."
+                                    feedback = "Generated solution produced insufficient output (missing format markers)."
                                     previous_code = code
                                     logging.warning("Verification failed: %s", feedback)
                             else:
@@ -272,23 +279,26 @@ def main():
                             f.write(scaffold2)
                         logging.info("Reset solution_part2.py to scaffold.")
                         previous_code = scaffold2
-                        feedback = "Starting fresh. Please implement the solution starting from this scaffold. Fill in sample_input and sample_answer. The script MUST print the test result first, then the real result."
+                        feedback = "Starting fresh. Please implement the solution starting from this scaffold. Fill in sample_input and sample_answer. The script MUST print the results in the format: ---- Sample Solution Part 2: [result] ---- and ---- Final Solution Part 2: [result] ----"
 
                     if attempt == 1 and os.path.exists(sol2) and not feedback and False: # Disabled because we always reset on attempt 1 now
                         try:
                             proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir, capture_output=True, text=True, timeout=30)
                             if proc.returncode == 0 and proc.stdout.strip():
-                                lines = proc.stdout.strip().splitlines()
-                                if len(lines) >= 2:
-                                    test_res = lines[-2].strip()
-                                    real_res = lines[-1].strip()
+                                # Parse output with regex
+                                sample_match = re.search(r"---- Sample Solution Part 2: (.+?) ----", proc.stdout)
+                                final_match = re.search(r"---- Final Solution Part 2: (.+?) ----", proc.stdout)
+                                
+                                if sample_match and final_match:
+                                    test_res = sample_match.group(1).strip()
+                                    real_res = final_match.group(1).strip()
                                     if test_res != real_res and test_res != "0" and real_res != "0":
                                         output = real_res
                                         logging.info("Output from existing solution_part2.py: Test=%s, Real=%s", test_res, real_res)
                                     else:
                                         feedback = f"Existing solution output invalid: Test='{test_res}', Real='{real_res}'. Must be distinct and non-zero."
                                 else:
-                                    feedback = "Existing solution produced insufficient output (need at least 2 lines)."
+                                    feedback = "Existing solution produced insufficient output (missing format markers)."
                             else:
                                 if proc.returncode != 0:
                                     feedback = f"Existing solution failed with error:\n{proc.stderr}"
@@ -311,10 +321,14 @@ def main():
                             try:
                                 proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
                                 if proc.returncode == 0 and proc.stdout.strip():
-                                    lines = proc.stdout.strip().splitlines()
-                                    if len(lines) >= 2:
-                                        test_res = lines[-2].strip()
-                                        real_res = lines[-1].strip()
+                                if proc.returncode == 0 and proc.stdout.strip():
+                                    # Parse output with regex
+                                    sample_match = re.search(r"---- Sample Solution Part 2: (.+?) ----", proc.stdout)
+                                    final_match = re.search(r"---- Final Solution Part 2: (.+?) ----", proc.stdout)
+                                    
+                                    if sample_match and final_match:
+                                        test_res = sample_match.group(1).strip()
+                                        real_res = final_match.group(1).strip()
                                         if test_res != real_res and test_res != "0" and real_res != "0":
                                             output = real_res
                                             logging.info("Output from generated solution_part2.py: Test=%s, Real=%s", test_res, real_res)
@@ -323,7 +337,7 @@ def main():
                                             previous_code = code
                                             logging.warning("Verification failed: %s", feedback)
                                     else:
-                                        feedback = "Generated solution produced insufficient output (need at least 2 lines)."
+                                        feedback = "Generated solution produced insufficient output (missing format markers)."
                                         previous_code = code
                                         logging.warning("Verification failed: %s", feedback)
                                 else:
