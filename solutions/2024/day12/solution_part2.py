@@ -30,13 +30,27 @@ def solve_part2(lines):
             
             sides = 0
             for cr, cc in region_cells:
-                for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                    nr, nc = cr + dr, cc + dc
+                for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+                    nr, nc = cr + dx, cc + dy
                     if not (0 <= nr < rows and 0 <= nc < cols) or grid[nr][nc] != plant_type:
                         sides += 1
             
+            corners = 0
+            for cr, cc in region_cells:
+                for corner_dx, corner_dy in [(0.5, 0.5), (0.5, -0.5), (-0.5, 0.5), (-0.5, -0.5)]:
+                    has_corner = True
+                    for check_dx, check_dy in [(0.5, 0), (-0.5, 0), (0, 0.5), (0, -0.5)]:
+                        check_r = cr + corner_dx + check_dx
+                        check_c = cc + corner_dy + check_dy
+                        if 0 <= check_r < rows and 0 <= check_c < cols:
+                            if grid[int(check_r)][int(check_c)] == plant_type:
+                                has_corner = False
+                                break
+                    if has_corner:
+                        corners += 1
+            
             area = len(region_cells)
-            total_price += area * sides
+            total_price += area * (sides + corners)
     
     return total_price
 
