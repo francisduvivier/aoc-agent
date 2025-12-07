@@ -58,8 +58,7 @@ def combo_value(operand, a, b, c):
         return b
     elif operand == 6:
         return c
-    else:
-        raise ValueError("Invalid combo operand")
+    return 0
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
