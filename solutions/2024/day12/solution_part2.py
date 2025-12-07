@@ -18,7 +18,6 @@ def solve_part2(lines):
             visited.add((r, c))
             region_cells = set([(r, c)])
             
-            # BFS to find all connected cells of same type
             while queue:
                 cr, cc = queue.popleft()
                 for dr, dc in directions:
@@ -28,33 +27,30 @@ def solve_part2(lines):
                         region_cells.add((nr, nc))
                         queue.append((nr, nc))
             
-            # Count sides by checking adjacent cells
+            # Count sides by tracing boundaries
             sides = 0
-            for cr, cc in region_cells:
-                # Check all four directions
-                for dr, dc in directions:
-                    nr, nc = cr + dr, cc + dc
-                    # If neighbor is out of bounds or different type, it's a side
-                    if not (0 <= nr < rows and 0 <= nc < cols) or grid[nr][nc] != plant_type:
-                        sides += 1
-                    # Check diagonal connections that create corners
-                    # For each corner, check if both adjacent sides exist
-                    if dr == 0:  # horizontal movement
-                        # Check above and below the horizontal neighbor
-                        for vd in [1, -1]:
-                            vr, vc = cr + vd, cc + dc
-                            if (0 <= vr < rows and 0 <= vc < cols and 
-                                grid[vr][vc] == plant_type and 
-                                (vr, vc) not in region_cells):
+            # For each cell, check corners to count sides
+            for r, c in region_cells:
+                # Check all 8 neighbors for boundary detection
+                # A side exists at a corner if the diagonal is not part of the region
+                # but at least one adjacent orthogonal cell is also not part of the region
+                for dr in [-1, 0, 1]:
+                    for dc in [-1, 0, 1]:
+                        if dr == 0 and dc == 0:
+                            continue
+                        nr, nc = r + dr, c + dc
+                        # If neighbor is out of bounds or different type
+                        if not (0 <= nr < rows and 0 <= nc < cols) or grid[nr][nc] != plant_type:
+                            # Check if this creates a new side (corner case)
+                            # For orthogonal neighbors, always count as side
+                            if abs(dr) + abs(dc) == 1:
                                 sides += 1
-                    else:  # vertical movement
-                        # Check left and right of the vertical neighbor
-                        for hd in [1, -1]:
-                            hr, hc = cr + dr, cc + hd
-                            if (0 <= hr < rows and 0 <= hc < cols and 
-                                grid[hr][hc] == plant_type and 
-                                (hr, hc) not in region_cells):
-                                sides += 1
+                            # For diagonal neighbors, count if both adjacent orthogonals are not in region
+                            else:
+                                orth1_ok = (0 <= r + dr < rows and 0 <= c < cols and grid[r + dr][c] == plant_type)
+                                orth2_ok = (0 <= r < rows and 0 <= c + dc < cols and grid[r][c + dc] == plant_type)
+                                if not orth1_ok and not orth2_ok:
+                                    sides += 1
             
             area = len(region_cells)
             total_price += area * sides
