@@ -1,54 +1,48 @@
 # Edit this file: implement solve_part1
 
 def solve_part1(lines):
-    # Parse robots: p=x,y v=dx,dy
-    robots = []
+    width = 101
+    height = 103
+    seconds = 100
+    
+    quadrants = [0, 0, 0, 0]
+    
     for line in lines:
         if not line.strip():
             continue
-        # Example: "p=0,4 v=3,-3"
+            
+        # Parse line: p=46,91 v=80,-6
         parts = line.split()
-        p_part = parts[0][2:]  # remove "p="
-        v_part = parts[1][2:]  # remove "v="
-        px, py = map(int, p_part.split(","))
-        vx, vy = map(int, v_part.split(","))
-        robots.append(((px, py), (vx, vy)))
-
-    # Dimensions
-    W = 101
-    H = 103
-    seconds = 100
-
-    # Compute final positions after 100 seconds
-    positions = []
-    for (px, py), (vx, vy) in robots:
-        fx = (px + vx * seconds) % W
-        fy = (py + vy * seconds) % H
-        positions.append((fx, fy))
-
-    # Count robots in each quadrant after 100 seconds
-    # Quadrants: top-left, top-right, bottom-left, bottom-right
-    # Middle lines (x=50 or y=51) are excluded
-    q1 = q2 = q3 = q4 = 0
-    for x, y in positions:
-        if x == 50 or y == 51:
+        pos_part = parts[0][2:]  # Remove "p="
+        vel_part = parts[1][2:]  # Remove "v="
+        
+        px, py = map(int, pos_part.split(','))
+        vx, vy = map(int, vel_part.split(','))
+        
+        # Calculate position after 100 seconds
+        final_x = (px + vx * seconds) % width
+        final_y = (py + vy * seconds) % height
+        
+        # Skip robots exactly in the middle
+        if final_x == width // 2 or final_y == height // 2:
             continue
-        if x < 50 and y < 51:
-            q1 += 1
-        elif x > 50 and y < 51:
-            q2 += 1
-        elif x < 50 and y > 51:
-            q3 += 1
-        elif x > 50 and y > 51:
-            q4 += 1
-
-    return q1 * q2 * q3 * q4
+            
+        # Determine quadrant
+        if final_x < width // 2 and final_y < height // 2:
+            quadrants[0] += 1
+        elif final_x > width // 2 and final_y < height // 2:
+            quadrants[1] += 1
+        elif final_x < width // 2 and final_y > height // 2:
+            quadrants[2] += 1
+        elif final_x > width // 2 and final_y > height // 2:
+            quadrants[3] += 1
+    
+    return quadrants[0] * quadrants[1] * quadrants[2] * quadrants[3]
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
 samples = [
-    (
-        """p=0,4 v=3,-3
+    ("""p=0,4 v=3,-3
 p=6,3 v=-1,-3
 p=10,3 v=-1,2
 p=2,0 v=2,-1
@@ -59,9 +53,7 @@ p=3,0 v=-1,-2
 p=9,3 v=2,3
 p=7,3 v=-1,2
 p=2,4 v=2,-3
-p=9,5 v=-3,-3""",
-        12
-    )
+p=9,5 v=-3,-3""", 12)
 ]  # TODO: fill with actual samples and expected results
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
