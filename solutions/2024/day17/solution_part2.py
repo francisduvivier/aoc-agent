@@ -1,80 +1,32 @@
 # Edit this file: implement solve_part2
 
-def get_combo(operand, A, B, C):
-    if operand <= 3:
-        return operand
-    elif operand == 4:
-        return A
-    elif operand == 5:
-        return B
-    elif operand == 6:
-        return C
-    else:
-        raise ValueError("Invalid operand")
-
-def run_iteration(A, B, C, program):
-    output = []
-    IP = 0
-    while IP < len(program):
-        opcode = program[IP]
-        operand = program[IP + 1]
-        if opcode == 0:  # adv
-            combo = get_combo(operand, A, B, C)
-            A = A // (1 << combo)
-        elif opcode == 1:  # bxl
-            B = B ^ operand
-        elif opcode == 2:  # bst
-            combo = get_combo(operand, A, B, C)
-            B = combo % 8
-        elif opcode == 3:  # jnz
-            if A != 0:
-                IP = operand
-                continue
-            else:
-                IP += 2
-                break
-        elif opcode == 4:  # bxc
-            B = B ^ C
-        elif opcode == 5:  # out
-            combo = get_combo(operand, A, B, C)
-            output.append(combo % 8)
-            IP += 2
-            if len(output) == 1:
-                break
-        elif opcode == 6:  # bdv
-            combo = get_combo(operand, A, B, C)
-            B = A // (1 << combo)
-        elif opcode == 7:  # cdv
-            combo = get_combo(operand, A, B, C)
-            C = A // (1 << combo)
-        else:
-            IP += 2
-    return output[0] if output else None, A, B, C
-
-def find_A(remaining, B, C, current_A, program):
-    if not remaining:
-        return current_A
-    target = remaining[0]
-    for a in range(8):
-        full_A = current_A * 8 + a
-        out, new_A, new_B, new_C = run_iteration(full_A, B, C, program)
-        if out == target:
-            if not remaining[1:]:
-                if new_A == 0:
-                    return full_A
-            else:
-                sub = find_A(remaining[1:], new_B, new_C, new_A, program)
-                if sub is not None:
-                    return sub
-    return None
-
 def solve_part2(lines):
-    program_str = lines[4].split(': ')[1]
-    program = [int(x) for x in program_str.split(',')]
-    P = program
-    remaining = P[::-1]
-    result = find_A(remaining, 0, 0, 0, program)
-    return result
+    # Parse the program
+    for line in lines:
+        if line.startswith("Program: "):
+            program = list(map(int, line.split(": ")[1].split(",")))
+            break
+    
+    def find_x(current_A, desired_o):
+        for x in range(8):
+            A = current_A * 8 + x
+            B = A % 8
+            B ^= 3
+            C = A // (2 ** B)
+            B ^= 5
+            B ^= C
+            output = B % 8
+            if output == desired_o:
+                yield x
+    
+    possible_current = {0}
+    for i in range(len(program) - 1, -1, -1):
+        new_possible = set()
+        for curr in possible_current:
+            for x in find_x(curr, program[i]):
+                new_possible.add(curr * 8 + x)
+        possible_current = new_possible
+    return min(possible_current) if possible_current else 0
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples IF there are any samples given for part 2.
