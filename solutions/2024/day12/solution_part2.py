@@ -4,7 +4,7 @@ def solve_part2(lines):
     if not lines or not lines[0]:
         return 0
         
-    grid = [list(line) for line in lines]
+    grid = [list(line.strip()) for line in lines if line.strip()]
     rows, cols = len(grid), len(grid[0])
     visited = [[False] * cols for _ in range(rows)]
     total_price = 0
@@ -33,22 +33,20 @@ def solve_part2(lines):
                 
                 corners = set()
                 for x, y in region_cells:
-                    for dx, dy in [(0, 0), (0, 1), (1, 0), (1, 1)]:
-                        corner = (x + dx, y + dy)
-                        corners.add(corner)
+                    corners.add((x, y))
+                    corners.add((x, y+1))
+                    corners.add((x+1, y))
+                    corners.add((x+1, y+1))
                 
-                perimeter_points = set()
+                sides = 0
                 for corner in corners:
                     x, y = corner
-                    count = 0
-                    for dx, dy in [(0, 0), (0, -1), (-1, 0), (-1, -1)]:
-                        check_point = (x + dx, y + dy)
-                        if check_point in region_cells:
-                            count += 1
-                    if count == 0:
-                        perimeter_points.add(corner)
+                    adjacent_cells = [(x-1, y-1), (x-1, y), (x, y-1), (x, y)]
+                    count_in_region = sum(1 for cell in adjacent_cells if cell in region_cells)
+                    if count_in_region == 0 or count_in_region == 4:
+                        continue
+                    sides += 1
                 
-                sides = len(perimeter_points)
                 total_price += area * sides
     
     return total_price
@@ -63,7 +61,7 @@ sample_result = solve_part2(sample_input.strip().splitlines())
 assert sample_result == sample_answer, f"Sample result {sample_result} does not match expected {sample_answer}"
 
 with open('input.txt') as f:
-    lines = [line.strip() for line in f]
+    lines = f.readlines()
 
 result = solve_part2(lines)
 print(result)
