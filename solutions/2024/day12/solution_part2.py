@@ -37,16 +37,18 @@ def solve_part2(lines):
             
             corners = 0
             for cr, cc in region_cells:
-                for corner_dx, corner_dy in [(0.5, 0.5), (0.5, -0.5), (-0.5, 0.5), (-0.5, -0.5)]:
-                    has_corner = True
+                for dx, dy in [(0.5, 0.5), (0.5, -0.5), (-0.5, 0.5), (-0.5, -0.5)]:
+                    corner_r, corner_c = cr + dx, cc + dy
+                    adjacent_cells = []
                     for check_dx, check_dy in [(0.5, 0), (-0.5, 0), (0, 0.5), (0, -0.5)]:
-                        check_r = cr + corner_dx + check_dx
-                        check_c = cc + corner_dy + check_dy
+                        check_r = corner_r + check_dx
+                        check_c = corner_c + check_dy
                         if 0 <= check_r < rows and 0 <= check_c < cols:
-                            if grid[int(check_r)][int(check_c)] == plant_type:
-                                has_corner = False
-                                break
-                    if has_corner:
+                            adjacent_cells.append(grid[int(check_r)][int(check_c)])
+                        else:
+                            adjacent_cells.append(None)
+                    
+                    if all(adj != plant_type for adj in adjacent_cells if adj is not None):
                         corners += 1
             
             area = len(region_cells)
