@@ -183,7 +183,8 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
 
     payload = {"model": model,
                "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_msg}],
-               "temperature": 0.002 * random.randint(1,50), "top_p": 0.002 * random.randint(1,50)}
+               # "temperature": 0}
+                "temperature": 0.002 * random.randint(1,50), "top_p": 0.002 * random.randint(1,50)}
     YELLOW = '\033[33m'
     CYAN = '\033[36m'
     RESET = '\033[0m'
