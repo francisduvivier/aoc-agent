@@ -33,15 +33,6 @@ def submit_solution(year: int, day: int, part: int, answer: str, session_cookie:
     if not answer_str:
         logging.warning("Empty answer provided; not submitting.")
         return {"success": False, "message": "Empty answer; not submitted", "status_code": None}
-    # Ensure the answer parses as a number
-    try:
-        _ = int(answer_str)
-    except ValueError:
-        try:
-            _ = float(answer_str)
-        except ValueError:
-            logging.warning("Answer does not parse as a number; not submitting.")
-            return {"success": False, "message": "Answer not numeric; not submitted", "status_code": None}
 
     key = f"{year}-{day}-{part}"
     attempts = _load_attempts()
