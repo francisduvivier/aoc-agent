@@ -5,6 +5,8 @@ def solve_part1(lines):
     height = 103
     seconds = 100
     
+    # Count robots in each quadrant
+    # Quadrants: 0=top-left, 1=top-right, 2=bottom-left, 3=bottom-right
     quadrants = [0, 0, 0, 0]
     
     for line in lines:
@@ -24,13 +26,22 @@ def solve_part1(lines):
         final_y = (py + vy * seconds) % height
         
         # Check if robot is in any quadrant (not on middle lines)
+        # Middle lines are at width//2 = 50 and height//2 = 51
         if final_x != width // 2 and final_y != height // 2:
-            x_quad = 0 if final_x < width // 2 else 1
-            y_quad = 0 if final_y < height // 2 else 1
-            quadrant_idx = y_quad * 2 + x_quad
-            quadrants[quadrant_idx] += 1
+            # Determine which quadrant
+            if final_x < width // 2:  # Left half
+                if final_y < height // 2:  # Top half
+                    quadrants[0] += 1  # Top-left
+                else:  # Bottom half
+                    quadrants[2] += 1  # Bottom-left
+            else:  # Right half
+                if final_y < height // 2:  # Top half
+                    quadrants[1] += 1  # Top-right
+                else:  # Bottom half
+                    quadrants[3] += 1  # Bottom-right
     
-    return quadrants[0] * quadrants[2] * quadrants[1] * quadrants[3]
+    # Return product of all four quadrants
+    return quadrants[0] * quadrants[1] * quadrants[2] * quadrants[3]
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
