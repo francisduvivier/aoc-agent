@@ -1,8 +1,18 @@
 from collections import deque
 
 def solve_part2(lines):
-    # Parse the grid
-    grid = [list(map(int, line)) for line in lines]
+    # Parse the grid - handle '.' as impassable (skip them)
+    grid = []
+    for line in lines:
+        row = []
+        for char in line:
+            if char == '.':
+                # Mark impassable cells with a special value (e.g., -1)
+                row.append(-1)
+            else:
+                row.append(int(char))
+        grid.append(row)
+    
     rows, cols = len(grid), len(grid[0])
     
     # Find all trailheads (height 0)
@@ -14,11 +24,9 @@ def solve_part2(lines):
     
     def count_trails(start_r, start_c):
         # BFS to find all distinct paths from start to any height 9
-        # We need to count paths, not just reachable cells
         # State: (r, c, height)
         queue = deque([(start_r, start_c, 0)])
-        # visited[r][c] = set of heights that can reach this cell
-        # But we need to count paths, so we'll track path counts
+        # Track path counts for each state
         path_counts = {}
         path_counts[(start_r, start_c, 0)] = 1
         
@@ -38,8 +46,8 @@ def solve_part2(lines):
                 nr, nc = r + dr, c + dc
                 if 0 <= nr < rows and 0 <= nc < cols:
                     next_height = grid[nr][nc]
-                    # Must increase by exactly 1
-                    if next_height == height + 1:
+                    # Skip impassable cells and check height constraint
+                    if next_height != -1 and next_height == height + 1:
                         next_state = (nr, nc, next_height)
                         # Add to queue if not already processed
                         if next_state not in path_counts:
