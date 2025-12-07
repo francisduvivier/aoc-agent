@@ -41,38 +41,38 @@ def solve_part1(lines):
     count = 0
     threshold = 100
     
-    # Check all pairs of positions within Manhattan distance <= 20 (cheat distance)
-    for pos1 in dist_from_start:
+    # Get all track positions
+    track_positions = set()
+    for r in range(rows):
+        for c in range(cols):
+            if grid[r][c] != '#':
+                track_positions.add((r, c))
+    
+    # Check all pairs of track positions within Manhattan distance <= 20
+    for pos1 in track_positions:
         r1, c1 = pos1
-        for dr in range(-20, 21):
-            for dc in range(-20, 21):
-                if abs(dr) + abs(dc) > 20:  # Manhattan distance limit
-                    continue
-                r2, c2 = r1 + dr, c1 + dc
-                pos2 = (r2, c2)
-                
-                if not (0 <= r2 < rows and 0 <= c2 < cols):
-                    continue
-                if pos1 == pos2:
-                    continue
-                
-                # Calculate cheat distance (Manhattan distance)
-                cheat_dist = abs(dr) + abs(dc)
-                if cheat_dist > 20:  # Cheat limit
-                    continue
-                
-                # Check if both positions are on the shortest path
-                if pos1 not in dist_from_start or pos2 not in dist_to_end:
-                    continue
-                
-                # Calculate new path length with cheat
-                new_dist = dist_from_start[pos1] + cheat_dist + dist_to_end[pos2]
-                
-                # Calculate time saved
-                saved = total_dist - new_dist
-                
-                if saved >= threshold:
-                    count += 1
+        for pos2 in track_positions:
+            r2, c2 = pos2
+            if pos1 == pos2:
+                continue
+            
+            # Calculate cheat distance (Manhattan distance)
+            cheat_dist = abs(r1 - r2) + abs(c1 - c2)
+            if cheat_dist > 20:  # Cheat limit
+                continue
+            
+            # Check if both positions are reachable
+            if pos1 not in dist_from_start or pos2 not in dist_to_end:
+                continue
+            
+            # Calculate new path length with cheat
+            new_dist = dist_from_start[pos1] + cheat_dist + dist_to_end[pos2]
+            
+            # Calculate time saved
+            saved = total_dist - new_dist
+            
+            if saved >= threshold:
+                count += 1
     
     return count
 
@@ -90,3 +90,4 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
+
