@@ -9,7 +9,7 @@ import logging
 import subprocess
 import re
 from datetime import datetime, timezone, timedelta
-from aoc_tools import fetch_problem_statement, download_input, create_day_dir, generate_solver_with_openrouter, git_commit, fetch_puzzle_status, parse_problem_file
+from aoc_tools import fetch_problem_statement, download_input, create_day_dir, generate_solver_with_openrouter, git_commit, fetch_puzzle_status, parse_problem_file, check_accepted_files
 from submit import submit_solution
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -72,8 +72,10 @@ def main():
     if do_fetch:
         # Check if problem.txt already exists and has Part 2 answer
         local_status = parse_problem_file(os.path.join(workdir, "problem.txt"))
-        if local_status and local_status['part2_solved']:
-            logging.info("Local problem.txt contains Part 2 answer. Skipping fetch.")
+        accepted_status = check_accepted_files(workdir)
+        
+        if (local_status and local_status['part2_solved']) or (accepted_status and accepted_status['part2_solved']):
+            logging.info("Local files indicate Part 2 is solved. Skipping fetch.")
         else:
             logging.info("Fetching problem statement HTML and cleaning to text")
             stmt = fetch_problem_statement(year, day, session)
@@ -116,15 +118,29 @@ def main():
         
         # Check puzzle status
         status = parse_problem_file(os.path.join(workdir, "problem.txt"))
-        if status and status['part2_solved']:
-            logging.info("Using local status from problem.txt: %s", status)
+        accepted_status = check_accepted_files(workdir)
+        
+        if accepted_status:
+            logging.info("Using local accepted files: %s", accepted_status)
+            if status:
+                # Merge status, preferring accepted files for solved status
+                if accepted_status['part1_solved']:
+                    status['part1_solved'] = True
+                    status['part1_answer'] = accepted_status['part1_answer']
+                if accepted_status['part2_solved']:
+                    status['part2_solved'] = True
+                    status['part2_answer'] = accepted_status['part2_answer']
+            else:
+                status = accepted_status
+        
+        if status and status['part2_solved']: # If part2_solved, then part1 must also be solved.
+            logging.info("Using local status from problem.txt/accepted files: %s", status)
         else:
             status = fetch_puzzle_status(year, day, session)
             logging.info("Puzzle status from AoC: %s", status)
 
         api_key = os.environ.get("AOC_OPENROUTER_API_KEY")
         
-        # --- PART 1 ---
         # --- PART 1 ---
         if not status['part1_solved']:
             logging.info("Part 1 not solved. Attempting to solve...")
@@ -238,7 +254,15 @@ def main():
                         logging.info("Submit result: %s", res)
                         if isinstance(res, dict) and res.get("success"):
                             logging.info("Part 1 solved successfully!")
-                            status = fetch_puzzle_status(year, day, session)
+                            # Cache the accepted solution
+                            accepted_file = os.path.join(workdir, f"accepted_part1.txt")
+                            with open(accepted_file, "w") as f:
+                                f.write(str(output))
+                            logging.info("Cached accepted solution to %s", accepted_file)
+                            git_commit([workdir], f"Solved Part 1 for {year} Day {day}")
+                            
+                            status['part1_solved'] = True
+                            status['part1_answer'] = str(output)
                             break
                         else:
                             logging.info("Part 1 submission failed.")
@@ -257,21 +281,21 @@ def main():
 
         # --- PART 2 ---
         # Only proceed to Part 2 if Part 1 is solved
-        # --- PART 2 ---
         if status['part1_solved']:
             if not status['part2_solved']:
                 logging.info("Part 2 not solved. Attempting to solve...")
                 sol2 = os.path.join(workdir, "solution_part2.py")
                 
-                if do_fetch:
-                     # Check local status again just in case
-                     local_status = parse_problem_file(os.path.join(workdir, "problem.txt"))
-                     if local_status and local_status['part2_solved']:
-                         logging.info("Local problem.txt contains Part 2 answer. Skipping fetch.")
-                     else:
-                         stmt = fetch_problem_statement(year, day, session)
-                         with open(os.path.join(workdir, "problem.txt"), "w") as f:
-                             f.write(stmt)
+                # Check local status again just in case
+                local_status = parse_problem_file(os.path.join(workdir, "problem.txt"))
+                accepted_status = check_accepted_files(workdir)
+                
+                if (local_status and local_status['part2_solved']) or (accepted_status and accepted_status['part2_solved']):
+                    logging.info("Local files indicate Part 2 is solved. Skipping fetch.")
+                else:
+                    stmt = fetch_problem_statement(year, day, session)
+                    with open(os.path.join(workdir, "problem.txt"), "w") as f:
+                        f.write(stmt)
                 
                 max_retries = 10
                 feedback = None
@@ -372,6 +396,15 @@ def main():
                             logging.info("Submit result: %s", res)
                             if isinstance(res, dict) and res.get("success"):
                                 logging.info("Part 2 solved successfully!")
+                                # Cache the accepted solution
+                                accepted_file = os.path.join(workdir, f"accepted_part2.txt")
+                                with open(accepted_file, "w") as f:
+                                    f.write(str(output))
+                                logging.info("Cached accepted solution to %s", accepted_file)
+                                git_commit([workdir], f"Solved Part 2 for {year} Day {day}")
+                                
+                                status['part2_solved'] = True
+                                status['part2_answer'] = str(output)
                                 break
                             else:
                                 logging.info("Part 2 submission failed.")
