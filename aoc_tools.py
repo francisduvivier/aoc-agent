@@ -189,7 +189,8 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
         "Do not include explanations, only return the python source code. Keep solution concise and robust."
     )
     user_msg = f"Problem statement:\n{problem}\n\nProvide a python script that reads 'input.txt' and prints the part {part} answer. Use only standard library. Include necessary parsing.\n" + \
-               f"IMPORTANT: You MUST fill in the 'sample_input' and 'sample_answer' variables in the scaffold with data from the problem statement. " + \
+               f"You are encouraged to include debug output in your solution in case of errors.\n" + \
+               f"IMPORTANT: You MUST fill in the 'sample_input' and 'sample_answer' variables in the scaffold with data from the problem statement.\n" + \
                f"IMPORTANT: The script MUST maintain the sample assert and the output format." + ("\n\nInput sample[:100]...[-100:]" + input_sample[:100]+"..."+input_sample[-max(0,min(100, len(input_sample)-1000)):])
     
     if previous_code and feedback:
