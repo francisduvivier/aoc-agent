@@ -12,10 +12,10 @@ def find_regions(grid):
                 char = grid[i][j]
                 queue = deque([(i, j)])
                 visited.add((i, j))
-                region = []
+                region = set()
                 while queue:
                     x, y = queue.popleft()
-                    region.append((x, y))
+                    region.add((x, y))
                     for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                         nx, ny = x + dx, y + dy
                         if 0 <= nx < rows and 0 <= ny < cols and (nx, ny) not in visited and grid[nx][ny] == char:
@@ -25,21 +25,17 @@ def find_regions(grid):
     return regions
 
 def get_edges(region, grid):
-    cells = set(region)
+    cells = region
     edges = []
     rows = len(grid)
     cols = len(grid[0]) if rows > 0 else 0
-    for (i, j) in region:
-        # Check top edge (cell above)
+    for (i, j) in cells:
         if i == 0 or (i-1, j) not in cells:
             edges.append(('h', i, j, j+1))
-        # Check right edge (cell to the right)
         if j == cols-1 or (i, j+1) not in cells:
             edges.append(('v', j+1, i, i+1))
-        # Check bottom edge (cell below)
         if i == rows-1 or (i+1, j) not in cells:
             edges.append(('h', i+1, j, j+1))
-        # Check left edge (cell to the left)
         if j == 0 or (i, j-1) not in cells:
             edges.append(('v', j, i, i+1))
     return edges
@@ -63,7 +59,6 @@ def merge_edges(edges):
             v_segments[x].append((y_start, y_end))
     
     merged = []
-    # Merge horizontal segments
     for y in h_segments:
         segs = sorted(h_segments[y], key=lambda s: s[0])
         current = segs[0]
@@ -75,7 +70,6 @@ def merge_edges(edges):
                 current = seg
         merged.append(('h', y, current[0], current[1]))
     
-    # Merge vertical segments
     for x in v_segments:
         segs = sorted(v_segments[x], key=lambda s: s[0])
         current = segs[0]
@@ -102,7 +96,6 @@ def solve_part2(lines):
         total_price += price
     return total_price
 
-# Samples
 samples = [
     (
         [
@@ -151,7 +144,6 @@ for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     assert sample_res == expected_result, f"Sample {idx} failed: expected {expected_result}, got {sample_res}"
     print(f"---- Sample {idx} Solution Part 2: {sample_res} ----")
 
-# Run on real input
 with open('input.txt') as f:
     lines = f.readlines()
 final_result = solve_part2(lines)
