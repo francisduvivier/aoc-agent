@@ -1,6 +1,7 @@
 """Helper utilities for Advent of Code agent: fetching problem, input, and submitting answers.
 """
 import os
+import random
 import time
 import logging
 import re
@@ -187,7 +188,6 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
     if xtitle:
         headers["X-Title"] = xtitle
 
-
     system = (
         f"You are a Python coding assistant that solves Advent of Code problems. Produce a Python 3.12 compatible script that reads 'input.txt' from the current working directory and prints the part {part} answer. "
         "Do not include explanations, only return the python source code. Keep solution concise and robust but also follow the users' instructions."
@@ -207,11 +207,11 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
                 f"{input_sample[:cutoff] + "..." + input_sample[-max(0, min(cutoff, len(input_sample) - cutoff)):]}"
                 f"\n\nProblem statement:\n{problem}\n\n")
     if previous_code and feedback:
-        user_msg += f"\n\nPrevious failed attempt code:\n```python\n{previous_code}\n```\nnFeedback: {feedback}\n\nPlease fix the code."
+        user_msg += f"\n\nPrevious failed attempt code:\n```python\n{previous_code if random.randint(1, 2) == 2 else "#Solution hidden to make you more creative"}\n```\nnFeedback: {feedback}\n\nPlease fix the code."
 
     payload = {"model": model,
                "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_msg}],
-               "temperature": 0.01, "top_p": 0.01}
+               "temperature": 0.002 * random.randint(1,50), "top_p": 0.002 * random.randint(1,50)}
     YELLOW = '\033[33m'
     CYAN = '\033[36m'
     RESET = '\033[0m'
