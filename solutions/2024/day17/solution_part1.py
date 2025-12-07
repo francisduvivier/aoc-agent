@@ -1,3 +1,5 @@
+# Edit this file: implement solve_part1
+
 def solve_part1(lines):
     # Parse registers
     a = int(lines[0].split(": ")[1])
@@ -11,30 +13,19 @@ def solve_part1(lines):
     ip = 0
     output = []
     
-    def get_combo_value(operand):
-        if operand <= 3:
-            return operand
-        elif operand == 4:
-            return a
-        elif operand == 5:
-            return b
-        elif operand == 6:
-            return c
-        else:
-            return 0
-    
     while ip < len(program):
         opcode = program[ip]
         operand = program[ip + 1]
         
         if opcode == 0:  # adv
-            a = a // (2 ** get_combo_value(operand))
+            denom = 1 << combo_value(operand, a, b, c)
+            a = a // denom
             ip += 2
         elif opcode == 1:  # bxl
             b = b ^ operand
             ip += 2
         elif opcode == 2:  # bst
-            b = get_combo_value(operand) % 8
+            b = combo_value(operand, a, b, c) % 8
             ip += 2
         elif opcode == 3:  # jnz
             if a != 0:
@@ -45,18 +36,30 @@ def solve_part1(lines):
             b = b ^ c
             ip += 2
         elif opcode == 5:  # out
-            output.append(str(get_combo_value(operand) % 8))
+            output.append(combo_value(operand, a, b, c) % 8)
             ip += 2
         elif opcode == 6:  # bdv
-            b = a // (2 ** get_combo_value(operand))
+            denom = 1 << combo_value(operand, a, b, c)
+            b = a // denom
             ip += 2
         elif opcode == 7:  # cdv
-            c = a // (2 ** get_combo_value(operand))
+            denom = 1 << combo_value(operand, a, b, c)
+            c = a // denom
             ip += 2
-        else:
-            break
     
-    return ",".join(output)
+    return ",".join(map(str, output))
+
+def combo_value(operand, a, b, c):
+    if operand <= 3:
+        return operand
+    elif operand == 4:
+        return a
+    elif operand == 5:
+        return b
+    elif operand == 6:
+        return c
+    else:
+        raise ValueError("Invalid combo operand")
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
@@ -78,3 +81,4 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
+
