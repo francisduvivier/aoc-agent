@@ -4,33 +4,32 @@ from math import gcd
 def solve_part2(lines):
     total_cost = 0
     for i in range(0, len(lines), 4):
-        a_line = lines[i]
-        b_line = lines[i+1]
-        prize_line = lines[i+2]
+        # Parse button A
+        ax, ay = map(int, re.findall(r'X\+(\d+), Y\+(\d+)', lines[i])[0])
+        # Parse button B
+        bx, by = map(int, re.findall(r'X\+(\d+), Y\+(\d+)', lines[i+1])[0])
+        # Parse prize with offset
+        px, py = map(int, re.findall(r'X=(\d+), Y=(\d+)', lines[i+2])[0])
+        px += 10000000000000
+        py += 10000000000000
         
-        ax = int(re.search(r'X\+(\d+)', a_line).group(1))
-        ay = int(re.search(r'Y\+(\d+)', a_line).group(1))
-        bx = int(re.search(r'X\+(\d+)', b_line).group(1))
-        by = int(re.search(r'Y\+(\d+)', b_line).group(1))
-        px = int(re.search(r'X=(\d+)', prize_line).group(1)) + 10000000000000
-        py = int(re.search(r'Y=(\d+)', prize_line).group(1)) + 10000000000000
-        
-        # Solve system: a*ax + b*bx = px, a*ay + b*by = py
+        # Solve system of equations:
+        # a*ax + b*bx = px
+        # a*ay + b*by = py
         # Using Cramer's rule
         det = ax * by - ay * bx
         if det == 0:
             continue
             
-        # Use exact integer arithmetic to avoid floating point errors
-        a_numer = px * by - py * bx
-        b_numer = ax * py - ay * px
+        det_a = px * by - py * bx
+        det_b = ax * py - ay * px
         
-        if a_numer % det == 0 and b_numer % det == 0:
-            a_presses = a_numer // det
-            b_presses = b_numer // det
-            if a_presses >= 0 and b_presses >= 0:
-                total_cost += a_presses * 3 + b_presses
-            
+        if det_a % det == 0 and det_b % det == 0:
+            a = det_a // det
+            b = det_b // det
+            if a >= 0 and b >= 0:
+                total_cost += a * 3 + b * 1
+                
     return total_cost
 
 # Sample data from the problem statement
@@ -49,7 +48,7 @@ Prize: X=7870, Y=6450
 
 Button A: X+69, Y+23
 Button B: X+27, Y+71
-Prize: X=18641, Y=10279""", 87384170492566)
+Prize: X=18641, Y=10279""", 875318608908)
 ]
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
@@ -57,6 +56,7 @@ for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
     print(f"---- Sample {idx} result Part 2: {sample_result} ----")
 
+# Run on the real puzzle input
 with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part2(lines)
