@@ -1,16 +1,17 @@
 # Edit this file: implement solve_part2
+
 def solve_part2(lines):
     # replace with actual solution
     return 0
 
-# Sample data – fill these in for each puzzle
-sample_input = """..."""
-expected_sample_result = 0
+# Sample data – may contain multiple samples from the problem statement.
+# Populate this list with (sample_input, expected_result) tuples.
+samples = []  # TODO: fill with actual samples and expected results
 
-# Run on the sample and verify
-sample_result = solve_part2(sample_input.strip().splitlines())
-assert sample_result == expected_sample_result, f"Sample result {sample_result} does not match expected {expected_sample_result}"
-print(f"---- Sample Solution Part 2: {sample_result} ----")
+for idx, (sample_input, expected_result) in enumerate(samples, start=1):
+    sample_res = solve_part2(sample_input.strip().splitlines())
+    assert sample_res == expected_result, f"Sample {idx} result {sample_res} does not match expected {expected_result}"
+    print(f"---- Sample {idx} Solution Part 2: {sample_res} ----")
 
 # Run on the real puzzle input
 with open('input.txt') as f:
