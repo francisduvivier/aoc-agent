@@ -1,35 +1,27 @@
-import sys
-
 def main():
+    sample_input = "2x3x4\n1x1x10"
+    sample_answer = 48  # 34 + 14 = 48
+
     total_ribbon = 0
-    try:
-        with open('input.txt', 'r') as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    l, w, h = map(int, line.split('x'))
-                    # Calculate volume for bow
-                    bow = l * w * h
-                    
-                    # Calculate smallest perimeter
-                    perimeters = [
-                        2 * (l + w),
-                        2 * (w + h),
-                        2 * (h + l)
-                    ]
-                    ribbon = min(perimeters)
-                    
-                    total_ribbon += ribbon + bow
-                except (ValueError, IndexError):
-                    print(f"Invalid line format: {line}", file=sys.stderr)
-                    continue
-    except FileNotFoundError:
-        print("input.txt not found", file=sys.stderr)
-        return
-    
-    print(total_ribbon)
+    with open('input.txt', 'r') as f:
+        for line in f:
+            l, w, h = map(int, line.strip().split('x'))
+            sides = sorted([l, w, h])
+            wrap = 2 * (sides[0] + sides[1])
+            bow = l * w * h
+            total_ribbon += wrap + bow
+
+    sample_lines = sample_input.strip().split('\n')
+    sample_total = 0
+    for line in sample_lines:
+        l, w, h = map(int, line.split('x'))
+        sides = sorted([l, w, h])
+        wrap = 2 * (sides[0] + sides[1])
+        bow = l * w * h
+        sample_total += wrap + bow
+
+    print(f"---- Sample Solution Part 2: {sample_total} ----")
+    print(f"---- Final Solution Part 2: {total_ribbon} ----")
 
 if __name__ == "__main__":
     main()
