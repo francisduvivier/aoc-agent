@@ -5,5 +5,4 @@
  - also, if user interaction was requested and approved, it should never be rate limited.
  - So the whole rate limiting system should be reworked.
 - Token usage counts should be logged in the console.
-- Fix current day not being used automatically anymore.
 - the previous tries of results should be persisted and checked so that we never try to submit the same wrong answer again.
