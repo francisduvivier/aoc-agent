@@ -1,14 +1,8 @@
 from collections import deque
 
 def solve_part1(lines):
-    # Filter out lines with dots (impassable tiles in examples)
-    grid_lines = []
-    for line in lines:
-        if '.' not in line:
-            grid_lines.append(line)
-    
     # Convert to integer grid
-    grid = [list(map(int, line)) for line in grid_lines]
+    grid = [list(map(int, line)) for line in lines]
     rows, cols = len(grid), len(grid[0])
     
     # Find all trailheads (height 0)
