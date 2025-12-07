@@ -34,4 +34,3 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part2(lines)
 print(f"---- Final result Part 2: {final_result} ----")
-
