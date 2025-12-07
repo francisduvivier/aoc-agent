@@ -1,4 +1,4 @@
-from collections import deque
+from functools import lru_cache
 
 def solve_part2(lines):
     grid = []
@@ -20,29 +20,24 @@ def solve_part2(lines):
             if grid[r][c] == 0:
                 trailheads.append((r, c))
     
-    def count_trails(start_r, start_c):
-        # Use DFS to count all distinct paths from start to any 9
-        # We can visit the same cell multiple times if we reach it through different paths
-        # The key insight: we count distinct paths, not just reachable 9s
+    @lru_cache(maxsize=None)
+    def count_trails_from(r, c):
+        """Count all distinct paths from position (r,c) to any height 9"""
+        if grid[r][c] == 9:
+            return 1
         
-        def dfs(r, c):
-            if grid[r][c] == 9:
-                return 1
-            
-            total = 0
-            for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
-                nr, nc = r + dr, c + dc
-                if 0 <= nr < rows and 0 <= nc < cols:
-                    # Check if the next cell is exactly 1 higher and not impassable
-                    if grid[nr][nc] != -1 and grid[nr][nc] == grid[r][c] + 1:
-                        total += dfs(nr, nc)
-            return total
-        
-        return dfs(start_r, start_c)
+        total = 0
+        for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < rows and 0 <= nc < cols:
+                # Check if the next cell is exactly 1 higher and not impassable
+                if grid[nr][nc] != -1 and grid[nr][nc] == grid[r][c] + 1:
+                    total += count_trails_from(nr, nc)
+        return total
     
     total_rating = 0
     for r, c in trailheads:
-        total_rating += count_trails(r, c)
+        total_rating += count_trails_from(r, c)
     
     return total_rating
 
@@ -64,5 +59,3 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part2(lines)
 print(f"---- Final result Part 2: {final_result} ----") # YOU MUST NOT change this output format
-
-
