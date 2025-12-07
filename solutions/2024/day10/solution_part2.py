@@ -1,7 +1,7 @@
-from collections import deque
+from functools import lru_cache
 
 def solve_part2(lines):
-    # Parse the grid - handle '.' as impassable (skip them)
+    # Parse the grid
     grid = []
     for line in lines:
         row = []
@@ -22,45 +22,27 @@ def solve_part2(lines):
             if grid[r][c] == 0:
                 trailheads.append((r, c))
     
-    def count_trails(start_r, start_c):
-        # BFS to find all distinct paths from start to any height 9
-        # State: (r, c, height)
-        queue = deque([(start_r, start_c, 0)])
-        # Track path counts for each state
-        path_counts = {}
-        path_counts[(start_r, start_c, 0)] = 1
+    @lru_cache(maxsize=None)
+    def count_paths(r, c, height):
+        # If we reached height 9, this is a valid trail end
+        if height == 9:
+            return 1
         
-        total_trails = 0
+        total = 0
+        # Explore all 4 directions
+        for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < rows and 0 <= nc < cols:
+                next_height = grid[nr][nc]
+                # Only move to next height (exactly +1)
+                if next_height != -1 and next_height == height + 1:
+                    total += count_paths(nr, nc, next_height)
         
-        while queue:
-            r, c, height = queue.popleft()
-            current_paths = path_counts.get((r, c, height), 0)
-            
-            # If we reached height 9, count all paths that reached this cell
-            if height == 9:
-                total_trails += current_paths
-                continue
-            
-            # Explore neighbors
-            for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
-                nr, nc = r + dr, c + dc
-                if 0 <= nr < rows and 0 <= nc < cols:
-                    next_height = grid[nr][nc]
-                    # Skip impassable cells and check height constraint
-                    if next_height != -1 and next_height == height + 1:
-                        next_state = (nr, nc, next_height)
-                        # Add to queue if not already processed
-                        if next_state not in path_counts:
-                            queue.append(next_state)
-                            path_counts[next_state] = 0
-                        # Add the number of paths from current state to next state
-                        path_counts[next_state] += current_paths
-        
-        return total_trails
+        return total
     
     total_rating = 0
     for r, c in trailheads:
-        total_rating += count_trails(r, c)
+        total_rating += count_paths(r, c, 0)
     
     return total_rating
 
