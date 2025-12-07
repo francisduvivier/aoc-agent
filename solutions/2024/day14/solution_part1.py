@@ -1,16 +1,14 @@
 # Edit this file: implement solve_part1
 
 def solve_part1(lines):
-    width = 11
-    height = 7
+    width = 101
+    height = 103
     seconds = 100
     
     quadrants = [0, 0, 0, 0]
-    mid_x = width // 2
-    mid_y = height // 2
     
     for line in lines:
-        if not line.strip():
+        if not line:
             continue
             
         # Parse line: p=46,91 v=80,-6
@@ -21,23 +19,23 @@ def solve_part1(lines):
         px, py = map(int, pos_part.split(','))
         vx, vy = map(int, vel_part.split(','))
         
-        # Calculate final position after 100 seconds
+        # Calculate position after 100 seconds
         final_x = (px + vx * seconds) % width
         final_y = (py + vy * seconds) % height
         
-        # Skip robots exactly on middle lines
-        if final_x == mid_x or final_y == mid_y:
+        # Skip robots exactly in the middle
+        if final_x == width // 2 or final_y == height // 2:
             continue
             
-        # Count in quadrants
-        if final_x < mid_x and final_y < mid_y:
-            quadrants[0] += 1  # Top-left
-        elif final_x > mid_x and final_y < mid_y:
-            quadrants[1] += 1  # Top-right
-        elif final_x < mid_x and final_y > mid_y:
-            quadrants[2] += 1  # Bottom-left
-        elif final_x > mid_x and final_y > mid_y:
-            quadrants[3] += 1  # Bottom-right
+        # Determine quadrant
+        if final_x < width // 2 and final_y < height // 2:
+            quadrants[0] += 1
+        elif final_x > width // 2 and final_y < height // 2:
+            quadrants[1] += 1
+        elif final_x < width // 2 and final_y > height // 2:
+            quadrants[2] += 1
+        elif final_x > width // 2 and final_y > height // 2:
+            quadrants[3] += 1
     
     return quadrants[0] * quadrants[1] * quadrants[2] * quadrants[3]
 
