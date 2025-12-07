@@ -3,7 +3,8 @@ from typing import List, Tuple
 
 # Sample inputs and expected results from the problem statement
 samples: List[Tuple[str, int]] = [
-    ("""L68
+    (
+        """L68
 L30
 R48
 L5
@@ -12,17 +13,19 @@ L55
 L1
 L99
 R14
-L82""", 6)
+L82""", 6
+    )
 ]
 
-def solve_part2(input_text: str) -> int:
+def solve_part2(input_str: str) -> int:
     """
     Count the number of times the dial points at 0 during the sequence of rotations.
-    This includes both times when the rotation ends at 0 and times when the dial passes 0 during a rotation.
+    This includes both times when the dial ends on 0 after a rotation and times when
+    the dial passes through 0 during a rotation.
     """
     # Parse the input into a list of (direction, distance) tuples
     rotations = []
-    for line in input_text.strip().split('\n'):
+    for line in input_str.strip().split('\n'):
         line = line.strip()
         if not line:
             continue
@@ -42,25 +45,27 @@ def solve_part2(input_text: str) -> int:
         else:  # direction == 'L'
             new_position = (current_position - distance) % 100
         
-        # Count how many times the dial passes 0 during this rotation
+        # Count how many times the dial points at 0 during this rotation
         if direction == 'R':
-            # Moving right: count how many times we cross 0
+            # Moving right (clockwise)
             if current_position < new_position:
-                # No wrap-around, so we don't cross 0
-                pass
+                # No wrap-around
+                if current_position < 0 <= new_position:
+                    zero_count += 1
             else:
-                # Wrap-around: we cross 0 once
+                # Wrap-around (crosses 99 -> 0)
                 zero_count += 1
-        else:  # direction == 'L'
-            # Moving left: count how many times we cross 0
-            if current_position >= new_position:
-                # No wrap-around, so we don't cross 0
-                pass
+        else:
+            # Moving left (counter-clockwise)
+            if current_position > new_position:
+                # No wrap-around
+                if current_position > 0 >= new_position:
+                    zero_count += 1
             else:
-                # Wrap-around: we cross 0 once
+                # Wrap-around (crosses 0 -> 99)
                 zero_count += 1
         
-        # If the rotation ends at 0, count that too
+        # Check if the rotation ends on 0
         if new_position == 0:
             zero_count += 1
         
@@ -75,18 +80,18 @@ def main():
         print(f"---- Sample {idx} Solution Part 2: {result} ----")
         assert result == expected, f"Sample {idx} failed: expected {expected}, got {result}"
     
-    # Read from input.txt and solve
+    # Read and solve for the actual input
     try:
         with open('input.txt', 'r') as f:
             input_data = f.read()
         
         answer = solve_part2(input_data)
-        print(f"---- Final Answer Part 2: {answer} ----")
+        print(f"---- Actual Answer Part 2: {answer} ----")
         
     except FileNotFoundError:
-        print("Error: input.txt not found in current directory")
+        print("Error: 'input.txt' not found in the current directory.")
     except Exception as e:
-        print(f"Error reading input: {e}")
+        print(f"Error reading input file: {e}")
 
 if __name__ == "__main__":
     main()

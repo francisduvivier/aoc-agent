@@ -178,7 +178,7 @@ def main():
                         proc = subprocess.run(["python3", "solution_part1.py"], cwd=workdir, capture_output=True, text=True, timeout=30)
                         if proc.returncode == 0 and proc.stdout.strip():
                             # Parse output with regex
-                            sample_match = re.search(r"---- Sample Solution Part 1: (.+?) ----", proc.stdout)
+                            sample_match = re.search(r"---- Sample (.+?) Solution Part 1: (.+?) ----", proc.stdout)
                             final_match = re.search(r"---- Final Solution Part 1: (.+?) ----", proc.stdout)
                             
                             if sample_match and final_match:
@@ -455,7 +455,7 @@ def main():
                                 if proc.returncode == 0 and proc.stdout.strip():
                                 
                                     # Parse output with regex
-                                    sample_match = re.search(r"---- Sample Solution Part 2: (.+?) ----", proc.stdout)
+                                    sample_match = re.search(r"---- Sample (.+?) Solution Part 2: (.+?) ----", proc.stdout)
                                     final_match = re.search(r"---- Final Solution Part 2: (.+?) ----", proc.stdout)
                                     
                                     if sample_match and final_match:
