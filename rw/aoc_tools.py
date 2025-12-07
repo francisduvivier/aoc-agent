@@ -103,7 +103,8 @@ def download_input(year: int, day: int, session_cookie: str, out_dir: str) -> st
 
 # kwaipilot/kat-coder-pro:free
 # tngtech/deepseek-r1t2-chimera:free
-def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: str, model: str = "tngtech/deepseek-r1t2-chimera:free", part: int = 1, previous_code: str = None, feedback: str = None) -> str:
+# deepseek/deepseek-chat-v3.1
+def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: str, model: str = "deepseek/deepseek-chat-v3.1", part: int = 1, previous_code: str = None, feedback: str = None) -> str:
     """Call OpenRouter's chat completions to generate a Python solver script.
     Returns the generated python code as a string (no surrounding ``` markers if possible).
     """
@@ -124,7 +125,8 @@ def generate_solver_with_openrouter(problem: str, input_sample: str, api_key: st
     )
     user_msg = f"Problem statement:\n{problem}\n\nProvide a python script that reads 'input.txt' and prints the part {part} answer. Use only standard library. Include necessary parsing.\n" + \
                f"IMPORTANT: You MUST fill in the 'sample_input' and 'sample_answer' variables in the scaffold with data from the problem statement. " + \
-               f"Uncomment the assertion line and ensure the test run passes. 'sample_answer' might be an integer or string." + ("\n\nInput sample:\n" + input_sample[:2000])
+               f"The script must print exactly two lines of output at the end: first the result of running on 'sample_input', then the result of running on the real input. " + \
+               f"Do NOT use assertions. Just print the values." + ("\n\nInput sample:\n" + input_sample[:2000])
     
     if previous_code and feedback:
         user_msg += f"\n\nPrevious attempt failed:\n```python\n{previous_code}\n```\nFeedback: {feedback}\nPlease fix the code."

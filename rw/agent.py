@@ -139,15 +139,24 @@ def main():
                         f.write(scaffold1)
                     logging.info("Reset solution_part1.py to scaffold.")
                     previous_code = scaffold1
-                    feedback = "Starting fresh. Please implement the solution starting from this scaffold. Fill in sample_input and sample_answer, and ensure the assertion passes."
+                    feedback = "Starting fresh. Please implement the solution starting from this scaffold. Fill in sample_input and sample_answer. The script MUST print the test result first, then the real result."
 
                 # Try to run existing solution first if no feedback yet (skipped if we just reset)
                 if attempt == 1 and os.path.exists(sol1) and not feedback and False: # Disabled because we always reset on attempt 1 now
                     try:
                         proc = subprocess.run(["python3", "solution_part1.py"], cwd=workdir, capture_output=True, text=True, timeout=30)
                         if proc.returncode == 0 and proc.stdout.strip():
-                            output = proc.stdout.strip().splitlines()[-1]
-                            logging.info("Output from existing solution_part1.py: %s", output)
+                            lines = proc.stdout.strip().splitlines()
+                            if len(lines) >= 2:
+                                test_res = lines[-2].strip()
+                                real_res = lines[-1].strip()
+                                if test_res != real_res and test_res != "0" and real_res != "0":
+                                    output = real_res
+                                    logging.info("Output from existing solution_part1.py: Test=%s, Real=%s", test_res, real_res)
+                                else:
+                                    feedback = f"Existing solution output invalid: Test='{test_res}', Real='{real_res}'. Must be distinct and non-zero."
+                            else:
+                                feedback = "Existing solution produced insufficient output (need at least 2 lines)."
                         else:
                             # Existing solution failed or no output
                             if proc.returncode != 0:
@@ -175,8 +184,21 @@ def main():
                         try:
                             proc = subprocess.run(["python3", "solution_part1.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
                             if proc.returncode == 0 and proc.stdout.strip():
-                                output = proc.stdout.strip().splitlines()[-1]
-                                logging.info("Output from generated solution_part1.py: %s", output)
+                                lines = proc.stdout.strip().splitlines()
+                                if len(lines) >= 2:
+                                    test_res = lines[-2].strip()
+                                    real_res = lines[-1].strip()
+                                    if test_res != real_res and test_res != "0" and real_res != "0":
+                                        output = real_res
+                                        logging.info("Output from generated solution_part1.py: Test=%s, Real=%s", test_res, real_res)
+                                    else:
+                                        feedback = f"Generated solution output invalid: Test='{test_res}', Real='{real_res}'. Must be distinct and non-zero."
+                                        previous_code = code
+                                        logging.warning("Verification failed: %s", feedback)
+                                else:
+                                    feedback = "Generated solution produced insufficient output (need at least 2 lines)."
+                                    previous_code = code
+                                    logging.warning("Verification failed: %s", feedback)
                             else:
                                 if proc.returncode != 0:
                                     feedback = f"Runtime error:\n{proc.stderr}"
@@ -248,14 +270,23 @@ def main():
                             f.write(scaffold2)
                         logging.info("Reset solution_part2.py to scaffold.")
                         previous_code = scaffold2
-                        feedback = "Starting fresh. Please implement the solution starting from this scaffold. Fill in sample_input and sample_answer, and ensure the assertion passes."
+                        feedback = "Starting fresh. Please implement the solution starting from this scaffold. Fill in sample_input and sample_answer. The script MUST print the test result first, then the real result."
 
                     if attempt == 1 and os.path.exists(sol2) and not feedback and False: # Disabled because we always reset on attempt 1 now
                         try:
                             proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir, capture_output=True, text=True, timeout=30)
                             if proc.returncode == 0 and proc.stdout.strip():
-                                output = proc.stdout.strip().splitlines()[-1]
-                                logging.info("Output from existing solution_part2.py: %s", output)
+                                lines = proc.stdout.strip().splitlines()
+                                if len(lines) >= 2:
+                                    test_res = lines[-2].strip()
+                                    real_res = lines[-1].strip()
+                                    if test_res != real_res and test_res != "0" and real_res != "0":
+                                        output = real_res
+                                        logging.info("Output from existing solution_part2.py: Test=%s, Real=%s", test_res, real_res)
+                                    else:
+                                        feedback = f"Existing solution output invalid: Test='{test_res}', Real='{real_res}'. Must be distinct and non-zero."
+                                else:
+                                    feedback = "Existing solution produced insufficient output (need at least 2 lines)."
                             else:
                                 if proc.returncode != 0:
                                     feedback = f"Existing solution failed with error:\n{proc.stderr}"
@@ -278,8 +309,21 @@ def main():
                             try:
                                 proc = subprocess.run(["python3", "solution_part2.py"], cwd=workdir, capture_output=True, text=True, timeout=60)
                                 if proc.returncode == 0 and proc.stdout.strip():
-                                    output = proc.stdout.strip().splitlines()[-1]
-                                    logging.info("Output from generated solution_part2.py: %s", output)
+                                    lines = proc.stdout.strip().splitlines()
+                                    if len(lines) >= 2:
+                                        test_res = lines[-2].strip()
+                                        real_res = lines[-1].strip()
+                                        if test_res != real_res and test_res != "0" and real_res != "0":
+                                            output = real_res
+                                            logging.info("Output from generated solution_part2.py: Test=%s, Real=%s", test_res, real_res)
+                                        else:
+                                            feedback = f"Generated solution output invalid: Test='{test_res}', Real='{real_res}'. Must be distinct and non-zero."
+                                            previous_code = code
+                                            logging.warning("Verification failed: %s", feedback)
+                                    else:
+                                        feedback = "Generated solution produced insufficient output (need at least 2 lines)."
+                                        previous_code = code
+                                        logging.warning("Verification failed: %s", feedback)
                                 else:
                                     if proc.returncode != 0:
                                         feedback = f"Runtime error:\n{proc.stderr}"
