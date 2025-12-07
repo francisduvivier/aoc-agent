@@ -41,7 +41,7 @@ def solve_part2(lines):
     return total_stones
 
 # Sample data – may contain multiple samples from the problem statement.
-# Populate this list with (sample_input, expected_result) tuples.
+# Populate this list with (sample_input, expected_result) tuples if there are samples given for part 2
 samples = [
     ("125 17", 533086132674961250)
 ]  # TODO: fill with actual samples and expected results
