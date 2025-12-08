@@ -1,72 +1,75 @@
-import math
 import sys
+import math
+from collections import defaultdict
 
 def solve_part1(input_lines):
-    # Parse coordinates
-    coords = []
+    # Parse input
+    junctions = []
     for line in input_lines:
         line = line.strip()
         if not line:
             continue
         x, y, z = map(int, line.split(','))
-        coords.append((x, y, z))
+        junctions.append((x, y, z))
     
-    # Union-Find structure
-    n = len(coords)
-    parent = list(range(n))
-    size = [1] * n
-    
-    def find(i):
-        if parent[i] != i:
-            parent[i] = find(parent[i])
-        return parent[i]
-    
-    def union(i, j):
-        root_i = find(i)
-        root_j = find(j)
-        if root_i != root_j:
-            if size[root_i] < size[root_j]:
-                parent[root_i] = root_j
-                size[root_j] += size[root_i]
-            else:
-                parent[root_j] = root_i
-                size[root_i] += size[root_j]
-    
-    # Calculate distances and sort
+    # Calculate distances between all pairs
     distances = []
+    n = len(junctions)
     for i in range(n):
         for j in range(i + 1, n):
-            x1, y1, z1 = coords[i]
-            x2, y2, z2 = coords[j]
+            x1, y1, z1 = junctions[i]
+            x2, y2, z2 = junctions[j]
             dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
             distances.append((dist, i, j))
     
+    # Sort by distance
     distances.sort()
     
-    # Connect closest pairs
+    # Union-Find for tracking circuits
+    parent = list(range(n))
+    rank = [0] * n
+    
+    def find(x):
+        if parent[x] != x:
+            parent[x] = find(parent[x])
+        return parent[x]
+    
+    def union(x, y):
+        px, py = find(x), find(y)
+        if px == py:
+            return False
+        if rank[px] < rank[py]:
+            px, py = py, px
+        parent[py] = px
+        if rank[px] == rank[py]:
+            rank[px] += 1
+        return True
+    
+    # Connect the 1000 closest pairs
     connections_made = 0
     for dist, i, j in distances:
         if connections_made >= 1000:
             break
-        union(i, j)
-        connections_made += 1
+        if union(i, j):
+            connections_made += 1
     
-    # Find circuit sizes
-    circuit_sizes = []
+    # Count circuit sizes
+    circuit_sizes = defaultdict(int)
     for i in range(n):
-        if parent[i] == i:
-            circuit_sizes.append(size[i])
+        root = find(i)
+        circuit_sizes[root] += 1
     
-    circuit_sizes.sort(reverse=True)
+    # Get the three largest circuits
+    sizes = sorted(circuit_sizes.values(), reverse=True)
     
-    # Multiply sizes of three largest circuits
+    # Multiply the three largest
     result = 1
-    for i in range(min(3, len(circuit_sizes))):
-        result *= circuit_sizes[i]
+    for i in range(min(3, len(sizes))):
+        result *= sizes[i]
     
     return result
 
-# Sample data
+# Sample data from the problem statement
 samples = [
     ([
         "162,817,812",
