@@ -5,8 +5,6 @@ def solve_part1(lines):
     # Parse coordinates
     coords = []
     for line in lines:
-        if not line.strip():
-            continue
         x, y, z = map(int, line.strip().split(','))
         coords.append((x, y, z))
     
@@ -44,22 +42,29 @@ def solve_part1(lines):
     
     distances.sort()
     
-    # Connect the 1000 closest pairs
-    for dist, i, j in distances[:1000]:
+    # Connect closest pairs (up to 1000 connections)
+    connections_made = 0
+    for dist, i, j in distances:
+        if connections_made >= 1000:
+            break
         union(i, j)
+        connections_made += 1
     
-    # Get sizes of all circuits
+    # Get circuit sizes
     circuit_sizes = [s for s in size if s > 0]
     circuit_sizes.sort(reverse=True)
     
-    # Multiply the three largest
-    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
+    # Multiply the three largest circuits
+    result = 1
+    for i in range(min(3, len(circuit_sizes))):
+        result *= circuit_sizes[i]
+    
     return result
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
 samples = [
-    ("""162,817,812
+    """162,817,812
 57,618,57
 906,360,560
 592,479,940
@@ -78,11 +83,11 @@ samples = [
 941,993,340
 862,61,35
 984,92,344
-425,690,689""", 40)
+425,690,689""".splitlines(), 40
 ]
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
-    sample_result = solve_part1(sample_input.strip().splitlines())
+    sample_result = solve_part1(sample_input)
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
     print(f"---- Sample {idx} result Part 1: {sample_result} ----") # YOU MUST NOT change this output format
 
