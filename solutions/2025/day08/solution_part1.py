@@ -50,16 +50,14 @@ def solve_part1(input_lines):
         union(i, j)
     
     # Collect sizes of all circuits - need to find all roots and their sizes
-    # FIXED: Instead of only checking if parent[i] == i, we need to find all unique roots
-    # and get their sizes properly
-    root_sizes = {}
+    # FIXED: Collect unique root sizes by finding the root of each node
+    # and using a set to track unique roots, then getting their sizes
+    unique_roots = set()
     for i in range(len(junctions)):
-        root = find(i)  # Ensure path compression is applied
-        # The size is stored at the root, so we use size[root]
-        root_sizes[root] = size[root]
+        unique_roots.add(find(i))
     
-    # Get unique circuit sizes
-    circuit_sizes = list(root_sizes.values())
+    # Get the sizes of all unique circuits
+    circuit_sizes = [size[root] for root in unique_roots]
     circuit_sizes.sort(reverse=True)
     
     # Multiply sizes of three largest circuits
