@@ -1,18 +1,18 @@
-import sys
 import math
-from collections import defaultdict
+import sys
 
 def solve_part1(lines):
     # Parse input
     junctions = []
     for line in lines:
-        if line.strip():
-            x, y, z = map(int, line.strip().split(','))
-            junctions.append((x, y, z))
+        if not line.strip():
+            continue
+        x, y, z = map(int, line.strip().split(','))
+        junctions.append((x, y, z))
     
-    # Calculate distances between all pairs
-    distances = []
+    # Build distance matrix
     n = len(junctions)
+    distances = []
     for i in range(n):
         for j in range(i + 1, n):
             x1, y1, z1 = junctions[i]
@@ -33,14 +33,12 @@ def solve_part1(lines):
         return parent[x]
     
     def union(x, y):
-        rx, ry = find(x), find(y)
-        if rx != ry:
-            if size[rx] < size[ry]:
-                parent[rx] = ry
-                size[ry] += size[rx]
-            else:
-                parent[ry] = rx
-                size[rx] += size[ry]
+        px, py = find(x), find(y)
+        if px != py:
+            if size[px] < size[py]:
+                px, py = py, px
+            parent[py] = px
+            size[px] += size[py]
     
     # Connect 1000 closest pairs
     connections_made = 0
@@ -51,15 +49,20 @@ def solve_part1(lines):
             union(i, j)
             connections_made += 1
     
-    # Get circuit sizes
+    # Count circuit sizes
     circuit_sizes = []
     for i in range(n):
-        if parent[i] == i:  # Root of a circuit
+        if parent[i] == i:
             circuit_sizes.append(size[i])
     
-    # Sort and multiply top 3
     circuit_sizes.sort(reverse=True)
-    return circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
+    
+    # Multiply the three largest circuits
+    result = 1
+    for i in range(min(3, len(circuit_sizes))):
+        result *= circuit_sizes[i]
+    
+    return result
 
 # Sample data from problem statement
 samples = [
