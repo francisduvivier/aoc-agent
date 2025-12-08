@@ -56,8 +56,14 @@ def solve_part1(input_lines):
     
     circuit_sizes.sort(reverse=True)
     
-    # Multiply sizes of three largest circuits
-    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
+    # Multiply sizes of three largest circuits - handle case where there are fewer than 3 circuits
+    # If there are fewer than 3 circuits, we need to handle this gracefully
+    if len(circuit_sizes) < 3:
+        # If there's only 1 circuit (all junctions connected), return 0 or handle as needed
+        # Based on the problem, this shouldn't happen with 1000 connections from many junctions
+        result = 0
+    else:
+        result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
     return result
 
 # Sample data – may contain multiple samples from the problem statement.
