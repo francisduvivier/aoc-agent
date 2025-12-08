@@ -58,14 +58,16 @@ def solve_part1(input_lines, config):
         if union(i, j):
             connections_made += 1
     
-    # Find circuit sizes
+    # Find circuit sizes - FIXED: Use a set to track unique roots
+    # and get their sizes directly from the size array
     circuit_sizes = []
-    root_sizes = defaultdict(int)
+    unique_roots = set()
     for i in range(len(junctions)):
         root = find(i)
-        root_sizes[root] = size[root]
+        unique_roots.add(root)
     
-    circuit_sizes = list(root_sizes.values())
+    # Get sizes of all unique circuits
+    circuit_sizes = [size[root] for root in unique_roots]
     circuit_sizes.sort(reverse=True)
     
     # Multiply the three largest circuits
