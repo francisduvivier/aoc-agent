@@ -1,77 +1,72 @@
 import math
+import sys
 
-def solve_part1(input_lines):
-    # Parse junction box coordinates
-    boxes = []
+def solve_part1(input_lines, config):
+    # Parse 3D coordinates from input
+    junctions = []
     for line in input_lines:
         line = line.strip()
-        if not line:
-            continue
-        x, y, z = map(int, line.split(','))
-        boxes.append((x, y, z))
+        if line:
+            x, y, z = map(int, line.split(','))
+            junctions.append((x, y, z))
     
-    # Union-Find data structure
-    parent = list(range(len(boxes)))
-    size = [1] * len(boxes)
+    # Calculate Euclidean distance between two junctions
+    def distance(a, b):
+        return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2 + (a[2] - b[2])**2)
     
-    def find(i):
-        if parent[i] != i:
-            parent[i] = find(parent[i])
-        return parent[i]
+    # Create list of all possible connections with distances
+    connections = []
+    n = len(junctions)
+    for i in range(n):
+        for j in range(i + 1, n):
+            dist = distance(junctions[i], junctions[j])
+            connections.append((dist, i, j))
     
-    def union(i, j):
-        root_i = find(i)
-        root_j = find(j)
-        if root_i != root_j:
-            if size[root_i] < size[root_j]:
-                parent[root_i] = root_j
-                size[root_j] += size[root_i]
+    # Sort connections by distance (shortest first)
+    connections.sort()
+    
+    # Union-Find data structure to track circuits
+    parent = list(range(n))
+    size = [1] * n
+    
+    def find(x):
+        if parent[x] != x:
+            parent[x] = find(parent[x])
+        return parent[x]
+    
+    def union(x, y):
+        root_x = find(x)
+        root_y = find(y)
+        if root_x != root_y:
+            if size[root_x] < size[root_y]:
+                parent[root_x] = root_y
+                size[root_y] += size[root_x]
+                size[root_x] = 0
             else:
-                parent[root_j] = root_i
-                size[root_i] += size[root_j]
-            return True  # Successfully connected
-        return False  # Already connected (cycle)
+                parent[root_y] = root_x
+                size[root_x] += size[root_y]
+                size[root_y] = 0
     
-    # Calculate distances between all pairs
-    distances = []
-    for i in range(len(boxes)):
-        for j in range(i + 1, len(boxes)):
-            x1, y1, z1 = boxes[i]
-            x2, y2, z2 = boxes[j]
-            dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
-            distances.append((dist, i, j))
+    # Connect the 1000 closest pairs
+    connections_made = 0
+    for dist, i, j in connections:
+        if connections_made >= 1000:
+            break
+        union(i, j)
+        connections_made += 1
     
-    # Sort by distance and connect the 1000 closest pairs
-    distances.sort()
-    num_connections = min(1000, len(distances))
+    # Get circuit sizes and find the three largest
+    circuit_sizes = sorted([s for s in size if s > 0], reverse=True)
     
-    # FIX: Connect the first 1000 closest pairs regardless of whether they form cycles
-    # The problem statement says "connect together the 1000 pairs of junction boxes which are closest together"
-    # This means we attempt to connect the 1000 closest pairs, even if some are already connected
-    for i in range(num_connections):
-        dist, idx1, idx2 = distances[i]
-        union(idx1, idx2)  # Always try to connect, even if it's a no-op
-    
-    # Find sizes of all circuits
-    circuit_sizes = []
-    for i in range(len(boxes)):
-        if find(i) == i:  # Root of a circuit
-            circuit_sizes.append(size[i])
-    
-    # Sort sizes in descending order and multiply the three largest
-    circuit_sizes.sort(reverse=True)
-    
-    # Handle case where there are fewer than 3 circuits
-    while len(circuit_sizes) < 3:
-        circuit_sizes.append(1)
-    
-    return circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
+    # Multiply the three largest circuits
+    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
+    return result
 
 # Sample data from problem statement
 samples = [
     ([
         "162,817,812",
-        "57,618,57", 
+        "57,618,57",
         "906,360,560",
         "592,479,940",
         "352,342,300",
@@ -94,11 +89,12 @@ samples = [
 ]
 
 for idx, (sample_input_lines, expected_result) in enumerate(samples, start=1):
-    sample_result = solve_part1(sample_input_lines)
+    sample_config = "TODO"
+    sample_result = solve_part1(sample_input_lines, sample_config)
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
     print(f"---- Sample {idx} result Part 1: {sample_result} ----")
 
 # Run on the real puzzle input
-final_result = solve_part1(open('input.txt').readlines())
+final_config = "TODO"
+final_result = solve_part1(open('input.txt').readlines(), final_config)
 print(f"---- Final result Part 1: {final_result} ----")
-
