@@ -53,6 +53,13 @@ def solve_part1(input_lines):
     
     # Sort sizes in descending order and multiply the three largest
     circuit_sizes.sort(reverse=True)
+    
+    # Fix: Handle case where there are fewer than 3 circuits
+    # If there are fewer than 3 circuits, we need to pad with 1s
+    # since multiplying by 1 doesn't change the result
+    while len(circuit_sizes) < 3:
+        circuit_sizes.append(1)
+    
     return circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
 
 # Sample data
