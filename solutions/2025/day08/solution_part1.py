@@ -21,36 +21,31 @@ def solve_part1(lines):
         return parent[i]
     
     def union(i, j):
-        root_i = find(i)
-        root_j = find(j)
-        if root_i != root_j:
-            if size[root_i] < size[root_j]:
-                parent[root_i] = root_j
-                size[root_j] += size[root_i]
+        ri, rj = find(i), find(j)
+        if ri != rj:
+            if size[ri] < size[rj]:
+                parent[ri] = rj
+                size[rj] += size[ri]
             else:
-                parent[root_j] = root_i
-                size[root_i] += size[root_j]
+                parent[rj] = ri
+                size[ri] += size[rj]
     
-    # Calculate distances and sort
-    distances = []
+    # Compute distances and sort edges
+    edges = []
     for i in range(n):
         for j in range(i + 1, n):
             x1, y1, z1 = coords[i]
             x2, y2, z2 = coords[j]
             dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
-            distances.append((dist, i, j))
+            edges.append((dist, i, j))
     
-    distances.sort()
+    edges.sort()
     
-    # Connect closest pairs
-    connections_made = 0
-    for dist, i, j in distances:
-        if connections_made >= 1000:
-            break
+    # Connect 1000 closest pairs
+    for dist, i, j in edges[:1000]:
         union(i, j)
-        connections_made += 1
     
-    # Get circuit sizes
+    # Find circuit sizes
     circuit_sizes = []
     for i in range(n):
         if parent[i] == i:
@@ -59,13 +54,11 @@ def solve_part1(lines):
     circuit_sizes.sort(reverse=True)
     
     # Multiply the three largest
-    result = 1
-    for i in range(min(3, len(circuit_sizes))):
-        result *= circuit_sizes[i]
-    
+    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
     return result
 
-# Sample data
+# Sample data – may contain multiple samples from the problem statement.
+# Populate this list with (sample_input, expected_result) tuples.
 samples = [
     ("""162,817,812
 57,618,57
@@ -92,10 +85,10 @@ samples = [
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     sample_result = solve_part1(sample_input.strip().splitlines())
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
-    print(f"---- Sample {idx} result Part 1: {sample_result} ----")
+    print(f"---- Sample {idx} result Part 1: {sample_result} ----") # YOU MUST NOT change this output format
 
 # Run on the real puzzle input
 with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
-print(f"---- Final result Part 1: {final_result} ----")
+print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
