@@ -21,28 +21,29 @@ def solve_part1(input_lines):
         return parent[i]
     
     def union(i, j):
-        ri, rj = find(i), find(j)
-        if ri != rj:
-            if size[ri] < size[rj]:
-                parent[ri] = rj
-                size[rj] += size[ri]
+        root_i = find(i)
+        root_j = find(j)
+        if root_i != root_j:
+            if size[root_i] < size[root_j]:
+                parent[root_i] = root_j
+                size[root_j] += size[root_i]
             else:
-                parent[rj] = ri
-                size[ri] += size[rj]
+                parent[root_j] = root_i
+                size[root_i] += size[root_j]
     
-    # Compute distances and sort
-    edges = []
+    # Calculate distances and sort
+    distances = []
     for i in range(len(coords)):
         for j in range(i + 1, len(coords)):
             x1, y1, z1 = coords[i]
             x2, y2, z2 = coords[j]
             dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
-            edges.append((dist, i, j))
+            distances.append((dist, i, j))
     
-    edges.sort()
+    distances.sort()
     
     # Connect the 1000 closest pairs
-    for dist, i, j in edges[:1000]:
+    for dist, i, j in distances[:1000]:
         union(i, j)
     
     # Find circuit sizes
