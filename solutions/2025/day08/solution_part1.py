@@ -45,7 +45,6 @@ def solve_part1(input_lines):
     edges.sort()
     
     # Connect the 1000 closest pairs, or all pairs if there are fewer than 1000
-    # CHANGED: Use min(1000, len(edges)) to handle cases where there aren't enough edges
     connections_to_make = min(1000, len(edges))
     for dist, i, j in edges[:connections_to_make]:
         union(i, j)
@@ -102,3 +101,4 @@ for idx, (sample_input_lines, expected_result) in enumerate(samples, start=1):
 # Run on the real puzzle input
 final_result = solve_part1(open('input.txt').readlines())
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
+
