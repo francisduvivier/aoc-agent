@@ -1,4 +1,3 @@
-import sys
 import math
 from collections import defaultdict
 
@@ -6,12 +5,10 @@ def solve_part1(lines):
     # Parse coordinates
     coords = []
     for line in lines:
-        if not line.strip():
-            continue
-        x, y, z = map(int, line.strip().split(','))
+        x, y, z = map(int, line.split(','))
         coords.append((x, y, z))
     
-    # Union-Find structure
+    # Union-Find for tracking circuits
     parent = list(range(len(coords)))
     size = [1] * len(coords)
     
@@ -21,19 +18,16 @@ def solve_part1(lines):
         return parent[i]
     
     def union(i, j):
-        root_i = find(i)
-        root_j = find(j)
-        if root_i != root_j:
-            if size[root_i] < size[root_j]:
-                parent[root_i] = root_j
-                size[root_j] += size[root_i]
-                size[root_i] = 0
+        ri, rj = find(i), find(j)
+        if ri != rj:
+            if size[ri] < size[rj]:
+                parent[ri] = rj
+                size[rj] += size[ri]
             else:
-                parent[root_j] = root_i
-                size[root_i] += size[root_j]
-                size[root_j] = 0
+                parent[rj] = ri
+                size[ri] += size[rj]
     
-    # Calculate distances and sort
+    # Compute distances and sort
     distances = []
     for i in range(len(coords)):
         for j in range(i + 1, len(coords)):
@@ -44,24 +38,25 @@ def solve_part1(lines):
     
     distances.sort()
     
-    # Connect the 1000 closest pairs
+    # Connect 1000 closest pairs
     for dist, i, j in distances[:1000]:
         union(i, j)
     
-    # Get circuit sizes
-    circuit_sizes = [s for s in size if s > 0]
+    # Find circuit sizes
+    circuit_sizes = []
+    for i in range(len(coords)):
+        if parent[i] == i:
+            circuit_sizes.append(size[i])
+    
     circuit_sizes.sort(reverse=True)
     
-    # Multiply the three largest
-    result = 1
-    for i in range(min(3, len(circuit_sizes))):
-        result *= circuit_sizes[i]
-    
+    # Multiply sizes of three largest circuits
+    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
     return result
 
-# Sample data
+# Sample data from problem statement
 samples = [
-    """162,817,812
+    ("""162,817,812
 57,618,57
 906,360,560
 592,479,940
@@ -80,11 +75,11 @@ samples = [
 941,993,340
 862,61,35
 984,92,344
-425,690,689""".strip().splitlines(), 40
+425,690,689""", 40)
 ]
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
-    sample_result = solve_part1(sample_input)
+    sample_result = solve_part1(sample_input.strip().splitlines())
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
     print(f"---- Sample {idx} result Part 1: {sample_result} ----")
 
