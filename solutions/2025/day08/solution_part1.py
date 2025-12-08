@@ -2,18 +2,18 @@ import math
 import sys
 
 def solve_part1(input_lines):
-    # Parse input: each line is "x,y,z"
-    junctions = []
+    # Parse coordinates from input
+    coords = []
     for line in input_lines:
         line = line.strip()
         if not line:
             continue
         x, y, z = map(int, line.split(','))
-        junctions.append((x, y, z))
+        coords.append((x, y, z))
     
-    # Union-Find (Disjoint Set Union) to track circuits
-    parent = list(range(len(junctions)))
-    size = [1] * len(junctions)
+    # Union-Find (Disjoint Set Union) structure
+    parent = list(range(len(coords)))
+    size = [1] * len(coords)
     
     def find(i):
         if parent[i] != i:
@@ -21,50 +21,39 @@ def solve_part1(input_lines):
         return parent[i]
     
     def union(i, j):
-        ri, rj = find(i), find(j)
-        if ri != rj:
-            if size[ri] < size[rj]:
-                parent[ri] = rj
-                size[rj] += size[ri]
+        root_i = find(i)
+        root_j = find(j)
+        if root_i != root_j:
+            if size[root_i] < size[root_j]:
+                parent[root_i] = root_j
+                size[root_j] += size[root_i]
             else:
-                parent[rj] = ri
-                size[ri] += size[rj]
+                parent[root_j] = root_i
+                size[root_i] += size[root_j]
     
-    # Compute all pairwise distances and sort by distance
-    edges = []
-    for i in range(len(junctions)):
-        xi, yi, zi = junctions[i]
-        for j in range(i + 1, len(junctions)):
-            xj, yj, zj = junctions[j]
-            dx = xi - xj
-            dy = yi - yj
-            dz = zi - zj
-            dist = math.sqrt(dx*dx + dy*dy + dz*dz)
-            edges.append((dist, i, j))
+    # Calculate distances between all pairs
+    distances = []
+    for i in range(len(coords)):
+        for j in range(i + 1, len(coords)):
+            x1, y1, z1 = coords[i]
+            x2, y2, z2 = coords[j]
+            dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
+            distances.append((dist, i, j))
     
-    edges.sort()
-    
-    # Connect the 1000 closest pairs, or all pairs if there are fewer than 1000
-    connections_to_make = min(1000, len(edges))
-    for dist, i, j in edges[:connections_to_make]:
+    # Sort by distance and connect the 1000 closest pairs
+    distances.sort()
+    for dist, i, j in distances[:1000]:
         union(i, j)
     
-    # Collect sizes of all circuits - need to find all roots and their sizes
-    # FIXED: Collect unique root sizes by finding the root of each node
-    # and using a set to track unique roots, then getting their sizes
-    unique_roots = set()
-    for i in range(len(junctions)):
-        unique_roots.add(find(i))
+    # Find sizes of all circuits
+    circuit_sizes = []
+    for i in range(len(coords)):
+        if parent[i] == i:  # Root of a circuit
+            circuit_sizes.append(size[i])
     
-    # Get the sizes of all unique circuits
-    circuit_sizes = [size[root] for root in unique_roots]
+    # Sort sizes in descending order and multiply the three largest
     circuit_sizes.sort(reverse=True)
-    
-    # Multiply sizes of three largest circuits
-    if len(circuit_sizes) < 3:
-        result = 0
-    else:
-        result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
+    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
     return result
 
 # Sample data – may contain multiple samples from the problem statement.
@@ -92,7 +81,7 @@ samples = [
         "984,92,344",
         "425,690,689"
     ], 40)
-]  # TODO: fill with actual samples and expected results
+]
 
 for idx, (sample_input_lines, expected_result) in enumerate(samples, start=1):
     sample_result = solve_part1(sample_input_lines)
