@@ -53,7 +53,10 @@ def solve_part1(lines):
     circuit_sizes.sort(reverse=True)
     
     # Multiply the three largest
-    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
+    if len(circuit_sizes) >= 3:
+        result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
+    else:
+        result = 0
     return result
 
 # Sample data – may contain multiple samples from the problem statement.
