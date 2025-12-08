@@ -55,6 +55,9 @@ def solve_part1(input_lines):
     circuit_sizes.sort(reverse=True)
     
     # Multiply the three largest
+    # Ensure we have at least 3 circuits
+    if len(circuit_sizes) < 3:
+        return 0
     result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
     return result
 
