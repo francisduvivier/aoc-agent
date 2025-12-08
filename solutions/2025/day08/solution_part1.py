@@ -45,10 +45,10 @@ def solve_part1(input_lines):
     for dist, i, j in edges[:1000]:
         union(i, j)
 
-    # Find sizes of all circuits
+    # Find sizes of all circuits - FIXED: need to use find() to get root representatives
     circuit_sizes = []
     for i in range(len(junctions)):
-        if parent[i] == i:
+        if find(i) == i:  # Use find() instead of direct parent check
             circuit_sizes.append(size[i])
 
     circuit_sizes.sort(reverse=True)
