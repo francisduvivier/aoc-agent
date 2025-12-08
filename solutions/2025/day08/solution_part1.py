@@ -63,7 +63,7 @@ def solve_part1(lines):
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
 samples = [
-    """162,817,812
+    ("""162,817,812
 57,618,57
 906,360,560
 592,479,940
@@ -82,7 +82,7 @@ samples = [
 941,993,340
 862,61,35
 984,92,344
-425,690,689""".splitlines(), 40
+425,690,689""".splitlines(), 40)
 ]
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
@@ -95,3 +95,4 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
+
