@@ -49,21 +49,21 @@ def solve_part1(input_lines, config):
         if union(i, j):
             connections_made += 1
     
-    # Find circuit sizes
+    # Find circuit sizes - FIXED: Use find() to get the root of each circuit
     circuit_sizes = []
+    root_sizes = defaultdict(int)
     for i in range(len(junctions)):
-        if parent[i] == i:  # Root of a circuit
-            circuit_sizes.append(size[i])
+        root = find(i)  # Use find() to get the actual root, not just parent[i]
+        root_sizes[root] = size[root]
     
-    # Sort sizes in descending order
+    circuit_sizes = list(root_sizes.values())
     circuit_sizes.sort(reverse=True)
     
     # Multiply the three largest circuits
-    # Added check to ensure we have at least 3 circuits before accessing indices
     if len(circuit_sizes) >= 3:
         result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
     else:
-        # If we don't have 3 circuits, pad with 1s (multiplying by 1 doesn't change result)
+        # If we don't have 3 circuits, pad with 1s
         while len(circuit_sizes) < 3:
             circuit_sizes.append(1)
         result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
