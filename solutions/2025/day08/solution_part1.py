@@ -1,34 +1,16 @@
 import math
-from collections import defaultdict
+import sys
 
 def solve_part1(lines):
     # Parse coordinates
     coords = []
     for line in lines:
-        if line.strip():
-            x, y, z = map(int, line.strip().split(','))
-            coords.append((x, y, z))
+        if not line.strip():
+            continue
+        x, y, z = map(int, line.strip().split(','))
+        coords.append((x, y, z))
     
-    # Union-Find structure
-    parent = list(range(len(coords)))
-    size = [1] * len(coords)
-    
-    def find(i):
-        if parent[i] != i:
-            parent[i] = find(parent[i])
-        return parent[i]
-    
-    def union(i, j):
-        root_i, root_j = find(i), find(j)
-        if root_i != root_j:
-            if size[root_i] < size[root_j]:
-                parent[root_i] = root_j
-                size[root_j] += size[root_i]
-            else:
-                parent[root_j] = root_i
-                size[root_i] += size[root_j]
-    
-    # Calculate distances and sort
+    # Calculate distances between all pairs
     distances = []
     for i in range(len(coords)):
         for j in range(i + 1, len(coords)):
@@ -37,29 +19,54 @@ def solve_part1(lines):
             dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
             distances.append((dist, i, j))
     
+    # Sort by distance
     distances.sort()
     
+    # Union-Find for circuit tracking
+    parent = list(range(len(coords)))
+    rank = [0] * len(coords)
+    
+    def find(x):
+        if parent[x] != x:
+            parent[x] = find(parent[x])
+        return parent[x]
+    
+    def union(x, y):
+        px, py = find(x), find(y)
+        if px == py:
+            return False
+        if rank[px] < rank[py]:
+            px, py = py, px
+        parent[py] = px
+        if rank[px] == rank[py]:
+            rank[px] += 1
+        return True
+    
     # Connect 1000 closest pairs
-    for dist, i, j in distances[:1000]:
-        union(i, j)
+    connections_made = 0
+    for dist, i, j in distances:
+        if connections_made >= 1000:
+            break
+        if union(i, j):
+            connections_made += 1
     
-    # Find sizes of all circuits
-    circuit_sizes = []
+    # Count circuit sizes
+    circuit_sizes = {}
     for i in range(len(coords)):
-        if parent[i] == i:
-            circuit_sizes.append(size[i])
+        root = find(i)
+        circuit_sizes[root] = circuit_sizes.get(root, 0) + 1
     
-    circuit_sizes.sort(reverse=True)
+    # Get three largest circuits
+    sizes = sorted(circuit_sizes.values(), reverse=True)
     
-    # Multiply sizes of three largest circuits
+    # Multiply the three largest
     result = 1
-    for s in circuit_sizes[:3]:
-        result *= s
+    for size in sizes[:3]:
+        result *= size
     
     return result
 
-# Sample data – may contain multiple samples from the problem statement.
-# Populate this list with (sample_input, expected_result) tuples.
+# Sample data from problem statement
 samples = [
     ("""162,817,812
 57,618,57
@@ -86,10 +93,10 @@ samples = [
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     sample_result = solve_part1(sample_input.strip().splitlines())
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
-    print(f"---- Sample {idx} result Part 1: {sample_result} ----") # YOU MUST NOT change this output format
+    print(f"---- Sample {idx} result Part 1: {sample_result} ----")
 
 # Run on the real puzzle input
 with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
-print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
+print(f"---- Final result Part 1: {final_result} ----")
