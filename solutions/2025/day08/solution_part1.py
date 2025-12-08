@@ -50,8 +50,9 @@ def solve_part1(input_lines):
     for dist, i, j in distances:
         if connections_made >= 1000:
             break
-        union(i, j)  # Always union, even if already connected
-        connections_made += 1
+        # Only count connections that actually connect different circuits
+        if union(i, j):
+            connections_made += 1
     
     # Count circuit sizes
     circuit_sizes = defaultdict(int)
