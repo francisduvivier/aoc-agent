@@ -59,7 +59,14 @@ def solve_part1(input_lines, config):
     circuit_sizes.sort(reverse=True)
     
     # Multiply the three largest circuits
-    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
+    # Added check to ensure we have at least 3 circuits before accessing indices
+    if len(circuit_sizes) >= 3:
+        result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
+    else:
+        # If we don't have 3 circuits, pad with 1s (multiplying by 1 doesn't change result)
+        while len(circuit_sizes) < 3:
+            circuit_sizes.append(1)
+        result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
     return result
 
 # Sample data from the problem statement
