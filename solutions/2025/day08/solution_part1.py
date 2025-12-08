@@ -1,94 +1,98 @@
 import math
-from collections import defaultdict
+import sys
 
-def solve_part1(lines):
-    # Parse coordinates
-    coords = []
-    for line in lines:
+def solve_part1(input_lines):
+    # Parse 3D coordinates from input
+    junctions = []
+    for line in input_lines:
+        line = line.strip()
+        if not line:
+            continue
         x, y, z = map(int, line.split(','))
-        coords.append((x, y, z))
+        junctions.append((x, y, z))
     
-    # Union-Find data structure
-    parent = list(range(len(coords)))
-    size = [1] * len(coords)
-    
-    def find(i):
-        if parent[i] != i:
-            parent[i] = find(parent[i])
-        return parent[i]
-    
-    def union(i, j):
-        root_i, root_j = find(i), find(j)
-        if root_i != root_j:
-            if size[root_i] < size[root_j]:
-                parent[root_i] = root_j
-                size[root_j] += size[root_i]
-            else:
-                parent[root_j] = root_i
-                size[root_i] += size[root_j]
-    
-    # Calculate distances and sort by distance
-    distances = []
-    for i in range(len(coords)):
-        for j in range(i + 1, len(coords)):
-            x1, y1, z1 = coords[i]
-            x2, y2, z2 = coords[j]
+    # Precompute distances between all pairs and sort by distance
+    edges = []
+    n = len(junctions)
+    for i in range(n):
+        for j in range(i + 1, n):
+            x1, y1, z1 = junctions[i]
+            x2, y2, z2 = junctions[j]
             dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
-            distances.append((dist, i, j))
+            edges.append((dist, i, j))
     
-    distances.sort()
+    edges.sort()
+    
+    # Union-Find (Disjoint Set Union) for tracking circuits
+    parent = list(range(n))
+    size = [1] * n
+    
+    def find(x):
+        if parent[x] != x:
+            parent[x] = find(parent[x])
+        return parent[x]
+    
+    def union(x, y):
+        rx, ry = find(x), find(y)
+        if rx != ry:
+            if size[rx] < size[ry]:
+                parent[rx] = ry
+                size[ry] += size[rx]
+            else:
+                parent[ry] = rx
+                size[rx] += size[ry]
     
     # Connect the 1000 closest pairs
-    for dist, i, j in distances[:1000]:
-        union(i, j)
+    connections_made = 0
+    for dist, i, j in edges:
+        if connections_made >= 1000:
+            break
+        if find(i) != find(j):
+            union(i, j)
+            connections_made += 1
     
-    # Find circuit sizes
+    # Find sizes of all circuits (only root nodes have correct sizes)
     circuit_sizes = []
-    for i in range(len(coords)):
-        if parent[i] == i:
+    for i in range(n):
+        if parent[i] == i:  # Root of a circuit
             circuit_sizes.append(size[i])
     
+    # Sort sizes descending and take top 3
     circuit_sizes.sort(reverse=True)
-    
-    # Multiply the three largest circuits
-    result = 1
-    for i in range(min(3, len(circuit_sizes))):
-        result *= circuit_sizes[i]
-    
+    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
     return result
 
-# Sample data – may contain multiple samples from the problem statement.
-# Populate this list with (sample_input, expected_result) tuples.
+# Sample data from the problem statement
 samples = [
-    ("""162,817,812
-57,618,57
-906,360,560
-592,479,940
-352,342,300
-466,668,158
-542,29,236
-431,825,988
-739,650,466
-52,470,668
-216,146,977
-819,987,18
-117,168,530
-805,96,715
-346,949,466
-970,615,88
-941,993,340
-862,61,35
-984,92,344
-425,690,689""", 40)
+    ([
+        "162,817,812",
+        "57,618,57",
+        "906,360,560",
+        "592,479,940",
+        "352,342,300",
+        "466,668,158",
+        "542,29,236",
+        "431,825,988",
+        "739,650,466",
+        "52,470,668",
+        "216,146,977",
+        "819,987,18",
+        "117,168,530",
+        "805,96,715",
+        "346,949,466",
+        "970,615,88",
+        "941,993,340",
+        "862,61,35",
+        "984,92,344",
+        "425,690,689"
+    ], 40)
 ]
 
-for idx, (sample_input, expected_result) in enumerate(samples, start=1):
-    sample_result = solve_part1(sample_input.strip().splitlines())
+for idx, (sample_input_lines, expected_result) in enumerate(samples, start=1):
+    sample_result = solve_part1(sample_input_lines)
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
-    print(f"---- Sample {idx} result Part 1: {sample_result} ----") # YOU MUST NOT change this output format
+    print(f"---- Sample {idx} result Part 1: {sample_result} ----")
 
 # Run on the real puzzle input
-with open('input.txt') as f:
-    lines = [line.strip() for line in f]
-final_result = solve_part1(lines)
-print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
+final_result = solve_part1(open('input.txt').readlines())
+print(f"---- Final result Part 1: {final_result} ----")
