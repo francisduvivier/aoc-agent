@@ -51,16 +51,15 @@ def solve_part1(input_lines):
     # Collect sizes of all circuits (only root nodes have correct sizes)
     circuit_sizes = []
     for i in range(len(junctions)):
-        if parent[i] == i:
+        # Find the root of each node to get correct circuit sizes
+        root = find(i)
+        if root == i:  # Only count root nodes
             circuit_sizes.append(size[i])
     
     circuit_sizes.sort(reverse=True)
     
-    # Multiply sizes of three largest circuits - handle case where there are fewer than 3 circuits
-    # If there are fewer than 3 circuits, we need to handle this gracefully
+    # Multiply sizes of three largest circuits
     if len(circuit_sizes) < 3:
-        # If there's only 1 circuit (all junctions connected), return 0 or handle as needed
-        # Based on the problem, this shouldn't happen with 1000 connections from many junctions
         result = 0
     else:
         result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
@@ -101,3 +100,4 @@ for idx, (sample_input_lines, expected_result) in enumerate(samples, start=1):
 # Run on the real puzzle input
 final_result = solve_part1(open('input.txt').readlines())
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
+
