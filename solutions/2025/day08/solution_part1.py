@@ -1,16 +1,14 @@
-import sys
 import math
-from collections import defaultdict
+import sys
 
 def solve_part1(lines):
     # Parse coordinates
     coords = []
     for line in lines:
-        if line.strip():
-            x, y, z = map(int, line.strip().split(','))
-            coords.append((x, y, z))
+        x, y, z = map(int, line.split(','))
+        coords.append((x, y, z))
     
-    # Union-Find structure
+    # Union-Find data structure
     parent = list(range(len(coords)))
     size = [1] * len(coords)
     
@@ -60,8 +58,7 @@ def solve_part1(lines):
     
     return result
 
-# Sample data – may contain multiple samples from the problem statement.
-# Populate this list with (sample_input, expected_result) tuples.
+# Sample data from problem statement
 samples = [
     ("""162,817,812
 57,618,57
@@ -82,17 +79,16 @@ samples = [
 941,993,340
 862,61,35
 984,92,344
-425,690,689""".splitlines(), 40)
+425,690,689""", 40)
 ]
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
-    sample_result = solve_part1(sample_input)
+    sample_result = solve_part1(sample_input.strip().splitlines())
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
-    print(f"---- Sample {idx} result Part 1: {sample_result} ----") # YOU MUST NOT change this output format
+    print(f"---- Sample {idx} result Part 1: {sample_result} ----")
 
 # Run on the real puzzle input
 with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
-print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
-
+print(f"---- Final result Part 1: {final_result} ----")
