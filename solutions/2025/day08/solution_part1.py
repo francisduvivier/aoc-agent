@@ -1,7 +1,8 @@
 import math
+from collections import defaultdict
 
 def solve_part1(input_lines, config):
-    # Parse 3D coordinates from input
+    # Parse junction box coordinates
     junctions = []
     for line in input_lines:
         line = line.strip()
@@ -9,24 +10,21 @@ def solve_part1(input_lines, config):
             x, y, z = map(int, line.split(','))
             junctions.append((x, y, z))
     
-    # Calculate Euclidean distance between two junctions
-    def distance(a, b):
-        return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2 + (a[2] - b[2])**2)
+    # Calculate distances between all pairs
+    distances = []
+    for i in range(len(junctions)):
+        for j in range(i + 1, len(junctions)):
+            x1, y1, z1 = junctions[i]
+            x2, y2, z2 = junctions[j]
+            dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
+            distances.append((dist, i, j))
     
-    # Create list of all possible connections with distances
-    connections = []
-    n = len(junctions)
-    for i in range(n):
-        for j in range(i + 1, n):
-            dist = distance(junctions[i], junctions[j])
-            connections.append((dist, i, j))
+    # Sort by distance
+    distances.sort()
     
-    # Sort connections by distance (shortest first)
-    connections.sort()
-    
-    # Union-Find data structure to track circuits
-    parent = list(range(n))
-    size = [1] * n
+    # Union-Find (Disjoint Set Union) for tracking circuits
+    parent = list(range(len(junctions)))
+    size = [1] * len(junctions)
     
     def find(x):
         if parent[x] != x:
@@ -34,39 +32,37 @@ def solve_part1(input_lines, config):
         return parent[x]
     
     def union(x, y):
-        root_x = find(x)
-        root_y = find(y)
-        if root_x != root_y:
-            if size[root_x] < size[root_y]:
-                parent[root_x] = root_y
-                size[root_y] += size[root_x]
-                size[root_x] = 0
-            else:
-                parent[root_y] = root_x
-                size[root_x] += size[root_y]
-                size[root_y] = 0
+        px, py = find(x), find(y)
+        if px != py:
+            if size[px] < size[py]:
+                px, py = py, px
+            parent[py] = px
+            size[px] += size[py]
+            return True
+        return False
     
-    # Connect the 1000 closest pairs, but not more than available connections
+    # Connect the 1000 closest pairs
     connections_made = 0
-    max_connections = min(1000, len(connections))
-    for dist, i, j in connections:
-        if connections_made >= max_connections:
+    for dist, i, j in distances:
+        if connections_made >= 1000:
             break
-        union(i, j)
-        connections_made += 1
+        if union(i, j):
+            connections_made += 1
     
-    # Get circuit sizes and find the three largest
-    circuit_sizes = sorted([s for s in size if s > 0], reverse=True)
+    # Find circuit sizes
+    circuit_sizes = []
+    for i in range(len(junctions)):
+        if parent[i] == i:  # Root of a circuit
+            circuit_sizes.append(size[i])
     
-    # Multiply the three largest circuits, handling case where there are fewer than 3
-    # If fewer than 3 circuits, multiply available circuits by 1 for missing ones
-    result = 1
-    for i in range(min(3, len(circuit_sizes))):
-        result *= circuit_sizes[i]
+    # Sort sizes in descending order
+    circuit_sizes.sort(reverse=True)
     
+    # Multiply the three largest circuits
+    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
     return result
 
-# Sample data from problem statement
+# Sample data from the problem statement
 samples = [
     ([
         "162,817,812",
