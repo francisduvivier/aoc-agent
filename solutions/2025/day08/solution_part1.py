@@ -52,7 +52,10 @@ def solve_part1(lines):
     
     # Sort and multiply the three largest
     circuit_sizes.sort(reverse=True)
-    return circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
+    result = 1
+    for i in range(min(3, len(circuit_sizes))):
+        result *= circuit_sizes[i]
+    return result
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
@@ -89,3 +92,4 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
+
