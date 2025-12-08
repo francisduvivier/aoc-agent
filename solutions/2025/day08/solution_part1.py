@@ -1,4 +1,3 @@
-import sys
 import math
 from collections import defaultdict
 
@@ -10,7 +9,7 @@ def solve_part1(lines):
             x, y, z = map(int, line.strip().split(','))
             coords.append((x, y, z))
     
-    # Union-Find data structure
+    # Union-Find structure
     parent = list(range(len(coords)))
     size = [1] * len(coords)
     
@@ -20,8 +19,7 @@ def solve_part1(lines):
         return parent[i]
     
     def union(i, j):
-        root_i = find(i)
-        root_j = find(j)
+        root_i, root_j = find(i), find(j)
         if root_i != root_j:
             if size[root_i] < size[root_j]:
                 parent[root_i] = root_j
@@ -30,7 +28,7 @@ def solve_part1(lines):
                 parent[root_j] = root_i
                 size[root_i] += size[root_j]
     
-    # Calculate all pairwise distances
+    # Calculate distances and sort
     distances = []
     for i in range(len(coords)):
         for j in range(i + 1, len(coords)):
@@ -39,25 +37,31 @@ def solve_part1(lines):
             dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
             distances.append((dist, i, j))
     
-    # Sort by distance and connect the 1000 closest pairs
     distances.sort()
+    
+    # Connect 1000 closest pairs
     for dist, i, j in distances[:1000]:
         union(i, j)
     
-    # Find all circuit sizes
+    # Find sizes of all circuits
     circuit_sizes = []
     for i in range(len(coords)):
-        if parent[i] == i:  # Root of a circuit
+        if parent[i] == i:
             circuit_sizes.append(size[i])
     
-    # Sort sizes in descending order and multiply the three largest
     circuit_sizes.sort(reverse=True)
-    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
+    
+    # Multiply sizes of three largest circuits
+    result = 1
+    for s in circuit_sizes[:3]:
+        result *= s
+    
     return result
 
-# Sample data from the problem statement
+# Sample data – may contain multiple samples from the problem statement.
+# Populate this list with (sample_input, expected_result) tuples.
 samples = [
-    """162,817,812
+    ("""162,817,812
 57,618,57
 906,360,560
 592,479,940
@@ -76,16 +80,16 @@ samples = [
 941,993,340
 862,61,35
 984,92,344
-425,690,689""".splitlines(), 40
+425,690,689""", 40)
 ]
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
-    sample_result = solve_part1(sample_input)
+    sample_result = solve_part1(sample_input.strip().splitlines())
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
-    print(f"---- Sample {idx} result Part 1: {sample_result} ----")
+    print(f"---- Sample {idx} result Part 1: {sample_result} ----") # YOU MUST NOT change this output format
 
 # Run on the real puzzle input
 with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
-print(f"---- Final result Part 1: {final_result} ----")
+print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
