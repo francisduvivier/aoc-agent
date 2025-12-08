@@ -101,3 +101,4 @@ final_result = solve_part1(open('input.txt').readlines())
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
 
 
+
