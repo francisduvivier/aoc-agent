@@ -1,5 +1,4 @@
 import math
-import sys
 
 def solve_part1(input_lines):
     # Parse junction box coordinates
