@@ -27,11 +27,9 @@ def solve_part1(lines):
             if size[root_i] < size[root_j]:
                 parent[root_i] = root_j
                 size[root_j] += size[root_i]
-                size[root_i] = 0
             else:
                 parent[root_j] = root_i
                 size[root_i] += size[root_j]
-                size[root_j] = 0
     
     # Calculate distances and sort
     distances = []
@@ -44,20 +42,30 @@ def solve_part1(lines):
     
     distances.sort()
     
-    # Connect the 1000 closest pairs
-    for dist, i, j in distances[:1000]:
+    # Connect closest pairs
+    connections_made = 0
+    for dist, i, j in distances:
+        if connections_made >= 1000:
+            break
         union(i, j)
+        connections_made += 1
     
     # Get circuit sizes
-    circuit_sizes = [s for s in size if s > 0]
+    circuit_sizes = []
+    for i in range(n):
+        if parent[i] == i:
+            circuit_sizes.append(size[i])
+    
     circuit_sizes.sort(reverse=True)
     
     # Multiply the three largest
-    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
+    result = 1
+    for i in range(min(3, len(circuit_sizes))):
+        result *= circuit_sizes[i]
+    
     return result
 
-# Sample data – may contain multiple samples from the problem statement.
-# Populate this list with (sample_input, expected_result) tuples.
+# Sample data
 samples = [
     ("""162,817,812
 57,618,57
@@ -84,10 +92,10 @@ samples = [
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     sample_result = solve_part1(sample_input.strip().splitlines())
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
-    print(f"---- Sample {idx} result Part 1: {sample_result} ----") # YOU MUST NOT change this output format
+    print(f"---- Sample {idx} result Part 1: {sample_result} ----")
 
 # Run on the real puzzle input
 with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
-print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
+print(f"---- Final result Part 1: {final_result} ----")
