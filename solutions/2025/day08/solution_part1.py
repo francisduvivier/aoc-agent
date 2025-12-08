@@ -41,7 +41,9 @@ def solve_part1(input_lines):
     
     # Sort by distance and connect the 1000 closest pairs
     distances.sort()
-    for dist, i, j in distances[:1000]:
+    # FIX: Use min(1000, len(distances)) to handle cases where there are fewer than 1000 pairs
+    num_connections = min(1000, len(distances))
+    for dist, i, j in distances[:num_connections]:
         union(i, j)
     
     # Find sizes of all circuits - FIX: Use find() to get actual root
