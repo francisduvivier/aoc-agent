@@ -2,7 +2,7 @@ import math
 import sys
 
 def solve_part1(input_lines):
-    # Parse coordinates from input
+    # Parse coordinates
     coords = []
     for line in input_lines:
         line = line.strip()
@@ -11,7 +11,7 @@ def solve_part1(input_lines):
         x, y, z = map(int, line.split(','))
         coords.append((x, y, z))
     
-    # Union-Find (Disjoint Set Union) structure
+    # Union-Find structure
     parent = list(range(len(coords)))
     size = [1] * len(coords)
     
@@ -21,38 +21,39 @@ def solve_part1(input_lines):
         return parent[i]
     
     def union(i, j):
-        root_i = find(i)
-        root_j = find(j)
-        if root_i != root_j:
-            if size[root_i] < size[root_j]:
-                parent[root_i] = root_j
-                size[root_j] += size[root_i]
+        ri, rj = find(i), find(j)
+        if ri != rj:
+            if size[ri] < size[rj]:
+                parent[ri] = rj
+                size[rj] += size[ri]
             else:
-                parent[root_j] = root_i
-                size[root_i] += size[root_j]
+                parent[rj] = ri
+                size[ri] += size[rj]
     
-    # Calculate distances between all pairs
-    distances = []
+    # Compute distances and sort
+    edges = []
     for i in range(len(coords)):
         for j in range(i + 1, len(coords)):
             x1, y1, z1 = coords[i]
             x2, y2, z2 = coords[j]
             dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
-            distances.append((dist, i, j))
+            edges.append((dist, i, j))
     
-    # Sort by distance and connect the 1000 closest pairs
-    distances.sort()
-    for dist, i, j in distances[:1000]:
+    edges.sort()
+    
+    # Connect the 1000 closest pairs
+    for dist, i, j in edges[:1000]:
         union(i, j)
     
-    # Find sizes of all circuits
+    # Find circuit sizes
     circuit_sizes = []
     for i in range(len(coords)):
-        if parent[i] == i:  # Root of a circuit
+        if parent[i] == i:
             circuit_sizes.append(size[i])
     
-    # Sort sizes in descending order and multiply the three largest
     circuit_sizes.sort(reverse=True)
+    
+    # Multiply the three largest
     result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
     return result
 
