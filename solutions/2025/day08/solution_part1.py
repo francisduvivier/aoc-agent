@@ -1,9 +1,8 @@
-import sys
 import math
-from collections import defaultdict
+import sys
 
 def solve_part1(input_lines):
-    # Parse input
+    # Parse input: each line is "x,y,z"
     junctions = []
     for line in input_lines:
         line = line.strip()
@@ -12,64 +11,57 @@ def solve_part1(input_lines):
         x, y, z = map(int, line.split(','))
         junctions.append((x, y, z))
     
-    # Calculate distances between all pairs
-    distances = []
-    n = len(junctions)
-    for i in range(n):
-        for j in range(i + 1, n):
-            x1, y1, z1 = junctions[i]
-            x2, y2, z2 = junctions[j]
-            dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
-            distances.append((dist, i, j))
+    # Union-Find (Disjoint Set Union) to track circuits
+    parent = list(range(len(junctions)))
+    size = [1] * len(junctions)
     
-    # Sort by distance
-    distances.sort()
+    def find(i):
+        if parent[i] != i:
+            parent[i] = find(parent[i])
+        return parent[i]
     
-    # Union-Find for tracking circuits
-    parent = list(range(n))
-    rank = [0] * n
+    def union(i, j):
+        ri, rj = find(i), find(j)
+        if ri != rj:
+            if size[ri] < size[rj]:
+                parent[ri] = rj
+                size[rj] += size[ri]
+            else:
+                parent[rj] = ri
+                size[ri] += size[rj]
     
-    def find(x):
-        if parent[x] != x:
-            parent[x] = find(parent[x])
-        return parent[x]
+    # Compute all pairwise distances and sort by distance
+    edges = []
+    for i in range(len(junctions)):
+        xi, yi, zi = junctions[i]
+        for j in range(i + 1, len(junctions)):
+            xj, yj, zj = junctions[j]
+            dx = xi - xj
+            dy = yi - yj
+            dz = zi - zj
+            dist = math.sqrt(dx*dx + dy*dy + dz*dz)
+            edges.append((dist, i, j))
     
-    def union(x, y):
-        px, py = find(x), find(y)
-        if px == py:
-            return False
-        if rank[px] < rank[py]:
-            px, py = py, px
-        parent[py] = px
-        if rank[px] == rank[py]:
-            rank[px] += 1
-        return True
+    edges.sort()
     
-    # Connect 1000 closest pairs
-    connections_made = 0
-    for dist, i, j in distances:
-        if connections_made >= 1000:
-            break
-        union(i, j)  # Always union, even if already connected
-        connections_made += 1
+    # Connect the 1000 closest pairs
+    for dist, i, j in edges[:1000]:
+        union(i, j)
     
-    # Count circuit sizes
-    circuit_sizes = defaultdict(int)
-    for i in range(n):
-        root = find(i)
-        circuit_sizes[root] += 1
+    # Collect sizes of all circuits (only root nodes have correct sizes)
+    circuit_sizes = []
+    for i in range(len(junctions)):
+        if parent[i] == i:
+            circuit_sizes.append(size[i])
     
-    # Get sizes sorted in descending order
-    sizes = sorted(circuit_sizes.values(), reverse=True)
+    circuit_sizes.sort(reverse=True)
     
-    # Multiply the three largest circuits
-    result = 1
-    for i in range(min(3, len(sizes))):
-        result *= sizes[i]
-    
+    # Multiply sizes of three largest circuits
+    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
     return result
 
-# Sample data from the problem statement
+# Sample data – may contain multiple samples from the problem statement.
+# Populate this list with (sample_input, expected_result) tuples.
 samples = [
     ([
         "162,817,812",
@@ -93,13 +85,13 @@ samples = [
         "984,92,344",
         "425,690,689"
     ], 40)
-]
+]  # TODO: fill with actual samples and expected results
 
 for idx, (sample_input_lines, expected_result) in enumerate(samples, start=1):
     sample_result = solve_part1(sample_input_lines)
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
-    print(f"---- Sample {idx} result Part 1: {sample_result} ----")
+    print(f"---- Sample {idx} result Part 1: {sample_result} ----") # YOU MUST NOT change this output format
 
 # Run on the real puzzle input
 final_result = solve_part1(open('input.txt').readlines())
-print(f"---- Final result Part 1: {final_result} ----")
+print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
