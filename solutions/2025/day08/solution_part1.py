@@ -49,14 +49,17 @@ def solve_part1(input_lines):
     for dist, i, j in edges[:connections_to_make]:
         union(i, j)
     
-    # Collect sizes of all circuits (only root nodes have correct sizes)
-    circuit_sizes = []
+    # Collect sizes of all circuits - need to find all roots and their sizes
+    # FIXED: Instead of only checking if parent[i] == i, we need to find all unique roots
+    # and get their sizes properly
+    root_sizes = {}
     for i in range(len(junctions)):
-        # Find the root of each node to get correct circuit sizes
-        root = find(i)
-        if root == i:  # Only count root nodes
-            circuit_sizes.append(size[i])
+        root = find(i)  # Ensure path compression is applied
+        # The size is stored at the root, so we use size[root]
+        root_sizes[root] = size[root]
     
+    # Get unique circuit sizes
+    circuit_sizes = list(root_sizes.values())
     circuit_sizes.sort(reverse=True)
     
     # Multiply sizes of three largest circuits
@@ -101,4 +104,3 @@ for idx, (sample_input_lines, expected_result) in enumerate(samples, start=1):
 # Run on the real puzzle input
 final_result = solve_part1(open('input.txt').readlines())
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
-
