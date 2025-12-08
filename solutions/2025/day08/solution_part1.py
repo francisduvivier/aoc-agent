@@ -48,7 +48,7 @@ def solve_part1(lines):
     for dist, i, j in distances[:1000]:
         union(i, j)
     
-    # Get sizes of all circuits
+    # Get circuit sizes
     circuit_sizes = [s for s in size if s > 0]
     circuit_sizes.sort(reverse=True)
     
@@ -91,4 +91,3 @@ with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
-
