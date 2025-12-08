@@ -1,6 +1,5 @@
-import sys
 import math
-from collections import defaultdict
+import sys
 
 def solve_part1(lines):
     # Parse coordinates
@@ -11,9 +10,10 @@ def solve_part1(lines):
         x, y, z = map(int, line.strip().split(','))
         coords.append((x, y, z))
     
-    # Union-Find data structure
-    parent = list(range(len(coords)))
-    size = [1] * len(coords)
+    # Union-Find structure
+    n = len(coords)
+    parent = list(range(n))
+    size = [1] * n
     
     def find(i):
         if parent[i] != i:
@@ -31,32 +31,41 @@ def solve_part1(lines):
                 parent[root_j] = root_i
                 size[root_i] += size[root_j]
     
-    # Calculate all pairwise distances
+    # Calculate distances and sort
     distances = []
-    for i in range(len(coords)):
-        for j in range(i + 1, len(coords)):
+    for i in range(n):
+        for j in range(i + 1, n):
             x1, y1, z1 = coords[i]
             x2, y2, z2 = coords[j]
             dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
             distances.append((dist, i, j))
     
-    # Sort by distance and connect the 1000 closest pairs
     distances.sort()
-    for dist, i, j in distances[:1000]:
-        union(i, j)
     
-    # Find all circuit sizes
+    # Connect closest pairs
+    connections_made = 0
+    for dist, i, j in distances:
+        if connections_made >= 1000:
+            break
+        union(i, j)
+        connections_made += 1
+    
+    # Get circuit sizes
     circuit_sizes = []
-    for i in range(len(coords)):
-        if parent[i] == i:  # Root of a circuit
+    for i in range(n):
+        if parent[i] == i:
             circuit_sizes.append(size[i])
     
-    # Sort in descending order and multiply the three largest
     circuit_sizes.sort(reverse=True)
-    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
+    
+    # Multiply the three largest
+    result = 1
+    for i in range(min(3, len(circuit_sizes))):
+        result *= circuit_sizes[i]
+    
     return result
 
-# Sample data from problem statement
+# Sample data
 samples = [
     ("""162,817,812
 57,618,57
