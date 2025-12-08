@@ -44,28 +44,26 @@ def solve_part1(input_lines):
     for dist, i, j in distances[:1000]:
         union(i, j)
     
-    # Find sizes of all circuits
+    # Find sizes of all circuits - FIX: Use find() to get actual root
     circuit_sizes = []
     for i in range(len(boxes)):
-        if parent[i] == i:  # Root of a circuit
+        if find(i) == i:  # Root of a circuit - USE find() instead of parent[i]
             circuit_sizes.append(size[i])
     
     # Sort sizes in descending order and multiply the three largest
     circuit_sizes.sort(reverse=True)
     
-    # Fix: Handle case where there are fewer than 3 circuits
-    # If there are fewer than 3 circuits, we need to pad with 1s
-    # since multiplying by 1 doesn't change the result
+    # Handle case where there are fewer than 3 circuits
     while len(circuit_sizes) < 3:
         circuit_sizes.append(1)
     
     return circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
 
-# Sample data
+# Sample data from problem statement
 samples = [
     ([
         "162,817,812",
-        "57,618,57",
+        "57,618,57", 
         "906,360,560",
         "592,479,940",
         "352,342,300",
