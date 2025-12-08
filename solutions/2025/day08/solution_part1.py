@@ -45,14 +45,13 @@ def solve_part1(input_lines):
             rank[px] += 1
         return True
     
-    # Connect the 1000 closest pairs
+    # Connect 1000 closest pairs
     connections_made = 0
     for dist, i, j in distances:
         if connections_made >= 1000:
             break
-        # Always attempt to connect (even if already in same circuit)
-        union(i, j)
-        connections_made += 1
+        if union(i, j):
+            connections_made += 1
     
     # Count circuit sizes
     circuit_sizes = defaultdict(int)
@@ -60,10 +59,10 @@ def solve_part1(input_lines):
         root = find(i)
         circuit_sizes[root] += 1
     
-    # Get the three largest circuits
+    # Get sizes sorted in descending order
     sizes = sorted(circuit_sizes.values(), reverse=True)
     
-    # Multiply the three largest
+    # Multiply the three largest circuits
     result = 1
     for i in range(min(3, len(sizes))):
         result *= sizes[i]
