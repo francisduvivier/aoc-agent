@@ -1,5 +1,4 @@
 import math
-import sys
 
 def solve_part1(input_lines, config):
     # Parse 3D coordinates from input
@@ -47,10 +46,11 @@ def solve_part1(input_lines, config):
                 size[root_x] += size[root_y]
                 size[root_y] = 0
     
-    # Connect the 1000 closest pairs
+    # Connect the 1000 closest pairs, but not more than available connections
     connections_made = 0
+    max_connections = min(1000, len(connections))
     for dist, i, j in connections:
-        if connections_made >= 1000:
+        if connections_made >= max_connections:
             break
         union(i, j)
         connections_made += 1
@@ -58,8 +58,12 @@ def solve_part1(input_lines, config):
     # Get circuit sizes and find the three largest
     circuit_sizes = sorted([s for s in size if s > 0], reverse=True)
     
-    # Multiply the three largest circuits
-    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
+    # Multiply the three largest circuits, handling case where there are fewer than 3
+    # If fewer than 3 circuits, multiply available circuits by 1 for missing ones
+    result = 1
+    for i in range(min(3, len(circuit_sizes))):
+        result *= circuit_sizes[i]
+    
     return result
 
 # Sample data from problem statement
