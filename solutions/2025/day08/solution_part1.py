@@ -1,18 +1,17 @@
-import sys
 import math
 from collections import defaultdict
 
 def solve_part1(lines):
-    # Parse junction box positions
-    junctions = []
+    # Parse coordinates
+    coords = []
     for line in lines:
         if line.strip():
             x, y, z = map(int, line.strip().split(','))
-            junctions.append((x, y, z))
+            coords.append((x, y, z))
     
     # Union-Find data structure
-    parent = list(range(len(junctions)))
-    size = [1] * len(junctions)
+    parent = list(range(len(coords)))
+    size = [1] * len(coords)
     
     def find(i):
         if parent[i] != i:
@@ -30,33 +29,38 @@ def solve_part1(lines):
                 parent[root_j] = root_i
                 size[root_i] += size[root_j]
     
-    # Calculate distances and sort connections
-    connections = []
-    for i in range(len(junctions)):
-        for j in range(i + 1, len(junctions)):
-            x1, y1, z1 = junctions[i]
-            x2, y2, z2 = junctions[j]
+    # Calculate all pairwise distances
+    distances = []
+    for i in range(len(coords)):
+        for j in range(i + 1, len(coords)):
+            x1, y1, z1 = coords[i]
+            x2, y2, z2 = coords[j]
             dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
-            connections.append((dist, i, j))
+            distances.append((dist, i, j))
     
-    connections.sort()
-    
-    # Make the 1000 shortest connections
-    for dist, i, j in connections[:1000]:
+    # Sort by distance and connect the 1000 closest pairs
+    distances.sort()
+    for dist, i, j in distances[:1000]:
         union(i, j)
     
     # Find all circuit sizes
     circuit_sizes = []
-    for i in range(len(junctions)):
+    for i in range(len(coords)):
         if parent[i] == i:  # Root of a circuit
             circuit_sizes.append(size[i])
     
-    # Sort and multiply the three largest circuits
+    # Sort in descending order
     circuit_sizes.sort(reverse=True)
-    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
+    
+    # Multiply the three largest circuits
+    result = 1
+    for i in range(min(3, len(circuit_sizes))):
+        result *= circuit_sizes[i]
+    
     return result
 
-# Sample data from problem statement
+# Sample data – may contain multiple samples from the problem statement.
+# Populate this list with (sample_input, expected_result) tuples.
 samples = [
     ("""162,817,812
 57,618,57
@@ -83,10 +87,10 @@ samples = [
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     sample_result = solve_part1(sample_input.strip().splitlines())
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
-    print(f"---- Sample {idx} result Part 1: {sample_result} ----")
+    print(f"---- Sample {idx} result Part 1: {sample_result} ----") # YOU MUST NOT change this output format
 
 # Run on the real puzzle input
 with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
-print(f"---- Final result Part 1: {final_result} ----")
+print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
