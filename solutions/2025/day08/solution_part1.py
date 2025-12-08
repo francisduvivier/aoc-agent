@@ -2,69 +2,62 @@ import math
 import sys
 
 def solve_part1(lines):
-    # Parse input
-    junctions = []
+    # Parse coordinates
+    coords = []
     for line in lines:
         if not line.strip():
             continue
         x, y, z = map(int, line.strip().split(','))
-        junctions.append((x, y, z))
+        coords.append((x, y, z))
     
-    # Build distance matrix
-    n = len(junctions)
-    distances = []
-    for i in range(n):
-        for j in range(i + 1, n):
-            x1, y1, z1 = junctions[i]
-            x2, y2, z2 = junctions[j]
-            dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
-            distances.append((dist, i, j))
-    
-    # Sort by distance
-    distances.sort()
-    
-    # Union-Find for circuit tracking
+    # Union-Find structure
+    n = len(coords)
     parent = list(range(n))
     size = [1] * n
     
-    def find(x):
-        if parent[x] != x:
-            parent[x] = find(parent[x])
-        return parent[x]
+    def find(i):
+        if parent[i] != i:
+            parent[i] = find(parent[i])
+        return parent[i]
     
-    def union(x, y):
-        px, py = find(x), find(y)
-        if px != py:
-            if size[px] < size[py]:
-                px, py = py, px
-            parent[py] = px
-            size[px] += size[py]
+    def union(i, j):
+        root_i = find(i)
+        root_j = find(j)
+        if root_i != root_j:
+            if size[root_i] < size[root_j]:
+                parent[root_i] = root_j
+                size[root_j] += size[root_i]
+                size[root_i] = 0
+            else:
+                parent[root_j] = root_i
+                size[root_i] += size[root_j]
+                size[root_j] = 0
     
-    # Connect 1000 closest pairs
-    connections_made = 0
-    for dist, i, j in distances:
-        if connections_made >= 1000:
-            break
-        if find(i) != find(j):
-            union(i, j)
-            connections_made += 1
-    
-    # Count circuit sizes
-    circuit_sizes = []
+    # Calculate distances and sort
+    distances = []
     for i in range(n):
-        if parent[i] == i:
-            circuit_sizes.append(size[i])
+        for j in range(i + 1, n):
+            x1, y1, z1 = coords[i]
+            x2, y2, z2 = coords[j]
+            dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
+            distances.append((dist, i, j))
     
+    distances.sort()
+    
+    # Connect the 1000 closest pairs
+    for dist, i, j in distances[:1000]:
+        union(i, j)
+    
+    # Get circuit sizes
+    circuit_sizes = [s for s in size if s > 0]
     circuit_sizes.sort(reverse=True)
     
-    # Multiply the three largest circuits
-    result = 1
-    for i in range(min(3, len(circuit_sizes))):
-        result *= circuit_sizes[i]
-    
+    # Multiply the three largest
+    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
     return result
 
-# Sample data from problem statement
+# Sample data – may contain multiple samples from the problem statement.
+# Populate this list with (sample_input, expected_result) tuples.
 samples = [
     ("""162,817,812
 57,618,57
@@ -91,10 +84,10 @@ samples = [
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     sample_result = solve_part1(sample_input.strip().splitlines())
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
-    print(f"---- Sample {idx} result Part 1: {sample_result} ----")
+    print(f"---- Sample {idx} result Part 1: {sample_result} ----") # YOU MUST NOT change this output format
 
 # Run on the real puzzle input
 with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part1(lines)
-print(f"---- Final result Part 1: {final_result} ----")
+print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
