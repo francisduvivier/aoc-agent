@@ -1,17 +1,18 @@
 import math
-from collections import defaultdict
+import sys
 
 def solve_part1(lines):
-    # Parse coordinates
-    coords = []
+    # Parse junction box coordinates
+    boxes = []
     for line in lines:
-        if line.strip():
-            x, y, z = map(int, line.strip().split(','))
-            coords.append((x, y, z))
+        if not line.strip():
+            continue
+        x, y, z = map(int, line.strip().split(','))
+        boxes.append((x, y, z))
     
-    # Union-Find data structure
-    parent = list(range(len(coords)))
-    size = [1] * len(coords)
+    # Union-Find data structure to track circuits
+    parent = list(range(len(boxes)))
+    size = [1] * len(boxes)
     
     def find(i):
         if parent[i] != i:
@@ -29,12 +30,12 @@ def solve_part1(lines):
                 parent[root_j] = root_i
                 size[root_i] += size[root_j]
     
-    # Calculate all pairwise distances
+    # Calculate distances between all pairs
     distances = []
-    for i in range(len(coords)):
-        for j in range(i + 1, len(coords)):
-            x1, y1, z1 = coords[i]
-            x2, y2, z2 = coords[j]
+    for i in range(len(boxes)):
+        for j in range(i + 1, len(boxes)):
+            x1, y1, z1 = boxes[i]
+            x2, y2, z2 = boxes[j]
             dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
             distances.append((dist, i, j))
     
@@ -45,19 +46,13 @@ def solve_part1(lines):
     
     # Find all circuit sizes
     circuit_sizes = []
-    for i in range(len(coords)):
-        if parent[i] == i:  # Root of a circuit
+    for i in range(len(boxes)):
+        if parent[i] == i:
             circuit_sizes.append(size[i])
     
-    # Sort in descending order
+    # Sort and multiply the three largest
     circuit_sizes.sort(reverse=True)
-    
-    # Multiply the three largest circuits
-    result = 1
-    for i in range(min(3, len(circuit_sizes))):
-        result *= circuit_sizes[i]
-    
-    return result
+    return circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
