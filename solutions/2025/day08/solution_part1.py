@@ -44,7 +44,6 @@ def solve_part1(input_lines):
     edges.sort()
 
     # Connect the 1000 closest pairs that aren't already connected
-    # FIXED: Need to track how many connections we actually make, not just take first 1000
     connections_made = 0
     for dist, i, j in edges:
         if connections_made >= 1000:
@@ -100,3 +99,4 @@ for idx, (sample_input_lines, expected_result) in enumerate(samples, start=1):
 # Run on the real puzzle input
 final_result = solve_part1(open('input.txt').readlines())
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
+
