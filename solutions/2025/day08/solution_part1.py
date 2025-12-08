@@ -29,6 +29,8 @@ def solve_part1(input_lines):
             else:
                 parent[root_j] = root_i
                 size[root_i] += size[root_j]
+            return True  # Successfully connected
+        return False  # Already connected (cycle)
     
     # Calculate distances between all pairs
     distances = []
@@ -41,15 +43,19 @@ def solve_part1(input_lines):
     
     # Sort by distance and connect the 1000 closest pairs
     distances.sort()
-    # FIX: Use min(1000, len(distances)) to handle cases where there are fewer than 1000 pairs
     num_connections = min(1000, len(distances))
-    for dist, i, j in distances[:num_connections]:
-        union(i, j)
+    actual_connections = 0
+    for dist, i, j in distances:
+        if actual_connections >= num_connections:
+            break
+        # FIX: Only count successful connections, but process all pairs up to the limit
+        if union(i, j):
+            actual_connections += 1
     
-    # Find sizes of all circuits - FIX: Use find() to get actual root
+    # Find sizes of all circuits
     circuit_sizes = []
     for i in range(len(boxes)):
-        if find(i) == i:  # Root of a circuit - USE find() instead of parent[i]
+        if find(i) == i:  # Root of a circuit
             circuit_sizes.append(size[i])
     
     # Sort sizes in descending order and multiply the three largest
