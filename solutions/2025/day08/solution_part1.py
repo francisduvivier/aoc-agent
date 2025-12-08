@@ -1,11 +1,14 @@
-import math
 import sys
+import math
+from collections import defaultdict
 
 def solve_part1(lines):
     # Parse coordinates
     coords = []
     for line in lines:
-        x, y, z = map(int, line.split(','))
+        if not line.strip():
+            continue
+        x, y, z = map(int, line.strip().split(','))
         coords.append((x, y, z))
     
     # Union-Find data structure
@@ -28,7 +31,7 @@ def solve_part1(lines):
                 parent[root_j] = root_i
                 size[root_i] += size[root_j]
     
-    # Calculate distances and sort
+    # Calculate all pairwise distances
     distances = []
     for i in range(len(coords)):
         for j in range(i + 1, len(coords)):
@@ -37,25 +40,20 @@ def solve_part1(lines):
             dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
             distances.append((dist, i, j))
     
+    # Sort by distance and connect the 1000 closest pairs
     distances.sort()
-    
-    # Connect the 1000 closest pairs
     for dist, i, j in distances[:1000]:
         union(i, j)
     
-    # Find circuit sizes
+    # Find all circuit sizes
     circuit_sizes = []
     for i in range(len(coords)):
-        if parent[i] == i:
+        if parent[i] == i:  # Root of a circuit
             circuit_sizes.append(size[i])
     
+    # Sort in descending order and multiply the three largest
     circuit_sizes.sort(reverse=True)
-    
-    # Multiply the three largest circuits
-    result = 1
-    for i in range(min(3, len(circuit_sizes))):
-        result *= circuit_sizes[i]
-    
+    result = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2]
     return result
 
 # Sample data from problem statement
