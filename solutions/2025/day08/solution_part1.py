@@ -44,13 +44,13 @@ def solve_part1(input_lines):
     # Sort by distance and connect the 1000 closest pairs
     distances.sort()
     num_connections = min(1000, len(distances))
-    actual_connections = 0
-    for dist, i, j in distances:
-        if actual_connections >= num_connections:
-            break
-        # FIX: Only count successful connections, but process all pairs up to the limit
-        if union(i, j):
-            actual_connections += 1
+    
+    # FIX: Connect the first 1000 closest pairs regardless of whether they form cycles
+    # The problem statement says "connect together the 1000 pairs of junction boxes which are closest together"
+    # This means we attempt to connect the 1000 closest pairs, even if some are already connected
+    for i in range(num_connections):
+        dist, idx1, idx2 = distances[i]
+        union(idx1, idx2)  # Always try to connect, even if it's a no-op
     
     # Find sizes of all circuits
     circuit_sizes = []
@@ -101,3 +101,4 @@ for idx, (sample_input_lines, expected_result) in enumerate(samples, start=1):
 # Run on the real puzzle input
 final_result = solve_part1(open('input.txt').readlines())
 print(f"---- Final result Part 1: {final_result} ----")
+
