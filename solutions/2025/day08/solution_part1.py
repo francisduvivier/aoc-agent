@@ -1,5 +1,6 @@
-import math
 import sys
+import math
+from collections import defaultdict
 
 def solve_part1(lines):
     # Parse coordinates
@@ -10,7 +11,29 @@ def solve_part1(lines):
         x, y, z = map(int, line.strip().split(','))
         coords.append((x, y, z))
     
-    # Calculate distances between all pairs
+    # Union-Find structure
+    parent = list(range(len(coords)))
+    size = [1] * len(coords)
+    
+    def find(i):
+        if parent[i] != i:
+            parent[i] = find(parent[i])
+        return parent[i]
+    
+    def union(i, j):
+        root_i = find(i)
+        root_j = find(j)
+        if root_i != root_j:
+            if size[root_i] < size[root_j]:
+                parent[root_i] = root_j
+                size[root_j] += size[root_i]
+                size[root_i] = 0
+            else:
+                parent[root_j] = root_i
+                size[root_i] += size[root_j]
+                size[root_j] = 0
+    
+    # Calculate distances and sort
     distances = []
     for i in range(len(coords)):
         for j in range(i + 1, len(coords)):
@@ -19,56 +42,26 @@ def solve_part1(lines):
             dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2 + (z2 - z1)**2)
             distances.append((dist, i, j))
     
-    # Sort by distance
     distances.sort()
     
-    # Union-Find for circuit tracking
-    parent = list(range(len(coords)))
-    rank = [0] * len(coords)
+    # Connect the 1000 closest pairs
+    for dist, i, j in distances[:1000]:
+        union(i, j)
     
-    def find(x):
-        if parent[x] != x:
-            parent[x] = find(parent[x])
-        return parent[x]
-    
-    def union(x, y):
-        px, py = find(x), find(y)
-        if px == py:
-            return False
-        if rank[px] < rank[py]:
-            px, py = py, px
-        parent[py] = px
-        if rank[px] == rank[py]:
-            rank[px] += 1
-        return True
-    
-    # Connect 1000 closest pairs
-    connections_made = 0
-    for dist, i, j in distances:
-        if connections_made >= 1000:
-            break
-        if union(i, j):
-            connections_made += 1
-    
-    # Count circuit sizes
-    circuit_sizes = {}
-    for i in range(len(coords)):
-        root = find(i)
-        circuit_sizes[root] = circuit_sizes.get(root, 0) + 1
-    
-    # Get three largest circuits
-    sizes = sorted(circuit_sizes.values(), reverse=True)
+    # Get circuit sizes
+    circuit_sizes = [s for s in size if s > 0]
+    circuit_sizes.sort(reverse=True)
     
     # Multiply the three largest
     result = 1
-    for size in sizes[:3]:
-        result *= size
+    for i in range(min(3, len(circuit_sizes))):
+        result *= circuit_sizes[i]
     
     return result
 
-# Sample data from problem statement
+# Sample data
 samples = [
-    ("""162,817,812
+    """162,817,812
 57,618,57
 906,360,560
 592,479,940
@@ -87,11 +80,11 @@ samples = [
 941,993,340
 862,61,35
 984,92,344
-425,690,689""", 40)
+425,690,689""".strip().splitlines(), 40
 ]
 
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
-    sample_result = solve_part1(sample_input.strip().splitlines())
+    sample_result = solve_part1(sample_input)
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
     print(f"---- Sample {idx} result Part 1: {sample_result} ----")
 
