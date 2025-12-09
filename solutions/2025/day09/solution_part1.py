@@ -23,13 +23,14 @@ def solve_part1(input_lines, config):
             x2, y2 = coords[j]
             
             # Calculate rectangle area using these two points as opposite corners
-            # The width and height are the absolute differences in x and y coordinates
-            width = abs(x2 - x1)
-            height = abs(y2 - y1)
+            # The width is the difference in x coordinates + 1 (inclusive)
+            # The height is the difference in y coordinates + 1 (inclusive)
+            # We need to add 1 because we're counting the tiles themselves
+            width = abs(x2 - x1) + 1
+            height = abs(y2 - y1) + 1
             area = width * height
             
-            # Update max area - any two red tiles can form a valid rectangle
-            # as opposite corners, regardless of what's on the boundary
+            # Update max area
             max_area = max(max_area, area)
     
     return max_area
@@ -59,4 +60,3 @@ for idx, (sample_input_lines, expected_result) in enumerate(samples, start=1):
 final_config = "TODO"
 final_result = solve_part1(open('input.txt').readlines(), final_config)
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
-
