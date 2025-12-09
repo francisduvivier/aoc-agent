@@ -27,6 +27,54 @@ def solve_part1(input_lines, config):
             height = abs(y2 - y1)
             area = width * height
             
+            # Check if these two red tiles can serve as opposite corners
+            # by verifying no other red tiles lie on the rectangle boundary
+            valid = True
+            
+            # Check the other two corners of the rectangle
+            corner1 = (x1, y2)
+            corner2 = (x2, y1)
+            
+            # For these to be valid opposite corners, the other two corners
+            # should NOT be red tiles (unless they're the same as our chosen corners)
+            if corner1 in coords and corner1 != (x1, y1) and corner1 != (x2, y2):
+                continue
+            if corner2 in coords and corner2 != (x1, y1) and corner2 != (x2, y2):
+                continue
+            
+            # Check edges of the rectangle (excluding corners)
+            # Top edge (excluding corners)
+            for x in range(min(x1, x2) + 1, max(x1, x2)):
+                if (x, max(y1, y2)) in coords:
+                    valid = False
+                    break
+            if not valid:
+                continue
+                
+            # Bottom edge (excluding corners)
+            for x in range(min(x1, x2) + 1, max(x1, x2)):
+                if (x, min(y1, y2)) in coords:
+                    valid = False
+                    break
+            if not valid:
+                continue
+                
+            # Left edge (excluding corners)
+            for y in range(min(y1, y2) + 1, max(y1, y2)):
+                if (min(x1, x2), y) in coords:
+                    valid = False
+                    break
+            if not valid:
+                continue
+                
+            # Right edge (excluding corners)
+            for y in range(min(y1, y2) + 1, max(y1, y2)):
+                if (max(x1, x2), y) in coords:
+                    valid = False
+                    break
+            if not valid:
+                continue
+            
             max_area = max(max_area, area)
     
     return max_area
@@ -56,4 +104,3 @@ for idx, (sample_input_lines, expected_result) in enumerate(samples, start=1):
 final_config = "TODO"
 final_result = solve_part1(open('input.txt').readlines(), final_config)
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
-
