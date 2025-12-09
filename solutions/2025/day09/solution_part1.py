@@ -1,41 +1,49 @@
+# Edit this file: implement solve_part1
+
 def solve_part1(input_lines, config):
-    # Parse coordinates from input
-    points = []
+    # Parse coordinates
+    coords = []
     for line in input_lines:
         line = line.strip()
         if not line:
             continue
         x, y = map(int, line.split(','))
-        points.append((x, y))
+        coords.append((x, y))
     
-    if len(points) < 2:
+    if not coords:
         return 0
     
     max_area = 0
-    n = len(points)
+    n = len(coords)
     
-    # Try all pairs of points as opposite corners
+    # Try all pairs of red tiles as opposite corners
     for i in range(n):
+        x1, y1 = coords[i]
         for j in range(i + 1, n):
-            x1, y1 = points[i]
-            x2, y2 = points[j]
+            x2, y2 = coords[j]
             
-            # Calculate rectangle dimensions
+            # Calculate rectangle area using these two points as opposite corners
             width = abs(x2 - x1)
             height = abs(y2 - y1)
-            
-            # Area is width * height
             area = width * height
             
-            if area > max_area:
-                max_area = area
+            max_area = max(max_area, area)
     
     return max_area
 
 # Sample data – may contain multiple samples from the problem statement.
 # Populate this list with (sample_input, expected_result) tuples.
 samples = [
-    (["7,1", "11,1", "11,7", "9,7", "9,5", "2,5", "2,3", "7,3"], 50)
+    ([
+        "7,1",
+        "11,1", 
+        "11,7",
+        "9,7",
+        "9,5",
+        "2,5",
+        "2,3",
+        "7,3"
+    ], 50)
 ]
 
 for idx, (sample_input_lines, expected_result) in enumerate(samples, start=1):
@@ -48,3 +56,4 @@ for idx, (sample_input_lines, expected_result) in enumerate(samples, start=1):
 final_config = "TODO"
 final_result = solve_part1(open('input.txt').readlines(), final_config)
 print(f"---- Final result Part 1: {final_result} ----") # YOU MUST NOT change this output format
+
