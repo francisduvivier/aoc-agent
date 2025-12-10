@@ -18,7 +18,7 @@ def solve_part2(lines):
         n = len(targets)
         start = tuple([0] * n)
         goal = tuple(targets)
-        # BFS to find min presses
+        # BFS to find min presses, with pruning if any counter exceeds target
         queue = deque([(start, 0)])
         visited = set([start])
         min_presses = -1
@@ -33,6 +33,9 @@ def solve_part2(lines):
                     if c < n:
                         new_state[c] += 1
                 new_state = tuple(new_state)
+                # Pruning: skip if any counter exceeds its target
+                if any(new_state[c] > targets[c] for c in range(n)):
+                    continue
                 if new_state not in visited:
                     visited.add(new_state)
                     queue.append((new_state, presses + 1))
