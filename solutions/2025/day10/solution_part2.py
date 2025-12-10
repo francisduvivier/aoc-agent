@@ -1,49 +1,7 @@
 # Edit this file: implement solve_part2
 
 import re
-from collections import defaultdict
-import heapq
-
-def min_cost_flow(source, sink, graph, flow_needed):
-    INF = 10**18
-    V = len(graph)
-    h = [0] * V
-    prevv = [0] * V
-    
-    total_cost = 0
-    while flow_needed > 0:
-        dist = [INF] * V
-        dist[source] = 0
-        que = [(0, source)]  # (cost, vertex)
-        while que:
-            p = heapq.heappop(que)
-            v = p[1]
-            if dist[v] < p[0]: continue
-            for to in graph[v]:
-                cap, cost, _ = graph[v][to]
-                if cap > 0 and dist[to] > dist[v] + cost + h[v] - h[to]:
-                    dist[to] = dist[v] + cost + h[v] - h[to]
-                    prevv[to] = v
-                    heapq.heappush(que, (dist[to], to))
-        if dist[sink] == INF:
-            return -1  # Cannot send more flow
-        for i in range(V):
-            if dist[i] < INF:
-                h[i] += dist[i]
-        d = flow_needed
-        v = sink
-        while v != source:
-            d = min(d, graph[prevv[v]][v][0])
-            v = prevv[v]
-        flow_needed -= d
-        total_cost += d * (dist[sink] + h[sink])
-        v = sink
-        while v != source:
-            graph[prevv[v]][v][0] -= d
-            if prevv[v] in graph[v]:  # Only update reverse if it exists to prevent sending negative flow on infinite capacity edges
-                graph[v][prevv[v]][0] += d
-            v = prevv[v]
-    return total_cost
+from collections import deque
 
 def solve_part2(lines):
     total = 0
@@ -57,31 +15,29 @@ def solve_part2(lines):
         for bm in button_matches:
             btn = tuple(map(int, bm.split(',')))
             buttons.append(btn)
-        m = len(buttons)
         n = len(targets)
-        V = m + n + 2
-        source = 0
-        sink = V - 1
-        graph = [{} for _ in range(V)]  # Changed from defaultdict(list) to dict to avoid issues with missing keys
-        # source to buttons: cap inf, cost 1
-        for i in range(1, m+1):
-            graph[source][i] = [10**9, 1, None]
-            graph[i][source] = [0, -1, None]
-        # buttons to counters
-        for i, btn in enumerate(buttons, 1):
-            for c in btn:
-                if c < n:
-                    j = m + 1 + c
-                    graph[i][j] = [10**9, 0, None]
-                    graph[j][i] = [0, 0, None]  # Added reverse edge for button-counter to properly handle residual graph, preventing incorrect flow calculations
-        # counters to sink: cap targets[c], cost 0
-        for c in range(n):
-            j = m + 1 + c
-            graph[j][sink] = [targets[c], 0, None]
-            graph[sink][j] = [0, 0, None]
-        flow_needed = sum(targets)
-        cost = min_cost_flow(source, sink, graph, flow_needed)
-        total += cost
+        start = tuple([0] * n)
+        goal = tuple(targets)
+        # BFS to find min presses
+        queue = deque([(start, 0)])
+        visited = set([start])
+        min_presses = -1
+        while queue:
+            current, presses = queue.popleft()
+            if current == goal:
+                min_presses = presses
+                break
+            for btn in buttons:
+                new_state = list(current)
+                for c in btn:
+                    if c < n:
+                        new_state[c] += 1
+                new_state = tuple(new_state)
+                if new_state not in visited:
+                    visited.add(new_state)
+                    queue.append((new_state, presses + 1))
+        if min_presses != -1:
+            total += min_presses
     return total
 
 # Sample data – may contain multiple samples from the problem statement.
