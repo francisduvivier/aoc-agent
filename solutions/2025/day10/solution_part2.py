@@ -8,14 +8,6 @@ def min_cost_flow(source, sink, graph, flow_needed):
     V = len(graph)
     h = [0] * V
     prevv = [0] * V
-    preve = [0] * V
-    
-    def add_edge(fr, to, cap, cost):
-        graph[fr][to] = [cap, cost, len(graph[to])]
-        graph[to][fr] = [0, -cost, len(graph[fr]) - 1]
-    
-    # Build graph inside, but since graph is passed, assume it's set up with add_edge calls outside.
-    # Wait, actually, in the function, we assume graph is already built with the format.
     
     total_cost = 0
     while flow_needed > 0:
@@ -32,7 +24,6 @@ def min_cost_flow(source, sink, graph, flow_needed):
                 if cap > 0 and dist[to] > dist[v] + cost + h[v] - h[to]:
                     dist[to] = dist[v] + cost + h[v] - h[to]
                     prevv[to] = v
-                    preve[to] = to
                     heapq.heappush(que, (dist[to], to))
         if dist[sink] == INF:
             return -1  # Cannot send more flow
@@ -45,7 +36,8 @@ def min_cost_flow(source, sink, graph, flow_needed):
             d = min(d, graph[prevv[v]][v][0])
             v = prevv[v]
         flow_needed -= d
-        total_cost += d * h[sink]
+        # Changed: total_cost += d * dist[sink] instead of d * h[sink], because dist[sink] is the reduced cost of the augmenting path, and with h updated after, this correctly accumulates the total cost.
+        total_cost += d * dist[sink]
         v = sink
         while v != source:
             graph[prevv[v]][v][0] -= d
