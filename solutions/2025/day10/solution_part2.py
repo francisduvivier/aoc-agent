@@ -8,32 +8,34 @@ def solve_part2(lines):
         joltage_str = parts[1].rstrip('}')
         joltage_reqs = list(map(int, joltage_str.split(',')))
 
-        # Extract button wiring schematics
-        button_parts = parts[0].split('[')[1].split(')')[0].split('(')
-        button_parts = [part.strip() for part in button_parts if part.strip()]
+        # Extract button wiring schematics - FIXED: properly parse the line
+        # Split the line to get the part between [ and {, then extract parentheses
+        bracket_part = line.split('[')[1].split('{')[0]
+        button_parts = []
+        # Find all parentheses groups
+        start = 0
+        while True:
+            open_idx = bracket_part.find('(', start)
+            if open_idx == -1:
+                break
+            close_idx = bracket_part.find(')', open_idx)
+            if close_idx == -1:
+                break
+            button_str = bracket_part[open_idx+1:close_idx]
+            button_parts.append(button_str)
+            start = close_idx + 1
+
         buttons = []
         for part in button_parts:
-            if part.startswith('['):
-                part = part[1:]
-            if part.endswith(')'):
-                part = part[:-1]
-            if part:
+            if part.strip():
                 buttons.append(tuple(map(int, part.split(','))))
 
-        # Solve the system of equations to find the minimum button presses
-        # We need to find non-negative integers x_i such that sum(x_i * button_i) = joltage_reqs
-        # This is a linear Diophantine system. We'll use a greedy approach to find the minimal solution.
-        # Since the problem is small, we can use a BFS approach to find the minimal solution.
-
+        # Solve using BFS to find minimal presses
         from collections import deque
         n = len(joltage_reqs)
-        m = len(buttons)
-
-        # We'll represent the state as a tuple of current joltage levels
-        start = tuple([0] * n)
         target = tuple(joltage_reqs)
+        start = tuple([0] * n)
 
-        # BFS setup
         queue = deque()
         queue.append((start, 0))
         visited = set()
@@ -54,14 +56,9 @@ def solve_part2(lines):
                 if new_state not in visited:
                     visited.add(new_state)
                     queue.append((new_state, presses + 1))
-        if not found:
-            # If BFS didn't find a solution, try a different approach (though problem states it's solvable)
-            # This is a fallback, but the problem guarantees a solution exists
-            pass
     return total_presses
 
-# Sample data – may contain multiple samples from the problem statement.
-# Populate this list with (sample_input, expected_result) tuples IF there are any samples given for part 2.
+# Sample data
 samples = [
     ("[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}", 10),
     ("[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}", 12),
@@ -72,9 +69,9 @@ samples = [
 for idx, (sample_input, expected_result) in enumerate(samples, start=1):
     sample_result = solve_part2(sample_input.strip().splitlines())
     assert sample_result == expected_result, f"Sample {idx} result {sample_result} does not match expected {expected_result}"
-    print(f"---- Sample {idx} result Part 2: {sample_result} ----") # YOU MUST NOT change this output format
+    print(f"---- Sample {idx} result Part 2: {sample_result} ----")
 # Run on the real puzzle input
 with open('input.txt') as f:
     lines = [line.strip() for line in f]
 final_result = solve_part2(lines)
-print(f"---- Final result Part 2: {final_result} ----") # YOU MUST NOT change this output format
+print(f"---- Final result Part 2: {final_result} ----")
