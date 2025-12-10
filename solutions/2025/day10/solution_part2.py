@@ -2,6 +2,7 @@
 
 import re
 from collections import defaultdict
+import heapq
 
 def min_cost_flow(source, sink, graph, flow_needed):
     INF = 10**18
@@ -13,14 +14,13 @@ def min_cost_flow(source, sink, graph, flow_needed):
     while flow_needed > 0:
         dist = [INF] * V
         dist[source] = 0
-        import heapq
         que = [(0, source)]  # (cost, vertex)
         while que:
             p = heapq.heappop(que)
             v = p[1]
             if dist[v] < p[0]: continue
-            for to, edge in graph[v].items():
-                cap, cost, _ = edge
+            for to in graph[v]:
+                cap, cost, _ = graph[v][to]
                 if cap > 0 and dist[to] > dist[v] + cost + h[v] - h[to]:
                     dist[to] = dist[v] + cost + h[v] - h[to]
                     prevv[to] = v
@@ -36,12 +36,12 @@ def min_cost_flow(source, sink, graph, flow_needed):
             d = min(d, graph[prevv[v]][v][0])
             v = prevv[v]
         flow_needed -= d
-        # Fixed: total_cost += d * (dist[sink] + h[sink] - h[source]) because the actual cost of the augmenting path is the reduced cost plus the potential difference; since h[source] = 0, it's d * (dist[sink] + h[sink])
         total_cost += d * (dist[sink] + h[sink])
         v = sink
         while v != source:
             graph[prevv[v]][v][0] -= d
-            graph[v][prevv[v]][0] += d
+            if prevv[v] in graph[v]:  # Only update reverse if it exists to prevent sending negative flow on infinite capacity edges
+                graph[v][prevv[v]][0] += d
             v = prevv[v]
     return total_cost
 
@@ -62,7 +62,7 @@ def solve_part2(lines):
         V = m + n + 2
         source = 0
         sink = V - 1
-        graph = [defaultdict(list) for _ in range(V)]
+        graph = [{} for _ in range(V)]  # Changed from defaultdict(list) to dict to avoid issues with missing keys
         # source to buttons: cap inf, cost 1
         for i in range(1, m+1):
             graph[source][i] = [10**9, 1, None]
@@ -73,7 +73,7 @@ def solve_part2(lines):
                 if c < n:
                     j = m + 1 + c
                     graph[i][j] = [10**9, 0, None]
-                    graph[j][i] = [0, 0, None]
+                    # Removed reverse edge for button-counter to prevent negative flow on infinite capacity edges
         # counters to sink: cap targets[c], cost 0
         for c in range(n):
             j = m + 1 + c
