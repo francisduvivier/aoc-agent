@@ -8,11 +8,9 @@ def solve_part2(lines):
         joltage_str = parts[1].rstrip('}')
         joltage_reqs = list(map(int, joltage_str.split(',')))
 
-        # Extract button wiring schematics - FIXED: properly parse the line
-        # Split the line to get the part between [ and {, then extract parentheses
+        # Extract button wiring schematics
         bracket_part = line.split('[')[1].split('{')[0]
         button_parts = []
-        # Find all parentheses groups
         start = 0
         while True:
             open_idx = bracket_part.find('(', start)
@@ -30,32 +28,38 @@ def solve_part2(lines):
             if part.strip():
                 buttons.append(tuple(map(int, part.split(','))))
 
-        # Solve using BFS to find minimal presses
-        from collections import deque
+        # Convert buttons to a matrix where each row represents a button
+        # and each column represents a counter
         n = len(joltage_reqs)
-        target = tuple(joltage_reqs)
-        start = tuple([0] * n)
+        m = len(buttons)
+        matrix = [[0]*m for _ in range(n)]
+        for j in range(m):
+            for i in buttons[j]:
+                matrix[i][j] = 1
 
-        queue = deque()
-        queue.append((start, 0))
-        visited = set()
-        visited.add(start)
+        # Solve the system of equations using a greedy approach
+        # We'll try to find the minimal number of presses by considering
+        # the buttons that cover the most remaining requirements first
+        presses = [0] * m
+        remaining = joltage_reqs.copy()
 
-        found = False
-        while queue and not found:
-            current, presses = queue.popleft()
-            if current == target:
-                total_presses += presses
-                found = True
-                break
-            for button in buttons:
-                new_state = list(current)
-                for idx in button:
-                    new_state[idx] += 1
-                new_state = tuple(new_state)
-                if new_state not in visited:
-                    visited.add(new_state)
-                    queue.append((new_state, presses + 1))
+        while any(remaining):
+            # Find the button that covers the most remaining requirements
+            best_button = -1
+            best_score = -1
+            for j in range(m):
+                score = sum(matrix[i][j] for i in range(n) if remaining[i] > 0)
+                if score > best_score:
+                    best_score = score
+                    best_button = j
+            if best_button == -1:
+                break  # No button can help, which shouldn't happen per problem statement
+            presses[best_button] += 1
+            for i in range(n):
+                if matrix[i][best_button]:
+                    remaining[i] -= 1
+
+        total_presses += sum(presses)
     return total_presses
 
 # Sample data
