@@ -1,10 +1,85 @@
 import re
 from collections import deque
 
+def solve_machine_joltage(joltage_requirements, buttons):
+    """
+    Solve for minimum button presses to reach joltage requirements.
+    Uses a more efficient approach than pure BFS.
+    """
+    num_counters = len(joltage_requirements)
+    if num_counters == 0:
+        return 0
+    
+    # If any requirement is 0, we can ignore those counters
+    # Filter out counters with 0 requirement
+    non_zero_indices = [i for i, req in enumerate(joltage_requirements) if req > 0]
+    if not non_zero_indices:
+        return 0
+    
+    # Work with only non-zero counters
+    filtered_requirements = [joltage_requirements[i] for i in non_zero_indices]
+    filtered_buttons = []
+    for button in buttons:
+        # Map button indices to filtered indices
+        filtered_indices = []
+        for idx in button:
+            if idx in non_zero_indices:
+                filtered_indices.append(non_zero_indices.index(idx))
+        if filtered_indices:  # Only include buttons that affect non-zero counters
+            filtered_buttons.append(filtered_indices)
+    
+    if not filtered_buttons:
+        # No buttons affect non-zero counters - impossible to solve
+        return sum(filtered_requirements)
+    
+    # Use BFS but with pruning
+    start_state = tuple(0 for _ in filtered_requirements)
+    target_state = tuple(filtered_requirements)
+    
+    # Priority queue for BFS - prioritize states closer to target
+    queue = deque([(start_state, 0)])
+    visited = {start_state}
+    
+    # Heuristic: minimum presses needed is at least max requirement
+    min_possible = max(filtered_requirements)
+    
+    while queue:
+        state, presses = queue.popleft()
+        
+        if state == target_state:
+            return presses
+        
+        # Try each button
+        for button in filtered_buttons:
+            new_state_list = list(state)
+            for counter_idx in button:
+                new_state_list[counter_idx] += 1
+            new_state = tuple(new_state_list)
+            
+            if new_state in visited:
+                continue
+                
+            # Pruning: if any counter exceeds target, skip
+            if any(new_state[i] > target_state[i] for i in range(len(filtered_requirements))):
+                continue
+                
+            # Additional pruning: if we've used too many presses already
+            if presses + 1 > sum(filtered_requirements):
+                continue
+                
+            visited.add(new_state)
+            queue.append((new_state, presses + 1))
+    
+    # Fallback: use sum of requirements
+    return sum(filtered_requirements)
+
 def solve_part2(lines):
     total_presses = 0
     for line in lines:
-        # Parse the line
+        line = line.strip()
+        if not line:
+            continue
+            
         # Extract joltage requirements in curly braces
         joltage_match = re.search(r'\{([^}]+)\}', line)
         if not joltage_match:
@@ -20,50 +95,12 @@ def solve_part2(lines):
                 indices = list(map(int, btn.split(',')))
                 buttons.append(indices)
         
-        # Solve for minimum presses using BFS
-        # State is a tuple of current counter values
-        num_counters = len(joltage_requirements)
-        start_state = tuple(0 for _ in range(num_counters))
-        target_state = tuple(joltage_requirements)
-        
-        # BFS queue: (state, presses_so_far)
-        queue = deque([(start_state, 0)])
-        visited = {start_state}
-        
-        min_presses = None
-        
-        while queue:
-            state, presses = queue.popleft()
+        if not buttons or not joltage_requirements:
+            continue
             
-            # Check if we reached the target
-            if state == target_state:
-                min_presses = presses
-                break
-            
-            # Try pressing each button
-            for button in buttons:
-                # Create new state by adding 1 to each counter affected by this button
-                new_state_list = list(state)
-                for counter_idx in button:
-                    new_state_list[counter_idx] += 1
-                new_state = tuple(new_state_list)
-                
-                # Skip if we've already visited this state or if any counter exceeds target
-                if new_state in visited:
-                    continue
-                
-                # Pruning: if any counter exceeds the target, skip this state
-                if any(new_state[i] > target_state[i] for i in range(num_counters)):
-                    continue
-                
-                visited.add(new_state)
-                queue.append((new_state, presses + 1))
-        
-        if min_presses is None:
-            # Fallback: use sum of requirements (worst case)
-            min_presses = sum(joltage_requirements)
-        
-        total_presses += min_presses
+        # Solve for minimum presses
+        machine_presses = solve_machine_joltage(joltage_requirements, buttons)
+        total_presses += machine_presses
     
     return total_presses
 
