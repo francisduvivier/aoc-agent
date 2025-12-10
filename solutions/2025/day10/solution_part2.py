@@ -36,8 +36,8 @@ def min_cost_flow(source, sink, graph, flow_needed):
             d = min(d, graph[prevv[v]][v][0])
             v = prevv[v]
         flow_needed -= d
-        # Changed: total_cost += d * dist[sink] instead of d * h[sink], because dist[sink] is the reduced cost of the augmenting path, and with h updated after, this correctly accumulates the total cost.
-        total_cost += d * dist[sink]
+        # Fixed: total_cost += d * (dist[sink] + h[sink] - h[source]) because the actual cost of the augmenting path is the reduced cost plus the potential difference; since h[source] = 0, it's d * (dist[sink] + h[sink])
+        total_cost += d * (dist[sink] + h[sink])
         v = sink
         while v != source:
             graph[prevv[v]][v][0] -= d
