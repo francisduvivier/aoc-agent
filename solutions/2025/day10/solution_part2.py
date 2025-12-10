@@ -1,15 +1,11 @@
 import re
-from itertools import product
+from collections import deque
 
 def solve_part2(lines):
     total_presses = 0
     for line in lines:
         # Parse the line
-        # Extract indicator diagram (not used in part 2)
-        # Extract buttons and joltage requirements
-        # Format: [.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
-        
-        # Find the joltage requirements in curly braces
+        # Extract joltage requirements in curly braces
         joltage_match = re.search(r'\{([^}]+)\}', line)
         if not joltage_match:
             continue
@@ -24,54 +20,48 @@ def solve_part2(lines):
                 indices = list(map(int, btn.split(',')))
                 buttons.append(indices)
         
-        # Solve for minimum presses to achieve joltage requirements
-        # This is a linear Diophantine problem: minimize sum(x_i) subject to A*x = b
-        # where A[i][j] = 1 if button j affects counter i, else 0
-        # and b[i] = joltage_requirements[i]
-        
+        # Solve for minimum presses using BFS
+        # State is a tuple of current counter values
         num_counters = len(joltage_requirements)
-        num_buttons = len(buttons)
+        start_state = tuple(0 for _ in range(num_counters))
+        target_state = tuple(joltage_requirements)
         
-        # Build the constraint matrix A
-        A = [[0] * num_buttons for _ in range(num_counters)]
-        for j, button in enumerate(buttons):
-            for i in button:
-                A[i][j] = 1
+        # BFS queue: (state, presses_so_far)
+        queue = deque([(start_state, 0)])
+        visited = {start_state}
         
-        # Try all possible combinations of button presses
-        # Use a reasonable upper bound: sum of all joltage requirements
-        max_presses = sum(joltage_requirements)
-        min_presses = float('inf')
+        min_presses = None
         
-        # Use a more efficient approach: BFS or try to solve systematically
-        # For now, use a bounded search
-        # We can use a simple greedy approach or try small combinations first
-        
-        # Try combinations with increasing total presses
-        for total in range(max_presses + 1):
-            # Generate all combinations of button presses that sum to 'total'
-            # This is equivalent to finding non-negative integer solutions to x_0 + x_1 + ... + x_n = total
-            for combo in product(range(total + 1), repeat=num_buttons):
-                if sum(combo) != total:
+        while queue:
+            state, presses = queue.popleft()
+            
+            # Check if we reached the target
+            if state == target_state:
+                min_presses = presses
+                break
+            
+            # Try pressing each button
+            for button in buttons:
+                # Create new state by adding 1 to each counter affected by this button
+                new_state_list = list(state)
+                for counter_idx in button:
+                    new_state_list[counter_idx] += 1
+                new_state = tuple(new_state_list)
+                
+                # Skip if we've already visited this state or if any counter exceeds target
+                if new_state in visited:
                     continue
                 
-                # Check if this combination satisfies the joltage requirements
-                result = [0] * num_counters
-                for j, presses in enumerate(combo):
-                    for i in buttons[j]:
-                        result[i] += presses
+                # Pruning: if any counter exceeds the target, skip this state
+                if any(new_state[i] > target_state[i] for i in range(num_counters)):
+                    continue
                 
-                if result == joltage_requirements:
-                    min_presses = total
-                    break
-            
-            if min_presses != float('inf'):
-                break
+                visited.add(new_state)
+                queue.append((new_state, presses + 1))
         
-        if min_presses == float('inf'):
-            # Fallback: use a simple greedy approach
-            # This shouldn't happen with the bounded search above
-            min_presses = max_presses
+        if min_presses is None:
+            # Fallback: use sum of requirements (worst case)
+            min_presses = sum(joltage_requirements)
         
         total_presses += min_presses
     
