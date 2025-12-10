@@ -73,7 +73,7 @@ def solve_part2(lines):
                 if c < n:
                     j = m + 1 + c
                     graph[i][j] = [10**9, 0, None]
-                    # Removed reverse edge for button-counter to prevent negative flow on infinite capacity edges
+                    graph[j][i] = [0, 0, None]  # Added reverse edge for button-counter to properly handle residual graph, preventing incorrect flow calculations
         # counters to sink: cap targets[c], cost 0
         for c in range(n):
             j = m + 1 + c
