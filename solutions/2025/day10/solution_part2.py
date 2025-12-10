@@ -2,7 +2,6 @@
 
 import re
 from collections import deque
-import heapq  # Added for priority queue to implement A* search
 
 def solve_part2(lines):
     total = 0
@@ -19,14 +18,13 @@ def solve_part2(lines):
         n = len(targets)
         start = tuple([0] * n)
         goal = tuple(targets)
-        # A* search to find min presses, with heuristic sum of remaining increments
-        # Priority queue: (priority, presses, state)
-        pq = []
-        heapq.heappush(pq, (0, 0, start))  # heuristic for start is sum(targets)
+        # BFS to find min presses, since cost is uniform
+        # Queue: (presses, state)
+        queue = deque([(0, start)])
         visited = set([start])
         min_presses = -1
-        while pq:
-            _, presses, current = heapq.heappop(pq)
+        while queue:
+            presses, current = queue.popleft()
             if current == goal:
                 min_presses = presses
                 break
@@ -41,9 +39,7 @@ def solve_part2(lines):
                     continue
                 if new_state not in visited:
                     visited.add(new_state)
-                    # Heuristic: sum of remaining increments for each counter
-                    h = sum(targets[c] - new_state[c] for c in range(n))
-                    heapq.heappush(pq, (presses + 1 + h, presses + 1, new_state))
+                    queue.append((presses + 1, new_state))
         if min_presses != -1:
             total += min_presses
     return total
