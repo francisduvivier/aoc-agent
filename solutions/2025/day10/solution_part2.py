@@ -1,8 +1,59 @@
 # Edit this file: implement solve_part2
 
+import re
+from collections import defaultdict
+
+def min_cost_flow(source, sink, graph, flow_needed):
+    INF = 10**18
+    V = len(graph)
+    h = [0] * V
+    prevv = [0] * V
+    preve = [0] * V
+    
+    def add_edge(fr, to, cap, cost):
+        graph[fr][to] = [cap, cost, len(graph[to])]
+        graph[to][fr] = [0, -cost, len(graph[fr]) - 1]
+    
+    # Build graph inside, but since graph is passed, assume it's set up with add_edge calls outside.
+    # Wait, actually, in the function, we assume graph is already built with the format.
+    
+    total_cost = 0
+    while flow_needed > 0:
+        dist = [INF] * V
+        dist[source] = 0
+        import heapq
+        que = [(0, source)]  # (cost, vertex)
+        while que:
+            p = heapq.heappop(que)
+            v = p[1]
+            if dist[v] < p[0]: continue
+            for to, edge in graph[v].items():
+                cap, cost, _ = edge
+                if cap > 0 and dist[to] > dist[v] + cost + h[v] - h[to]:
+                    dist[to] = dist[v] + cost + h[v] - h[to]
+                    prevv[to] = v
+                    preve[to] = to
+                    heapq.heappush(que, (dist[to], to))
+        if dist[sink] == INF:
+            return -1  # Cannot send more flow
+        for i in range(V):
+            if dist[i] < INF:
+                h[i] += dist[i]
+        d = flow_needed
+        v = sink
+        while v != source:
+            d = min(d, graph[prevv[v]][v][0])
+            v = prevv[v]
+        flow_needed -= d
+        total_cost += d * h[sink]
+        v = sink
+        while v != source:
+            graph[prevv[v]][v][0] -= d
+            graph[v][prevv[v]][0] += d
+            v = prevv[v]
+    return total_cost
+
 def solve_part2(lines):
-    import re
-    from collections import deque
     total = 0
     for line in lines:
         button_matches = re.findall(r'\(([^)]+)\)', line)
@@ -12,30 +63,33 @@ def solve_part2(lines):
         targets = list(map(int, target_match.group(1).split(',')))
         buttons = []
         for bm in button_matches:
-            btn = list(map(int, bm.split(',')))
+            btn = tuple(map(int, bm.split(',')))
             buttons.append(btn)
+        m = len(buttons)
         n = len(targets)
-        start = tuple([0] * n)
-        goal = tuple(targets)
-        q = deque([(start, 0)])
-        visited = set([start])
-        min_cost = None
-        while q:
-            current, cost = q.popleft()
-            if current == goal:
-                min_cost = cost
-                break
-            for button in buttons:
-                new_current = list(current)
-                for i in button:
-                    if i < n:
-                        new_current[i] += 1
-                new_current = tuple(new_current)
-                if new_current not in visited:
-                    visited.add(new_current)
-                    q.append((new_current, cost + 1))
-        if min_cost is not None:
-            total += min_cost
+        V = m + n + 2
+        source = 0
+        sink = V - 1
+        graph = [defaultdict(list) for _ in range(V)]
+        # source to buttons: cap inf, cost 1
+        for i in range(1, m+1):
+            graph[source][i] = [10**9, 1, None]
+            graph[i][source] = [0, -1, None]
+        # buttons to counters
+        for i, btn in enumerate(buttons, 1):
+            for c in btn:
+                if c < n:
+                    j = m + 1 + c
+                    graph[i][j] = [10**9, 0, None]
+                    graph[j][i] = [0, 0, None]
+        # counters to sink: cap targets[c], cost 0
+        for c in range(n):
+            j = m + 1 + c
+            graph[j][sink] = [targets[c], 0, None]
+            graph[sink][j] = [0, 0, None]
+        flow_needed = sum(targets)
+        cost = min_cost_flow(source, sink, graph, flow_needed)
+        total += cost
     return total
 
 # Sample data – may contain multiple samples from the problem statement.
