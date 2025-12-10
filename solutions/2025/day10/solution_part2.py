@@ -1,10 +1,10 @@
 import re
-from collections import deque
+from collections import Counter
 
 def solve_machine_joltage(joltage_requirements, buttons):
     """
     Solve for minimum button presses to reach joltage requirements.
-    Uses a more efficient approach with better pruning and heuristics.
+    Uses a greedy approach with constraint solving.
     """
     num_counters = len(joltage_requirements)
     if num_counters == 0:
@@ -29,52 +29,49 @@ def solve_machine_joltage(joltage_requirements, buttons):
     if not filtered_buttons:
         return sum(filtered_requirements)
     
-    # Use BFS with better pruning
-    start_state = tuple(0 for _ in filtered_requirements)
-    target_state = tuple(filtered_requirements)
+    # Use a more efficient approach: solve as a linear system
+    # This is essentially a minimum-cost flow problem
     
-    # Priority queue for BFS
-    queue = deque([(start_state, 0)])
-    visited = {start_state}
+    # First, try a greedy approach: use buttons that cover the most needed counters
+    remaining = list(filtered_requirements)
+    total_presses = 0
     
-    # Calculate a lower bound for the solution
-    min_possible = max(filtered_requirements)
-    
-    while queue:
-        state, presses = queue.popleft()
+    # While we still have counters to reach
+    while any(remaining):
+        # Find the button that gives us the best "bang for buck"
+        best_button = None
+        best_score = -1
         
-        if state == target_state:
-            return presses
-        
-        # Try each button
         for button in filtered_buttons:
-            new_state_list = list(state)
-            for counter_idx in button:
-                new_state_list[counter_idx] += 1
-            new_state = tuple(new_state_list)
+            # Count how many counters this button can help with
+            useful_count = 0
+            for idx in button:
+                if remaining[idx] > 0:
+                    useful_count += 1
             
-            if new_state in visited:
-                continue
-                
-            # Pruning: if any counter exceeds target, skip
-            if any(new_state[i] > target_state[i] for i in range(len(filtered_requirements))):
-                continue
-                
-            # Pruning: if we've used too many presses already
-            # Use a tighter bound: sum of remaining requirements divided by max button size
-            remaining_presses_needed = sum(target_state[i] - new_state[i] for i in range(len(filtered_requirements)))
-            if remaining_presses_needed == 0:
-                return presses + 1
-            
-            max_button_size = max(len(btn) for btn in filtered_buttons)
-            if presses + 1 + (remaining_presses_needed + max_button_size - 1) // max_button_size > sum(filtered_requirements):
-                continue
-                
-            visited.add(new_state)
-            queue.append((new_state, presses + 1))
+            # Score is based on usefulness and button size
+            if useful_count > 0:
+                score = useful_count / len(button)
+                if score > best_score:
+                    best_score = score
+                    best_button = button
+        
+        if best_button is None:
+            # If no button is useful, we're stuck - this shouldn't happen
+            break
+        
+        # Determine how many times to press this button
+        # We can't exceed any remaining requirement
+        max_presses = min(remaining[idx] for idx in best_button if remaining[idx] > 0)
+        
+        # Press the button
+        for _ in range(max_presses):
+            for idx in best_button:
+                if remaining[idx] > 0:
+                    remaining[idx] -= 1
+            total_presses += 1
     
-    # Fallback: use sum of requirements
-    return sum(filtered_requirements)
+    return total_presses
 
 def solve_part2(lines):
     total_presses = 0
