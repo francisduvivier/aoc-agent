@@ -6,7 +6,7 @@ import sys
 def solve_machine_joltage(joltage_requirements, buttons):
     """
     Solve for minimum button presses to reach joltage requirements.
-    Uses a more efficient constraint-based approach.
+    Uses a more systematic approach with constraint satisfaction.
     """
     num_counters = len(joltage_requirements)
     if num_counters == 0:
@@ -31,76 +31,71 @@ def solve_machine_joltage(joltage_requirements, buttons):
     if not filtered_buttons:
         return sum(filtered_requirements)
     
-    # Use a more efficient approach: solve using linear programming concepts
-    # We want to minimize sum(x_i) subject to A * x >= b (since we can overshoot)
-    # This is essentially a covering problem
-    
     num_counters = len(filtered_requirements)
     num_buttons = len(filtered_buttons)
     
-    # If we have exactly as many buttons as counters and they form a basis,
-    # we can solve directly
-    if num_buttons == num_counters:
-        # Try to solve as a system of linear equations
-        # This is a simplified approach for the specific problem structure
-        pass
+    # Use a more systematic approach: try to find the minimal solution
+    # We need to solve: A * x >= b, minimize sum(x)
+    # where A[i][j] = 1 if button j affects counter i, 0 otherwise
+    # and b[i] = requirement for counter i
     
-    # Use a greedy approach with backtracking
-    # Start with the most efficient buttons (those that affect the most counters)
-    button_efficiency = [(len(button), i) for i, button in enumerate(filtered_buttons)]
-    button_efficiency.sort(reverse=True)
+    # Build the constraint matrix
+    constraint_matrix = [[0] * num_buttons for _ in range(num_counters)]
+    for button_idx, button in enumerate(filtered_buttons):
+        for counter_idx in button:
+            constraint_matrix[counter_idx][button_idx] = 1
     
-    # Try a more direct approach: use the fact that we can overshoot
-    # We want to minimize total presses while satisfying all requirements
+    # Use a more sophisticated search algorithm
+    # Start with a simple upper bound: press each button enough times
+    # to satisfy its most demanding counter
+    upper_bound = sum(filtered_requirements)
     
-    # Use a simple but effective heuristic:
-    # 1. For each counter, find buttons that can affect it
-    # 2. Use the button that affects the most unsatisfied counters
+    # Try to find a better solution using a systematic search
+    # For small instances, we can try all combinations up to a certain limit
+    max_presses_per_button = max(filtered_requirements) + 1
     
-    presses = [0] * num_buttons
-    remaining = filtered_requirements[:]
+    # Use a more efficient search: branch and bound
+    best_solution = upper_bound
     
-    # Simple greedy algorithm that works well for this problem
-    changed = True
-    while changed and any(remaining):
-        changed = False
-        best_button = -1
-        best_score = -1
+    def search(button_idx, current_presses, current_totals):
+        nonlocal best_solution
         
-        # Find the button that gives the best improvement
-        for i, button in enumerate(filtered_buttons):
-            # Score based on how many counters this button can help with
-            score = 0
-            can_help = False
-            for idx in button:
-                if remaining[idx] > 0:
-                    score += remaining[idx]
-                    can_help = True
+        # If we've processed all buttons
+        if button_idx == num_buttons:
+            # Check if all requirements are satisfied
+            if all(current_totals[i] >= filtered_requirements[i] for i in range(num_counters)):
+                best_solution = min(best_solution, sum(current_presses))
+            return
+        
+        # If we've already exceeded the best solution, prune
+        if sum(current_presses) >= best_solution:
+            return
+        
+        # Try different numbers of presses for this button
+        # Calculate minimum presses needed for this button
+        min_presses = 0
+        for i in range(num_counters):
+            if constraint_matrix[i][button_idx] > 0:
+                remaining = max(0, filtered_requirements[i] - current_totals[i])
+                if remaining > 0:
+                    min_presses = max(min_presses, (remaining + constraint_matrix[i][button_idx] - 1) // constraint_matrix[i][button_idx])
+        
+        # Try from min_presses up to a reasonable upper bound
+        max_presses = min(max_presses_per_button, best_solution - sum(current_presses))
+        
+        for presses in range(min_presses, max_presses + 1):
+            # Update totals
+            new_totals = current_totals[:]
+            for i in range(num_counters):
+                new_totals[i] += constraint_matrix[i][button_idx] * presses
             
-            if can_help and score > best_score:
-                best_score = score
-                best_button = i
-        
-        if best_button >= 0:
-            # Press this button once
-            presses[best_button] += 1
-            for idx in filtered_buttons[best_button]:
-                if remaining[idx] > 0:
-                    remaining[idx] -= 1
-            changed = True
+            current_presses[button_idx] = presses
+            search(button_idx + 1, current_presses, new_totals)
+            current_presses[button_idx] = 0
     
-    # If we still have remaining requirements, use a fallback
-    if any(remaining):
-        # Add direct presses for remaining requirements
-        for i, req in enumerate(remaining):
-            if req > 0:
-                # Find any button that affects this counter
-                for button_idx, button in enumerate(filtered_buttons):
-                    if i in button:
-                        presses[button_idx] += req
-                        break
+    search(0, [0] * num_buttons, [0] * num_counters)
     
-    return sum(presses)
+    return best_solution
 
 def solve_part2(lines):
     total_presses = 0
