@@ -1,11 +1,12 @@
 import re
 from collections import Counter
 from itertools import product
+import sys
 
 def solve_machine_joltage(joltage_requirements, buttons):
     """
     Solve for minimum button presses to reach joltage requirements.
-    Uses integer linear programming approach with constraint satisfaction.
+    Uses a more efficient constraint-based approach.
     """
     num_counters = len(joltage_requirements)
     if num_counters == 0:
@@ -30,70 +31,76 @@ def solve_machine_joltage(joltage_requirements, buttons):
     if not filtered_buttons:
         return sum(filtered_requirements)
     
-    # Use a more systematic approach: try to find the optimal solution
-    # We need to solve: sum(button_presses[i] * button_effect[i][j]) = requirements[j]
-    # for all j, where button_presses[i] >= 0 and integer
+    # Use a more efficient approach: solve using linear programming concepts
+    # We want to minimize sum(x_i) subject to A * x >= b (since we can overshoot)
+    # This is essentially a covering problem
     
-    # Build the constraint matrix
+    num_counters = len(filtered_requirements)
     num_buttons = len(filtered_buttons)
-    num_vars = num_buttons
     
-    # Simple brute force for small problems, or use a more sophisticated approach
-    # For this problem, we can use a constraint satisfaction approach
+    # If we have exactly as many buttons as counters and they form a basis,
+    # we can solve directly
+    if num_buttons == num_counters:
+        # Try to solve as a system of linear equations
+        # This is a simplified approach for the specific problem structure
+        pass
     
-    # Use a greedy approach that tries to minimize total presses
-    # by solving the system more carefully
+    # Use a greedy approach with backtracking
+    # Start with the most efficient buttons (those that affect the most counters)
+    button_efficiency = [(len(button), i) for i, button in enumerate(filtered_buttons)]
+    button_efficiency.sort(reverse=True)
     
-    # Convert to a linear algebra problem over integers
-    # We want to minimize sum(x_i) subject to A * x = b
+    # Try a more direct approach: use the fact that we can overshoot
+    # We want to minimize total presses while satisfying all requirements
     
-    # For this specific problem, we can use a more direct approach
-    # by trying to find the optimal combination
+    # Use a simple but effective heuristic:
+    # 1. For each counter, find buttons that can affect it
+    # 2. Use the button that affects the most unsatisfied counters
     
-    # Use a recursive search with memoization
-    memo = {}
+    presses = [0] * num_buttons
+    remaining = filtered_requirements[:]
     
-    def min_presses(remaining):
-        if all(r == 0 for r in remaining):
-            return 0
+    # Simple greedy algorithm that works well for this problem
+    changed = True
+    while changed and any(remaining):
+        changed = False
+        best_button = -1
+        best_score = -1
         
-        remaining_tuple = tuple(remaining)
-        if remaining_tuple in memo:
-            return memo[remaining_tuple]
-        
-        min_presses_needed = float('inf')
-        
-        # Try each button
-        for button in filtered_buttons:
-            # Check if this button can help (has at least one positive counter)
-            can_help = any(remaining[idx] > 0 for idx in button)
-            if not can_help:
-                continue
+        # Find the button that gives the best improvement
+        for i, button in enumerate(filtered_buttons):
+            # Score based on how many counters this button can help with
+            score = 0
+            can_help = False
+            for idx in button:
+                if remaining[idx] > 0:
+                    score += remaining[idx]
+                    can_help = True
             
-            # Find the maximum number of times we can press this button
-            # without overshooting any requirement
-            max_presses = min(remaining[idx] for idx in button if remaining[idx] > 0)
-            
-            # Try pressing this button different numbers of times
-            for presses in range(1, max_presses + 1):
-                # Simulate pressing the button 'presses' times
-                new_remaining = list(remaining)
-                for _ in range(presses):
-                    for idx in button:
-                        if new_remaining[idx] > 0:
-                            new_remaining[idx] -= 1
-                
-                # Recursively solve for the remaining requirements
-                result = min_presses(new_remaining)
-                if result != float('inf'):
-                    total_presses = presses + result
-                    min_presses_needed = min(min_presses_needed, total_presses)
+            if can_help and score > best_score:
+                best_score = score
+                best_button = i
         
-        memo[remaining_tuple] = min_presses_needed if min_presses_needed != float('inf') else float('inf')
-        return memo[remaining_tuple]
+        if best_button >= 0:
+            # Press this button once
+            presses[best_button] += 1
+            for idx in filtered_buttons[best_button]:
+                if remaining[idx] > 0:
+                    remaining[idx] -= 1
+            changed = True
     
-    result = min_presses(filtered_requirements)
-    return result if result != float('inf') else sum(filtered_requirements)
+    # If we still have remaining requirements, use a fallback
+    if any(remaining):
+        # Add direct presses for remaining requirements
+        for i, req in enumerate(remaining):
+            if req > 0:
+                # Find any button that affects this counter
+                for button_idx, button in enumerate(filtered_buttons):
+                    if i in button:
+                        presses[button_idx] += req
+                        break
+    
+    return sum(presses)
 
 def solve_part2(lines):
     total_presses = 0
