@@ -4,13 +4,12 @@ from collections import deque
 def solve_machine_joltage(joltage_requirements, buttons):
     """
     Solve for minimum button presses to reach joltage requirements.
-    Uses a more efficient approach than pure BFS.
+    Uses a more efficient approach with better pruning and heuristics.
     """
     num_counters = len(joltage_requirements)
     if num_counters == 0:
         return 0
     
-    # If any requirement is 0, we can ignore those counters
     # Filter out counters with 0 requirement
     non_zero_indices = [i for i, req in enumerate(joltage_requirements) if req > 0]
     if not non_zero_indices:
@@ -20,27 +19,25 @@ def solve_machine_joltage(joltage_requirements, buttons):
     filtered_requirements = [joltage_requirements[i] for i in non_zero_indices]
     filtered_buttons = []
     for button in buttons:
-        # Map button indices to filtered indices
         filtered_indices = []
         for idx in button:
             if idx in non_zero_indices:
                 filtered_indices.append(non_zero_indices.index(idx))
-        if filtered_indices:  # Only include buttons that affect non-zero counters
+        if filtered_indices:
             filtered_buttons.append(filtered_indices)
     
     if not filtered_buttons:
-        # No buttons affect non-zero counters - impossible to solve
         return sum(filtered_requirements)
     
-    # Use BFS but with pruning
+    # Use BFS with better pruning
     start_state = tuple(0 for _ in filtered_requirements)
     target_state = tuple(filtered_requirements)
     
-    # Priority queue for BFS - prioritize states closer to target
+    # Priority queue for BFS
     queue = deque([(start_state, 0)])
     visited = {start_state}
     
-    # Heuristic: minimum presses needed is at least max requirement
+    # Calculate a lower bound for the solution
     min_possible = max(filtered_requirements)
     
     while queue:
@@ -63,8 +60,14 @@ def solve_machine_joltage(joltage_requirements, buttons):
             if any(new_state[i] > target_state[i] for i in range(len(filtered_requirements))):
                 continue
                 
-            # Additional pruning: if we've used too many presses already
-            if presses + 1 > sum(filtered_requirements):
+            # Pruning: if we've used too many presses already
+            # Use a tighter bound: sum of remaining requirements divided by max button size
+            remaining_presses_needed = sum(target_state[i] - new_state[i] for i in range(len(filtered_requirements)))
+            if remaining_presses_needed == 0:
+                return presses + 1
+            
+            max_button_size = max(len(btn) for btn in filtered_buttons)
+            if presses + 1 + (remaining_presses_needed + max_button_size - 1) // max_button_size > sum(filtered_requirements):
                 continue
                 
             visited.add(new_state)
